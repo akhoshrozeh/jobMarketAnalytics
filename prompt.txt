@@ -1,0 +1,2 @@
+I'm going to give you a job description for a job opening in the tech field. I want you to extract all the keywords that highlight what the employer is looking for. Things such as CI/CD, React, Go, Microservices, Communcation, Agile, etc. I want your output to be in the format of a python array of strings. Here's the job:
+Full job description
