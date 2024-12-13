@@ -12,6 +12,12 @@ from aws_cdk import (
     # aws_sqs as sqs,
 )
 from constructs import Construct
+import boto3
+import json
+from utils.secrets import get_mongodb_uri, get_db_collection
+from botocore.exceptions import ClientError
+
+
 
 class JobMarketCdkStack(Stack):
 
@@ -122,11 +128,10 @@ class JobMarketCdkStack(Stack):
 
       
 
-        # Get the secret
-        mongo_secret = sm.Secret.from_secret_attributes(self, "ImportedSecret", secret_complete_arn="arn:aws:secretsmanager:us-east-1:120590743722:secret:mongodb/jobMarketWriter-TFxVwv").to_string()
-        
+        mongodb_uri_secret = get_mongodb_uri()
+        mongodb_db, mongodb_collection = get_db_collection()
+
         # Create MongoDB writer Lambda
-        # TODO: rewrite lambda for correct mongo db and permissions
         mongodb_writer_lambda = _lambda.Function(
             self,
             "MongoDBWriterFunction",
@@ -135,7 +140,9 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             layers=[pymongo_layer],
             environment={
-                "MONGODB_URI": mongo_secret
+                "MONGODB_URI": mongodb_uri_secret,
+                "MONGODB_DATABASE": mongodb_db,
+                "MONGODB_COLLECTION": mongodb_collection
             },
             timeout=Duration.minutes(5),
             memory_size=512
@@ -213,18 +220,6 @@ class JobMarketCdkStack(Stack):
 
         # Grant permissions to the MongoDB writer Lambda to put events (if needed)
         event_bus.grant_put_events_to(mongodb_writer_lambda)
-
-
-
-        # # Create EventBridge rule to trigger MongoDB writer Lambda
-        # mongodb_writer_rule = events.Rule(self, "MongoDBWriterRule",
-        #     event_bus=event_bus,
-        #     event_pattern={
-        #         "source": ["bedrock.processor"]
-        #     }
-        # )
-        # mongodb_writer_rule.add_target(targets.LambdaFunction(mongodb_writer_lambda))
-
       
 
         # Add CloudWatch logging permissions for all Lambda functions
