@@ -61,7 +61,6 @@ class JobMarketCdkStack(Stack):
 
 
         # Lambda to write data to S3
-        # TODO: rewrite this lambda for data formatting
         s3_writer_lambda = _lambda.Function(self, "S3WriterFunction",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="s3_writer.handler",
@@ -76,14 +75,36 @@ class JobMarketCdkStack(Stack):
         # Grant the Lambda function permissions to write to S3
         s3_bucket.grant_write(s3_writer_lambda)
 
+
+
+          # Add Bedrock permissions
+        bedrock_access_policy = iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "bedrock:ListFoundationModels"
+            ],
+            resources=["*"]  # You might want to restrict this to specific model ARNs
+        )
+         # Create the IAM role for Lambda
+        bedrock_access_role = iam.Role(
+            self, 
+            "BedrockAccessRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com")
+        )
+        
+        # Add the policy to the role
+        bedrock_access_role.add_to_policy(bedrock_access_policy)
+
         # Create Bedrock processing Lambda
-        # TODO: rewrite this lambda: prompts, model, data extraction
         bedrock_processor_lambda = _lambda.Function(
             self,
             "BedrockProcessorFunction",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="bedrock_processor.handler",
             code=_lambda.Code.from_asset("lambda"),
+            role=bedrock_access_role,
             environment={
                 "EVENT_BUS_NAME": event_bus.event_bus_name
             },
@@ -91,16 +112,7 @@ class JobMarketCdkStack(Stack):
             memory_size=512
         )
 
-        # Add Bedrock permissions
-        bedrock_policy = iam.PolicyStatement(
-            actions=[
-                "bedrock:InvokeModel",
-                "bedrock:InvokeModelWithResponseStream"
-            ],
-            resources=["*"]  # You might want to restrict this to specific model ARNs
-        )
-        bedrock_processor_lambda.add_to_role_policy(bedrock_policy)
-
+      
 
         # Get the secret
         mongo_secret = sm.Secret.from_secret_attributes(self, "ImportedSecret", secret_complete_arn="arn:aws:secretsmanager:us-east-1:120590743722:secret:mongodb/jobMarketWriter-TFxVwv").to_string()
@@ -120,16 +132,16 @@ class JobMarketCdkStack(Stack):
             memory_size=512
         )
 
+
         # Create EventBridge rule to trigger S3 writer Lambda
         s3_writer_rule = events.Rule(self, "S3WriterRule",
             event_bus=event_bus,
             event_pattern=events.EventPattern(
                 source=["job.scraper"],
                 detail_type=["JobScrapeEvent"]
-            ))
-
+            )
+        )
         s3_writer_rule.add_target(targets.LambdaFunction(s3_writer_lambda))
-
         # Add Lambda invoke permissions for EventBridge
         s3_writer_lambda.add_permission(
             "EventBridgeInvoke",
@@ -143,16 +155,43 @@ class JobMarketCdkStack(Stack):
         # Create EventBridge rule to trigger Bedrock processor Lambda
         bedrock_processor_rule = events.Rule(self, "BedrockProcessorRule",
             event_bus=event_bus,
-            event_pattern={
-                "source": ["job.scraper"]
-            }
+            event_pattern=events.EventPattern(
+                source=["job.scraper"],
+                detail_type=["JobScrapeEvent"]
+            )
         )
         bedrock_processor_rule.add_target(targets.LambdaFunction(bedrock_processor_lambda))
+        bedrock_processor_lambda.add_permission(
+            "EventBridgeInvoke",
+            principal=iam.ServicePrincipal("events.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=bedrock_processor_rule.rule_arn
+        )
 
 
+
+
+        # Trigger mongodb writer lambda
+        mongodb_writer_rule = events.Rule(self, "MongoDBWriterRule",
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=["bedrock.processor"],
+                detail_type=["BedrockProcessedEvent"]
+            )
+        )
+        mongodb_writer_rule.add_target(targets.LambdaFunction(mongodb_writer_lambda))
+        mongodb_writer_lambda.add_permission(
+            "EventBridgeInvoke",
+            principal=iam.ServicePrincipal("events.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=mongodb_writer_rule.rule_arn
+        )
+
+        # Grant lambdas to put events on the event bus
         event_policy = iam.PolicyStatement(effect=iam.Effect.ALLOW, resources=['*'], actions=['events:PutEvents'])
         scrape_jobs_lambda.add_to_role_policy(event_policy)
-
+        bedrock_processor_lambda.add_to_role_policy(event_policy)
+        
 
         # You can keep the existing grant_put_events_to line as well
         # event_bus.grant_put_events_to(scrape_jobs_lambda)

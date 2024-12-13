@@ -11,7 +11,7 @@ def handler(event, context):
             site_name=["indeed"],
             search_term="software engineer",
             location="San Francisco, CA",
-            results_wanted=20,
+            results_wanted=2,
             hours_old=72,
             country_indeed='USA'
         )
