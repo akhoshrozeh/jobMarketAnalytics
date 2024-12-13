@@ -23,6 +23,14 @@ class JobMarketCdkStack(Stack):
             block_public_access=_s3.BlockPublicAccess.BLOCK_ALL
         )
 
+        pymongo_layer = _lambda.LayerVersion(
+            self,
+            "PymongoLayer",
+            code=_lambda.Code.from_asset("layer/pymongo_layer/pymongo_layer.zip"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
+            description="Layer containing pymongo library and dependencies"
+        )
+
         boto3_layer = _lambda.LayerVersion(
             self,
             "boto3Layer",
@@ -125,6 +133,7 @@ class JobMarketCdkStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="mongodb_writer.handler",
             code=_lambda.Code.from_asset("lambda"),
+            layers=[pymongo_layer],
             environment={
                 "MONGODB_URI": mongo_secret
             },
