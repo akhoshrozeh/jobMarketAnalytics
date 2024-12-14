@@ -73,7 +73,6 @@ def handler(event, context):
 
 
     try:
-
         record = event['detail']  
         job_record = record['job']
         job_description = record.get('job', {}).get('description', 'no_description')
