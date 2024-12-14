@@ -24,11 +24,17 @@ class JobMarketCdkStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # S3 for raw storage
+        # ********
         s3_bucket = _s3.Bucket(self, "JobPostingsRawData", 
             block_public_access=_s3.BlockPublicAccess.BLOCK_ALL
         )
 
+
+        # ************************************************************
+        # *                                                          *
+        # *                   Lambda Layers                          * 
+        # *                                                          *
+        # ************************************************************
         pymongo_layer = _lambda.LayerVersion(
             self,
             "PymongoLayer",
@@ -45,7 +51,6 @@ class JobMarketCdkStack(Stack):
             description="Layer containing boto3 library and dependencies"
         )
 
-        # Create jobspy layer
         jobspy_layer = _lambda.LayerVersion(
             self,
             "JobspyLayer",
@@ -53,6 +58,12 @@ class JobMarketCdkStack(Stack):
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
             description="Layer containing jobspy library and dependencies"
         )
+
+        # ************************************************************
+        # *                                                          *
+        # *                   Lambda Functions                       * 
+        # *                                                          *
+        # ************************************************************
 
         # Lambda for scraping jobs
         scrape_jobs_lambda = _lambda.Function(self, "ScrapeJobsFunction",
@@ -80,7 +91,8 @@ class JobMarketCdkStack(Stack):
             handler="s3_writer.handler",
             code=_lambda.Code.from_asset("lambda"),
             environment={
-                "BUCKET_NAME": s3_bucket.bucket_name
+                "BUCKET_NAME": s3_bucket.bucket_name,
+                "EVENT_BUS_NAME": event_bus.event_bus_name
             },
             timeout=Duration.minutes(5),
             memory_size=512
@@ -173,7 +185,7 @@ class JobMarketCdkStack(Stack):
             event_bus=event_bus,
             event_pattern=events.EventPattern(
                 source=["job.scraper"],
-                detail_type=["JobScrapeEvent"]
+                detail_type=["S3WriteCompleteEvent"]
             )
         )
         bedrock_processor_rule.add_target(targets.LambdaFunction(bedrock_processor_lambda))

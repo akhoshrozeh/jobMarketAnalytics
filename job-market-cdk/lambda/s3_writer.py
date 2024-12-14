@@ -4,6 +4,7 @@ import os
 
 def handler(event, context):
     s3 = boto3.client('s3')
+    event_bus = boto3.client('events')
 
     
     try:
@@ -28,6 +29,18 @@ def handler(event, context):
             )
 
             print("S3 Response:", res)
+
+            # make sure
+            if res.get('ResponseMetadata', {}).get('HTTPStatusCode') == 200:
+                event_bus.put_events(
+                    Entries=[
+                        {
+                            'Source': 's3.writer',
+                            'DetailType': 'S3WriteCompleteEvent',
+                            'Detail': jsonified
+                        }
+                    ]
+                )
 
             return {
                 'statusCode': 200,
