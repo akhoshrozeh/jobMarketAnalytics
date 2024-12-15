@@ -25,14 +25,18 @@ def handler(event, context):
             upsert=True                    # insert if doesn't exist
         )
 
-        logger.info(f"Write Result: {result.modified_count} documents modified.")
+        if result.upserted_id:
+            logger.info(f"New document inserted with id: {result.upserted_id}")
+        else:
+            logger.info(f"Document was not upserted")
+
         
         return {
             'statusCode': 200,
             'body': json.dumps('Data written to MongoDB')
         }
     except Exception as e:
-        print(e)
+        logger.error("Error writing to MongoDB: ", e)
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
