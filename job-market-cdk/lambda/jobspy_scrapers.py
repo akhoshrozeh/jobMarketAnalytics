@@ -10,8 +10,8 @@ def handler(event, context):
         jobs = scrape_jobs(
             site_name=["indeed"],
             search_term="software engineer",
-            location="San Francisco, CA",
-            results_wanted=100,
+            location="New York, NY",
+            results_wanted=1,
             hours_old=72,
             country_indeed='USA'
         )
