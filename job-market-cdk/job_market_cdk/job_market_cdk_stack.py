@@ -184,7 +184,7 @@ class JobMarketCdkStack(Stack):
         bedrock_processor_rule = events.Rule(self, "BedrockProcessorRule",
             event_bus=event_bus,
             event_pattern=events.EventPattern(
-                source=["job.scraper"],
+                source=["s3.writer"],
                 detail_type=["S3WriteCompleteEvent"]
             )
         )
@@ -219,10 +219,11 @@ class JobMarketCdkStack(Stack):
         event_policy = iam.PolicyStatement(effect=iam.Effect.ALLOW, resources=['*'], actions=['events:PutEvents'])
         scrape_jobs_lambda.add_to_role_policy(event_policy)
         bedrock_processor_lambda.add_to_role_policy(event_policy)
+        s3_writer_lambda.add_to_role_policy(event_policy)
         
 
         # You can keep the existing grant_put_events_to line as well
-        # event_bus.grant_put_events_to(scrape_jobs_lambda)
+        event_bus.grant_put_events_to(s3_writer_lambda)
 
         # Grant permissions to put events on the event bus
         event_bus.grant_put_events_to(scrape_jobs_lambda)
