@@ -74,8 +74,8 @@ def handler(event, context):
 
     try:
         record = event['detail']  
-        job_record = record['job']
-        job_description = record.get('job', {}).get('description', 'no_description')
+        # job_record = record['job']
+        job_description = record.get('description', 'no_description')
 
         
 
@@ -112,7 +112,7 @@ def handler(event, context):
 
 
         # Add extracted keywords back to event
-        job_record['extracted_keywords'] = claude_keywords
+        record['extracted_keywords'] = claude_keywords
 
         
         # Send processed data to EventBridge
@@ -121,7 +121,7 @@ def handler(event, context):
                 {
                     'Source': 'bedrock.processor',
                     'DetailType': 'BedrockProcessedEvent',
-                    'Detail': json.dumps({'processed_data': job_record}),
+                    'Detail': json.dumps({'processed_data': record}),
                     'EventBusName': os.environ['EVENT_BUS_NAME']
                 }
             ]
