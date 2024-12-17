@@ -29,6 +29,13 @@ class JobMarketCdkStack(Stack):
             block_public_access=_s3.BlockPublicAccess.BLOCK_ALL
         )
 
+        mongodb_uri_secret = get_mongodb_uri()
+        mongodb_db, mongodb_collection = get_db_collection()
+
+     # Create EventBridge event bus
+        event_bus = events.EventBus(self, "JobScrapeEventBus", event_bus_name="JobScrapeEventBus")
+
+
 
         # ************************************************************
         # *                                                          *
@@ -65,6 +72,23 @@ class JobMarketCdkStack(Stack):
         # *                                                          *
         # ************************************************************
 
+        sync_s3_mongo_lambda = _lambda.Function(self, "SyncS3MongoFunction",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="sync_s3_mongo.handler",
+            code=_lambda.Code.from_asset("lambda"),
+            layers=[boto3_layer, pymongo_layer],
+            environment={
+                "MONGODB_URI": mongodb_uri_secret,
+                "MONGODB_DATABASE": mongodb_db,
+                "MONGODB_COLLECTION": mongodb_collection, 
+                "EVENT_BUS_NAME": event_bus.event_bus_name
+            },
+            timeout=Duration.minutes(5),
+            memory_size=512
+        )
+
+        s3_bucket.grant_read(sync_s3_mongo_lambda)
+
         # Lambda for scraping jobs
         scrape_jobs_lambda = _lambda.Function(self, "ScrapeJobsFunction",
             runtime=_lambda.Runtime.PYTHON_3_12,
@@ -72,7 +96,7 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             layers=[jobspy_layer, boto3_layer],
               environment={
-                "EVENT_BUS_NAME": "JobScrapeEventBus"
+                "EVENT_BUS_NAME": event_bus.event_bus_name
             },
             timeout=Duration.minutes(5),
             memory_size=512
@@ -80,9 +104,7 @@ class JobMarketCdkStack(Stack):
 
        
 
-        # Create EventBridge event bus
-        event_bus = events.EventBus(self, "JobScrapeEventBus", event_bus_name="JobScrapeEventBus")
-
+  
 
 
         # Lambda to write data to S3
@@ -140,8 +162,7 @@ class JobMarketCdkStack(Stack):
 
       
 
-        mongodb_uri_secret = get_mongodb_uri()
-        mongodb_db, mongodb_collection = get_db_collection()
+       
 
         # Create MongoDB writer Lambda
         mongodb_writer_lambda = _lambda.Function(
@@ -159,6 +180,27 @@ class JobMarketCdkStack(Stack):
             timeout=Duration.minutes(5),
             memory_size=512
         )
+
+
+
+
+
+
+         # Create EventBridge rule to trigger S3 writer Lambda
+        sync_s3_mongo_rule = events.Rule(self, "SyncS3MongoRule",
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=["sync_s3_mongo"],
+                detail_type=["SyncS3MongoEvent"]
+            )
+        )
+        sync_s3_mongo_rule.add_target(targets.LambdaFunction(bedrock_processor_lambda))
+       
+
+
+
+
+
 
 
         # Create EventBridge rule to trigger S3 writer Lambda
@@ -220,7 +262,7 @@ class JobMarketCdkStack(Stack):
         scrape_jobs_lambda.add_to_role_policy(event_policy)
         bedrock_processor_lambda.add_to_role_policy(event_policy)
         s3_writer_lambda.add_to_role_policy(event_policy)
-        
+        sync_s3_mongo_lambda.add_to_role_policy(event_policy)
 
         # You can keep the existing grant_put_events_to line as well
         event_bus.grant_put_events_to(s3_writer_lambda)
@@ -233,6 +275,8 @@ class JobMarketCdkStack(Stack):
 
         # Grant permissions to the MongoDB writer Lambda to put events (if needed)
         event_bus.grant_put_events_to(mongodb_writer_lambda)
+
+        event_bus.grant_put_events_to(sync_s3_mongo_lambda)
       
 
         # Add CloudWatch logging permissions for all Lambda functions
