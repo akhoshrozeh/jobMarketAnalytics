@@ -8,7 +8,7 @@ logger.setLevel(logging.INFO)
 
 def handler(event, context):
     s3 = boto3.client('s3')
-    event_bus = boto3.client('events')
+    sqs = boto3.client('sqs')
 
     
     try:
@@ -45,18 +45,15 @@ def handler(event, context):
 
 
 
-                # make sure
+                # Send to SQS queue for bedrock processor
                 if res.get('ResponseMetadata', {}).get('HTTPStatusCode') == 200:
-                    event_bus.put_events(
-                        Entries=[
-                            {
-                                'Source': 's3.writer',
-                                'DetailType': 'S3WriteCompleteEvent',
-                                'EventBusName': os.environ['EVENT_BUS_NAME'],
-                                'Detail': jsonified
-                            }
-                        ]
+                    logger.info(f"Sending to SQS queue for bedrock processor: {jsonified}")
+                    enqueue_res = sqs.send_message(
+                        QueueUrl=os.environ['QUEUE_URL'],
+                        MessageBody=jsonified
                     )
+                    logger.info(f"Enqueued response: {enqueue_res}")
+
 
                 return {
                     'statusCode': 200,

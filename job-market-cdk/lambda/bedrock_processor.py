@@ -70,6 +70,7 @@ def keywords_from_str(kw_str):
 def handler(event, context):
     bedrock = boto3.client(service_name='bedrock-runtime')
     eventbridge = boto3.client('events')
+    logger.info(f"Received event: {event}")
 
 
     try:

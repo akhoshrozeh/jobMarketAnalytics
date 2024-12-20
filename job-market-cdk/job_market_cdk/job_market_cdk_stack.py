@@ -8,8 +8,9 @@ from aws_cdk import (
     aws_iam as iam,
     aws_secretsmanager as sm,
     Duration, 
-    CfnOutput
-    # aws_sqs as sqs,
+    CfnOutput,
+    aws_sqs as sqs,
+    aws_events_sources as eventsources,
 )
 from constructs import Construct
 import boto3
@@ -35,7 +36,7 @@ class JobMarketCdkStack(Stack):
      # Create EventBridge event bus
         event_bus = events.EventBus(self, "JobScrapeEventBus", event_bus_name="JobScrapeEventBus")
 
-
+        bedrock_queue = sqs.Queue(self, "BedrockProcessorQueue", queue_name="BedrockProcessorQueue")
 
         # ************************************************************
         # *                                                          *
@@ -114,7 +115,7 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             environment={
                 "BUCKET_NAME": s3_bucket.bucket_name,
-                "EVENT_BUS_NAME": event_bus.event_bus_name
+                "QUEUE_URL": bedrock_queue.queue_url
             },
             timeout=Duration.minutes(5),
             memory_size=512
@@ -122,6 +123,9 @@ class JobMarketCdkStack(Stack):
 
         # Grant the Lambda function permissions to write to S3
         s3_bucket.grant_write(s3_writer_lambda)
+
+
+        bedrock_queue.grant_send_messages(s3_writer_lambda)
 
 
 
@@ -154,14 +158,15 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             role=bedrock_access_role,
             environment={
-                "EVENT_BUS_NAME": event_bus.event_bus_name
+                "QUEUE_URL": bedrock_queue.queue_url
+
             },
             timeout=Duration.minutes(5),
             memory_size=512
         )
 
-      
-
+        bedrock_queue.grant_consume_messages(bedrock_processor_lambda)
+        bedrock_processor_lambda.add_event_source(eventsources.SqsEventSource(bedrock_queue, batch_size=1))
        
 
         # Create MongoDB writer Lambda
@@ -184,7 +189,7 @@ class JobMarketCdkStack(Stack):
 
 
 
-
+        
 
          # Create EventBridge rule to trigger S3 writer Lambda
         sync_s3_mongo_rule = events.Rule(self, "SyncS3MongoRule",
