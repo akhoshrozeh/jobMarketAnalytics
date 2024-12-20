@@ -1,0 +1,88 @@
+[
+    {
+        "name": "indeed_sf_software_engineer",
+        "schedule": "cron(0 12 * * ? *)",
+        "payload": {
+            "site_name": ["indeed"],
+            "search_term": "software engineer",
+            "location": "San Francisco, CA",
+            "results_wanted": 100,
+            "hours_old": 72,
+            "country_indeed": "USA"
+        }
+    },
+    {
+        "name": "indeed_la_software_engineer",
+        "schedule": "cron(0 12 * * ? *)",
+        "payload": {
+            "site_name": ["indeed"],
+            "search_term": "software engineer",
+            "location": "Los Angeles, CA",
+            "results_wanted": 100,
+            "hours_old": 72,
+            "country_indeed": "USA"
+        }
+    },
+    {
+        "name": "indeed_nyc_software_engineer",
+        "schedule": "cron(0 12 * * ? *)",
+        "payload": {
+            "site_name": ["indeed"],
+            "search_term": "software engineer",
+            "location": "New York City, NY",
+            "results_wanted": 100,
+            "hours_old": 72,
+            "country_indeed": "USA"
+        }
+    },
+    {
+        "name": "indeed_seattle_software_engineer",
+        "schedule": "cron(0 12 * * ? *)",
+        "payload": {
+            "site_name": ["indeed"],
+            "search_term": "software engineer",
+            "location": "Seattle, WA",
+            "results_wanted": 100,
+            "hours_old": 72,
+            "country_indeed": "USA"
+        }
+    },
+    {
+        "name": "indeed_boston_software_engineer",
+        "schedule": "cron(0 12 * * ? *)",
+        "payload": {
+            "site_name": ["indeed"],
+            "search_term": "software engineer",
+            "location": "Boston, MA",
+            "results_wanted": 100,
+            "hours_old": 72,
+            "country_indeed": "USA"
+        }
+    },
+    [
+        {
+            "name": "indeed_sd_software_engineer",
+            "schedule": "cron(0 12 * * ? *)",
+            "payload": {
+                "site_name": ["indeed"],
+                "search_term": "software engineer",
+                "location": "San Diego, CA",
+                "results_wanted": 100,
+                "hours_old": 72,
+                "country_indeed": "USA"
+            }
+        },
+        {
+            "name": "indeed_chicago_software_engineer",
+            "schedule": "cron(0 18 * * ? *)",
+            "payload": {
+                "site_name": ["indeed"],
+                "search_term": "software engineer",
+                "location": "Chicago, IL",
+                "results_wanted": 100,
+                "hours_old": 72,
+                "country_indeed": "USA"
+            }
+        }
+    ]
+]
