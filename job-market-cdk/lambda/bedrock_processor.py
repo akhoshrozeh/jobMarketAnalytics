@@ -74,9 +74,12 @@ def handler(event, context):
 
 
     try:
-        record = event['detail']  
+        record = event['Records'][0]['body']
+        logger.info(f"record {record}")
+        record = json.loads(record)
         # job_record = record['job']
         job_description = record.get('description', 'no_description')
+        logger.info(f"des {job_description}")
 
         
 
