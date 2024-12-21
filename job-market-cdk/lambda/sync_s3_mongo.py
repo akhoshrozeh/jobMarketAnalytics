@@ -12,6 +12,7 @@ logger.setLevel(logging.INFO)
 client = pymongo.MongoClient(os.environ['MONGODB_URI'])
 
 def handler(event, context):
+    sqs = boto3.client('sqs')
 
     path = "data/indeed/"
     logger.info("Syncing S3 and MongoDB")
@@ -53,17 +54,15 @@ def handler(event, context):
         
         # Convert the object data to JSON if needed
         detail_data = json.loads(object_data)
-        logger.info(f"to json: {detail_data}")
 
-        event_bus.put_events(
-            Entries=[
-                {
-                    'Source': 'sync_s3_mongo',
-                    'DetailType': 'SyncS3MongoEvent',
-                    'EventBusName': os.environ['EVENT_BUS_NAME'],
-                    'Detail': json.dumps(detail_data)
-                }
-            ]
+
+        logger.info(f"Sending to SQS queue for bedrock processor: {detail_data}")
+        enqueue_res = sqs.send_message(
+            QueueUrl=os.environ['QUEUE_URL'],
+            MessageBody=detail_data
         )
+        logger.info(f"Enqueued response: {enqueue_res}")
 
+       
+  
 
