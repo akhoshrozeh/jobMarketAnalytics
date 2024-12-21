@@ -10,7 +10,7 @@ from aws_cdk import (
     Duration, 
     CfnOutput,
     aws_sqs as sqs,
-    aws_events_sources as eventsources,
+    aws_lambda_event_sources as lambda_event_source,
 )
 from constructs import Construct
 import boto3
@@ -36,8 +36,8 @@ class JobMarketCdkStack(Stack):
      # Create EventBridge event bus
         event_bus = events.EventBus(self, "JobScrapeEventBus", event_bus_name="JobScrapeEventBus")
 
-        bedrock_queue = sqs.Queue(self, "BedrockProcessorQueue", queue_name="BedrockProcessorQueue")
-
+        bedrock_queue = sqs.Queue(self, "BedrockProcessorQueue", queue_name="BedrockProcessorQueue", visibility_timeout=Duration.minutes(5))
+        # bedrock_dlq = sqs.DeadLetterQueue(self, "BedrockProcessorDLQ", queue=bedrock_queue)
         # ************************************************************
         # *                                                          *
         # *                   Lambda Layers                          * 
@@ -82,11 +82,14 @@ class JobMarketCdkStack(Stack):
                 "MONGODB_URI": mongodb_uri_secret,
                 "MONGODB_DATABASE": mongodb_db,
                 "MONGODB_COLLECTION": mongodb_collection, 
-                "EVENT_BUS_NAME": event_bus.event_bus_name
+                "EVENT_BUS_NAME": event_bus.event_bus_name,
+                "QUEUE_URL": bedrock_queue.queue_url,   
             },
             timeout=Duration.minutes(5),
             memory_size=512
         )
+
+        bedrock_queue.grant_send_messages(sync_s3_mongo_lambda) 
 
         s3_bucket.grant_read(sync_s3_mongo_lambda)
 
@@ -115,7 +118,7 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             environment={
                 "BUCKET_NAME": s3_bucket.bucket_name,
-                "QUEUE_URL": bedrock_queue.queue_url
+                "QUEUE_URL": bedrock_queue.queue_url,   
             },
             timeout=Duration.minutes(5),
             memory_size=512
@@ -158,15 +161,15 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             role=bedrock_access_role,
             environment={
-                "QUEUE_URL": bedrock_queue.queue_url
-
+                "QUEUE_URL": bedrock_queue.queue_url,
+                "EVENT_BUS_NAME": event_bus.event_bus_name
             },
             timeout=Duration.minutes(5),
             memory_size=512
         )
 
         bedrock_queue.grant_consume_messages(bedrock_processor_lambda)
-        bedrock_processor_lambda.add_event_source(eventsources.SqsEventSource(bedrock_queue, batch_size=1))
+        bedrock_processor_lambda.add_event_source(lambda_event_source.SqsEventSource(bedrock_queue, batch_size=1))
        
 
         # Create MongoDB writer Lambda
@@ -201,8 +204,8 @@ class JobMarketCdkStack(Stack):
         )
         sync_s3_mongo_rule.add_target(targets.LambdaFunction(bedrock_processor_lambda))
        
-
-
+        
+        
 
 
 
@@ -272,7 +275,7 @@ class JobMarketCdkStack(Stack):
         # You can keep the existing grant_put_events_to line as well
         event_bus.grant_put_events_to(s3_writer_lambda)
 
-        # Grant permissions to put events on the event bus
+        # Grant permissions to put events on the    t bus
         event_bus.grant_put_events_to(scrape_jobs_lambda)
 
         # Grant permissions to the Bedrock processor Lambda to put events
