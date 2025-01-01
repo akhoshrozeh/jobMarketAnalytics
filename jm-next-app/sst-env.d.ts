@@ -6,8 +6,24 @@ import "sst"
 export {}
 declare module "sst" {
   export interface Resource {
+    "APIEndpoint": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "JMDatabase": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "MongoReadURI": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "MyWeb": {
       "type": "sst.aws.Nextjs"
+      "url": string
+    }
+    "api": {
+      "type": "sst.aws.ApiGatewayV2"
       "url": string
     }
   }
