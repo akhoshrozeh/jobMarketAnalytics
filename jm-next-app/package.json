@@ -11,6 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@types/aws-lambda": "^8.10.146",
     "mongodb": "^6.12.0",
     "next": "15.1.1",
     "react": "^19.0.0",
