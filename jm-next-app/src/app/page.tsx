@@ -24,7 +24,7 @@ async function test() {
 }
 
 async function getAvgOcc() {
-  const mongoURI = Resource.MongoReadURI.value;
+
   try {
     const response = await fetch(`${APIEndpoint}/avg-occ`, {
       headers: {
@@ -52,7 +52,7 @@ export default async function Home() {
       <h1>Lambda Function Test</h1>
       <p>Message from lambda: {data.message}</p>
       <h1>Test Read From Mongo</h1>
-      <p>Values: {mongodata && mongodata.map((item:any, index: number) => (
+      <p>Values: {mongodata && mongodata.map((item: {_id: string, totalOccurrences: number}, index: number) => (
                 <span key={index}>{JSON.stringify(item)}{index < mongodata.length - 1 ? ', ' : ''}</span>
       ))}</p>
      </div>

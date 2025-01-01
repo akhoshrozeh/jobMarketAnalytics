@@ -1,3 +1,4 @@
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { Resource } from "sst"
 import * as mongodb from "mongodb";
 
@@ -5,7 +6,7 @@ const MongoClient = mongodb.MongoClient;
 const mongoURI = Resource.MongoReadURI.value;
 const db = Resource.JMDatabase.value;
 
-let cachedDb: any = null;
+let cachedDb: mongodb.Db | null = null;
 
 async function connectToDatabase() {
   if (cachedDb) {
@@ -21,8 +22,10 @@ async function connectToDatabase() {
   return cachedDb;
 }
 
-export const handler = async (event: any) => {
+
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>  => {
     const db = await connectToDatabase();
+    console.log(event)
 
     try {   
         const pipeline = [
@@ -60,8 +63,13 @@ export const handler = async (event: any) => {
 
     } catch (error) {
         console.log("error:", error)
-        return error
+        return {
+            statusCode: 500,
+            body: JSON.stringify({message: error})
+        }
+
     }
+
 
 
 }
