@@ -33,7 +33,7 @@ export default function Example() {
                   Jobs
                 </a>
                 <a
-                  href="Pricing"
+                  href="/pricing"
                   className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   Pricing
