@@ -41,7 +41,7 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .attr("viewBox", [0, 0, width, height])
       .attr("width", width)
       .attr("height", height)
-      .attr("style", "max-width: 100%; height: auto;");
+      .attr("style", "max-width: 100%; height: auto;").call(d3.zoom)
 
     // Add bars
     svg.append("g")
@@ -50,10 +50,15 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .data(data)
       .join("rect")
       .attr("x", d => x(d._id) || 0)
-      .attr("y", d => y(d.totalOccurrences))
-      .attr("height", d => y(0) - y(d.totalOccurrences))
+      .attr("y", y(0))
+      .attr("height", 0)
       .attr("width", x.bandwidth())
-      .attr("opacity", 0.8);
+      .attr("opacity", 0.8)
+      .transition()
+      .duration(1000)
+      .ease(d3.easePoly)
+      .attr("y", d => y(d.totalOccurrences))
+      .attr("height", d => y(0) - y(d.totalOccurrences));
 
     // Add x-axis
     svg.append("g")
