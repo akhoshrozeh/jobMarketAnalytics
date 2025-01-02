@@ -118,31 +118,31 @@ export default function Example() {
           {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
           <DisclosureButton
             as="a"
-            href="#"
+            href="/"
             className="block rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white"
           >
-            Dashboard
+            Home
           </DisclosureButton>
           <DisclosureButton
             as="a"
-            href="#"
+            href="/metrics"
             className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
-            Team
+            Metrics
           </DisclosureButton>
           <DisclosureButton
             as="a"
-            href="#"
+            href="/jobs"
             className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
-            Projects
+            Jobs
           </DisclosureButton>
           <DisclosureButton
             as="a"
-            href="#"
+            href="/pricing"
             className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
-            Calendar
+            Pricing
           </DisclosureButton>
         </div>
         <div className="border-t border-gray-700 pb-3 pt-4">
