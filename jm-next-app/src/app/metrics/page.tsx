@@ -12,7 +12,7 @@ async function getAggregatedGrouped() {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
+      throw new Error(`Failed to fetch: ${response}`);
     }
 
     return response.json();
@@ -32,9 +32,9 @@ export default async function Metrics() {
     return (
         <div className="p-8">
         <h1 className="text-2xl font-bold mb-4">Keyword Frequencies</h1>
-        <h2>Top {aggGroup && aggGroup.length} Jobs</h2>
-        <div>
-            <AggregatedGroup data={aggGroup}/>
+        <h2>Top {aggGroup && aggGroup.length} Skills</h2>
+        <div> {aggGroup && <AggregatedGroup data={aggGroup.slice(0, 50)}/>}
+
         </div>
         </div>
     );

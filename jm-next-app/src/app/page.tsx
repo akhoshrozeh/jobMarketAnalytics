@@ -1,7 +1,7 @@
 'use client'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { useEffect, useState } from 'react'
-
+import Image from 'next/image'
 export default function Home() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
@@ -59,15 +59,17 @@ export default function Home() {
       </div>
       <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 sm:pb-32 lg:flex lg:px-8 lg:py-40">
         <div className="mx-auto max-w-2xl shrink-0 lg:mx-0 lg:pt-8">
-          <img
+          <Image
             alt="Your Company"
             src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
             className="h-11"
+            width={100}
+            height={100}
           />
           <div className="mt-24 sm:mt-32 lg:mt-16">
             <a href="#" className="inline-flex space-x-6">
               <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-sm/6 font-semibold text-indigo-400 ring-1 ring-inset ring-indigo-500/20">
-                What's new
+                What&apos;s new
               </span>
               <span className="inline-flex items-center space-x-2 text-sm/6 font-medium text-gray-300">
                 <span>Just shipped v1.0</span>

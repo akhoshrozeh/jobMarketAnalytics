@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Lexend, Roboto } from "next/font/google";
 import "./globals.css";
 
 // Components
 import Navbar from "@/app/components/Navbar";
+
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "500", "700", "900"],
+}); 
+ const lexend = Lexend({
+  variable: "--font-lexend",
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "500", "700", "900"],
+ });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${lexend.variable} ${roboto.variable} antialiased`}
       >
         <Navbar />
         <div>
