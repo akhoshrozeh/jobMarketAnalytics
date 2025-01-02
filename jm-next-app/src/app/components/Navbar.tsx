@@ -1,9 +1,11 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import Image from 'next/image'
+import Link from 'next/link'
+
+
 export default function Example() {
   return (
-    <Disclosure as="nav" className="bg-gray-900">
+    <Disclosure as="nav" className="bg-gray-900 border-b border-indigo-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
@@ -17,27 +19,27 @@ export default function Example() {
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
                 {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
-                <a href="/" className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white">
+                <Link href="/" className="rounded-md bg-gray-900 px-3 py-2 text-md font-bold text-white">
                   Home
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/metrics"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   Metrics
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/jobs"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   Jobs
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/pricing"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   Pricing
-                </a>
+                </Link>
               </div>
             </div>
           </div>
