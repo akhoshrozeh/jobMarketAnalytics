@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "techjobmarket.com",
-  description: "Tech Job Market Insights",
+  title: "JobTrendr | Job Market Tools",
+  description: "Gain insights into the job market and make informed decisions about your career.",
 };
 
 export default function RootLayout({
