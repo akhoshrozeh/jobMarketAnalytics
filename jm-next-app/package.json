@@ -11,8 +11,10 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@observablehq/plot": "^0.6.16",
     "@types/aws-lambda": "^8.10.146",
     "d3": "^7.9.0",
+    "fs": "^0.0.1-security",
     "mongodb": "^6.12.0",
     "next": "15.1.1",
     "react": "^19.0.0",
