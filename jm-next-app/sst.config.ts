@@ -18,7 +18,8 @@
       const apiEndpoint = new sst.Secret("APIEndpoint");
 
       new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, JMDatabase, apiEndpoint]
+        link: [mongoReadURI, JMDatabase, apiEndpoint],
+        domain: "jobtrendr.com"
       });
 
       const api = new sst.aws.ApiGatewayV2("api", {
@@ -26,7 +27,7 @@
       });
       
       api.route("GET /avg-occ", "src/functions/avgOcc.handler", );
-
+      api.route("GET /get-jobs", "src/functions/getJobs.handler", );
 
     
     }
