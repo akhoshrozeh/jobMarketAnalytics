@@ -1,5 +1,5 @@
 import { Resource } from "sst";
-import AggregatedGroup from "../components/AggregatedGrouped";
+import AggregatedGroup from "./AggregatedGrouped";
 
 const APIEndpoint = Resource.APIEndpoint.value;
 
@@ -25,16 +25,15 @@ async function getAggregatedGrouped() {
 export default async function Metrics() {
 
     const aggGroup = await getAggregatedGrouped();
+    const sliceLen: number = 50;
     console.log(aggGroup)
 
   
 
     return (
-        <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Keyword Frequencies</h1>
-        <h2>Top {aggGroup && aggGroup.length} Skills</h2>
-        <div> {aggGroup && <AggregatedGroup data={aggGroup.slice(0, 50)}/>}
-
+        <div className="flex justify-center items-center flex-col p-8 text-white">
+        <h1 className="text-2xl font-bold mb-4">Top {sliceLen} Skills</h1>
+        <div className="border rounded-lg pt-4 px-4 pb-2"> {aggGroup && <AggregatedGroup data={aggGroup.slice(0, sliceLen)}/>}
         </div>
         </div>
     );

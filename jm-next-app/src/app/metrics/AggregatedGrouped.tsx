@@ -19,11 +19,11 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
     d3.select(chartRef.current).selectAll("*").remove();
 
     // Chart dimensions
-    const width = 1500;
-    const height = 500;
+    const width = 2000;
+    const height = 1000;
     const marginTop = 20;
     const marginRight = 20;
-    const marginBottom = 90;
+    const marginBottom = 200;
     const marginLeft = 60;
 
     // Create scales
@@ -43,12 +43,15 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .attr("height", height)
       .attr("style", "max-width: 100%; height: auto;").call(d3.zoom)
 
-    // Add bars
-    svg.append("g")
+    // Add bars with labels
+    const bars = svg.append("g")
       .attr("fill", "#4f46e5")
-      .selectAll("rect")
+      .selectAll("g")
       .data(data)
-      .join("rect")
+      .join("g");
+
+    // Add the rectangles
+    bars.append("rect")
       .attr("x", d => x(d._id) || 0)
       .attr("y", y(0))
       .attr("height", 0)
@@ -58,15 +61,59 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .duration(1000)
       .ease(d3.easePoly)
       .attr("y", d => y(d.totalOccurrences))
-      .attr("height", d => y(0) - y(d.totalOccurrences));
+      .attr("height", d => y(0) - y(d.totalOccurrences))
+      .selection();
 
-    // Add x-axis
-    svg.append("g")
+    // Add x-axis with labels
+    const xAxis = svg.append("g")
       .attr("transform", `translate(0,${height - marginBottom})`)
-      .call(d3.axisBottom(x))
-      .selectAll("text")
+      .call(d3.axisBottom(x));
+
+    xAxis.selectAll("text")
       .attr("transform", "rotate(-45)")
-      .style("text-anchor", "end");
+      .style("text-anchor", "end")
+      .attr("class", "label-text")
+      .style("font-size", "1.6em");
+
+    // Add hover effects
+    bars.on("mouseenter", function(event, d) {
+      const group = d3.select(this);
+      
+      // Levitate the bar
+      group.select("rect")
+        .transition()
+        .duration(200)
+        .attr("y", d => y(d.totalOccurrences) - 10)
+        .attr("opacity", 1)
+        .attr("fill", "#635ce0");
+
+      // Enlarge the corresponding label
+      xAxis.selectAll(".label-text")
+        .filter(text => text === d._id)
+        .transition()
+        .duration(200)
+        .style("font-size", "2.2em")
+        .style("font-weight", "bold");
+    })
+    .on("mouseleave", function(event, d) {
+      const group = d3.select(this);
+      
+      // Return bar to original position
+      group.select("rect")
+        .transition()
+        .duration(200)
+        .attr("y", d => y(d.totalOccurrences))
+        .attr("opacity", 0.8)
+        .attr("fill", "#4f46e5");
+
+      // Return label to original size
+      xAxis.selectAll(".label-text")
+        .filter(text => text === d._id)
+        .transition()
+        .duration(200)
+        .style("font-size", "1.6em")
+        .style("font-weight", "normal");
+    });
 
     // Add y-axis
     svg.append("g")
@@ -80,7 +127,10 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .attr("text-anchor", "middle")
       .attr("x", width / 2)
       .attr("y", height - 10)
+      .style("fill", "white")
+      .style("font-size", "24px")
       .text("Keywords");
+      
 
     svg.append("text")
       .attr("class", "y-label")
@@ -88,6 +138,8 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .attr("transform", "rotate(-90)")
       .attr("x", -height / 2)
       .attr("y", 20)
+      .style("fill", "white")
+      .style("font-size", "24px")
       .text("Occurrences");
 
   }, [data]);
