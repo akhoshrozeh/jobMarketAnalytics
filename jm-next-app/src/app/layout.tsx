@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
-
+import DynamicBlob from "@/app/components/DynamicBlob";
 // Components
 import Navbar from "@/app/components/Navbar";
 
@@ -24,13 +24,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={quicksand.className}
-      >
-        <Navbar />
+      <body className={quicksand.className}>
         <div>
-          {children}
+          {/* Background layer */}
+          <div className="fixed inset-0 bg-gray-900 -z-20" />
+          
+          {/* Blob layer */}
+          <div className="fixed inset-0 -z-10">
+            <DynamicBlob />
+          </div>
 
+          {/* Content layer */}
+          <div className="relative z-0">
+            <Navbar />
+            <div className="relative">
+              {children}
+            </div>
+          </div>
         </div>
       </body>
     </html>

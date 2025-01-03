@@ -1,6 +1,5 @@
 import JobFilter from './JobFilter'
 import JobPostings from './JobPostings'
-
 import { Resource } from "sst";
 
 const APIEndpoint = Resource.APIEndpoint.value;
