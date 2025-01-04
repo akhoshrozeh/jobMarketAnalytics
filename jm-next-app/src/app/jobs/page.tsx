@@ -9,7 +9,8 @@ async function getJobs() {
         const response = await fetch(`${APIEndpoint}/get-jobs`, {
             headers: {
             'Accept': 'application/json',
-            }
+            },
+            cache: 'no-store',
         });
 
         if (!response.ok) {
