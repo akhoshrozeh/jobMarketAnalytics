@@ -76,14 +76,14 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
       .style("font-size", "1.6em");
 
     // Add hover effects
-    bars.on("mouseenter", function(event, d) {
+    bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number }) {
       const group = d3.select(this);
       
       // Levitate the bar
       group.select("rect")
         .transition()
         .duration(200)
-        .attr("y", d => y(d.totalOccurrences) - 10)
+        .attr("y", y(d.totalOccurrences) - 10)
         .attr("opacity", 1)
         .attr("fill", "#635ce0");
 
@@ -95,14 +95,14 @@ export default function AggregatedGroup({ data }: AggregatedGroupProps) {
         .style("font-size", "2.2em")
         .style("font-weight", "bold");
     })
-    .on("mouseleave", function(event, d) {
+    .on("mouseleave", function(event, d: { _id: string; totalOccurrences: number }) {
       const group = d3.select(this);
       
       // Return bar to original position
       group.select("rect")
         .transition()
         .duration(200)
-        .attr("y", d => y(d.totalOccurrences))
+        .attr("y", y(d.totalOccurrences))
         .attr("opacity", 0.8)
         .attr("fill", "#4f46e5");
 
