@@ -3,7 +3,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 
 
-export default function Example() {
+export default function Navbar() {
   return (
     <Disclosure as="nav" className="bg-gray-900 border-b border-indigo-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-20">
