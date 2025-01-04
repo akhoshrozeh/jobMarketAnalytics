@@ -8,9 +8,28 @@ const statuses = {
   Archived: 'text-yellow-800 bg-yellow-50 ring-yellow-600/20',
 }
 
-
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
+}
+
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return 'Today';
+  }
+  if (diffDays <= 7) {
+    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+  }
+  
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
 }
 
 export default async function JobPostings({ jobs }: { jobs: Array<JobPost> }) {
@@ -40,7 +59,7 @@ export default async function JobPostings({ jobs }: { jobs: Array<JobPost> }) {
 
             <div className="mt-1 flex items-center gap-x-2 text-sm/5">
               <p className="whitespace-nowrap">
-                <time dateTime={job.date_posted}>{job.date_posted}</time>
+                <time dateTime={job.date_posted}>{formatDate(job.date_posted)}</time>
               </p>
               <svg viewBox="0 0 2 2" className="size-0.5 fill-current">
                 <circle r={1} cx={1} cy={1} />
