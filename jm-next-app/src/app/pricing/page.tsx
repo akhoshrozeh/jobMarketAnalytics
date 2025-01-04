@@ -35,7 +35,7 @@ function classNames(...classes: string[]): string {
 export default function Pricing() {
   return (
     <div className="relative isolate px-6 py-24 sm:py-32 lg:px-8">
-      <div aria-hidden="true" className="absolute inset-x-0 -top-3 -z-10 transform-gpu overflow-hidden px-36 blur-3xl">
+      {/* <div aria-hidden="true" className="absolute inset-x-0 -top-3 -z-10 transform-gpu overflow-hidden px-36 blur-3xl">
         <div
           style={{
             clipPath:
@@ -43,7 +43,7 @@ export default function Pricing() {
           }}
           className="mx-auto aspect-[1155/678] w-[72.1875rem] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30"
         />
-      </div>
+      </div> */}
       <div className="mx-auto max-w-4xl text-center">
         <h2 className="text-3xl font-semibold text-indigo-600/100">Pricing</h2>
         <p className="mt-2 text-balance text-5xl font-semibold tracking-tight ttext-white sm:text-6xl">
