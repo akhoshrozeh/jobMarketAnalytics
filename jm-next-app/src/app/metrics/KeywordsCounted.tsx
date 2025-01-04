@@ -2,14 +2,14 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from "d3";
 
-interface AggregatedGroupProps {
+interface KeywordsCountedProps {
   data: Array<{
     _id: string;
     totalOccurrences: number;
   }>;
 }
 
-export default function AggregatedGroup({ data }: AggregatedGroupProps) {
+export default function KeywordsCounted({ data }: KeywordsCountedProps) {
   const chartRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {

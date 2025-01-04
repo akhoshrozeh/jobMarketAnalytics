@@ -1,6 +1,4 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { Resource } from "sst"
-import * as mongodb from "mongodb";
 import { connectToDatabase } from "@/lib/mongoClient";
 
 

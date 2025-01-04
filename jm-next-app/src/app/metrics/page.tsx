@@ -1,11 +1,11 @@
 import { Resource } from "sst";
-import AggregatedGroup from "./AggregatedGrouped";
+import KeywordsCounted from "./KeywordsCounted";
 
 const APIEndpoint = Resource.APIEndpoint.value;
 
-async function getAggregatedGrouped() {
+async function getKeywordsCounted() {
   try {
-    const response = await fetch(`${APIEndpoint}/avg-occ`, {
+    const response = await fetch(`${APIEndpoint}/get-keywords-counted`, {
       headers: {
         'Accept': 'application/json',
       },
@@ -25,7 +25,7 @@ async function getAggregatedGrouped() {
 
 export default async function Metrics() {
 
-    const aggGroup = await getAggregatedGrouped();
+    const aggGroup = await getKeywordsCounted();
     const sliceLen: number = 50;
     console.log(aggGroup)
 
@@ -34,7 +34,7 @@ export default async function Metrics() {
     return (
         <div className="flex justify-center items-center flex-col p-8 text-white">
         <h1 className="text-2xl font-bold mb-4">Top {sliceLen} Skills</h1>
-        <div className="border rounded-lg pt-4 px-4 pb-2"> {aggGroup && <AggregatedGroup data={aggGroup.slice(0, sliceLen)}/>}
+        <div className="border rounded-lg pt-4 px-4 pb-2"> {aggGroup && <KeywordsCounted data={aggGroup.slice(0, sliceLen)}/>}
         </div>
         </div>
     );

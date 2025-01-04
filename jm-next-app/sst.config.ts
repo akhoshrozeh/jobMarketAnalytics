@@ -26,7 +26,7 @@
         link: [mongoReadURI, JMDatabase]    
       });
       
-      api.route("GET /avg-occ", "src/functions/avgOcc.handler", );
+      api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
       api.route("GET /get-jobs", "src/functions/getJobs.handler", );
 
     
