@@ -2,12 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { connectToDatabase } from "@/lib/mongoClient";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>  => {
-    console.log("GetJobs handler started", {
-        httpMethod: event.httpMethod,
-        path: event.path,
-        headers: event.headers
-    });
-
+    
     const db = await connectToDatabase();
     console.log("Database connected successfully");
 
