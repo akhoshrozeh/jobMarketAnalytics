@@ -164,7 +164,6 @@ class JobMarketCdkStack(Stack):
                 "QUEUE_URL": bedrock_queue.queue_url,
                 "EVENT_BUS_NAME": event_bus.event_bus_name
             },
-            reserved_concurrent_executions=1,
             timeout=Duration.minutes(5),
             memory_size=512
         )
