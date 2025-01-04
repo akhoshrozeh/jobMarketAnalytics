@@ -2,7 +2,7 @@ import { CheckIcon } from '@heroicons/react/20/solid'
 
 const tiers = [
   {
-    name: 'Casual Job Seeker',
+    name: 'Casual',
     id: 'tier-hobby',
     href: '#',
     priceMonthly: '$0',
@@ -11,7 +11,7 @@ const tiers = [
     featured: false,
   },
   {
-    name: 'Serious Job Seeker',
+    name: 'Professional',
     id: 'tier-enterprise',
     href: '#',
     priceMonthly: '$15',
@@ -45,7 +45,7 @@ export default function Pricing() {
         />
       </div>
       <div className="mx-auto max-w-4xl text-center">
-        <h2 className="text-base/7 font-semibold text-indigo-600">Pricing</h2>
+        <h2 className="text-3xl font-semibold text-indigo-600/100">Pricing</h2>
         <p className="mt-2 text-balance text-5xl font-semibold tracking-tight ttext-white sm:text-6xl">
           Choose the right plan for you
         </p>
@@ -70,7 +70,7 @@ export default function Pricing() {
           >
             <h3
               id={tier.id}
-              className={classNames(tier.featured ? 'text-indigo-400' : 'text-indigo-600', 'text-base/7 font-semibold')}
+              className={classNames(tier.featured ? 'text-indigo-400' : 'text-indigo-600', 'text-base/7 font-bold')}
             >
               {tier.name}
             </h3>
