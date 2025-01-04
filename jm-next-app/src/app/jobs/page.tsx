@@ -10,7 +10,7 @@ async function getJobs() {
             headers: {
             'Accept': 'application/json',
             },
-            cache: 'no-store',
+            next: { revalidate: 21600 },
         });
 
         if (!response.ok) {
