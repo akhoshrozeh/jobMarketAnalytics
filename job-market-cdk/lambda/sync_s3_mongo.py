@@ -59,7 +59,7 @@ def handler(event, context):
         logger.info(f"Sending to SQS queue for bedrock processor: {detail_data}")
         enqueue_res = sqs.send_message(
             QueueUrl=os.environ['QUEUE_URL'],
-            MessageBody=detail_data
+            MessageBody=json.dumps(detail_data)
         )
         logger.info(f"Enqueued response: {enqueue_res}")
 
