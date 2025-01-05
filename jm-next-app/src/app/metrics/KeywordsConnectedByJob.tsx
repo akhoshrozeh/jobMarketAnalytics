@@ -14,6 +14,7 @@ interface KeywordsConnectedByJobProps {
     }>;
 }
 
+
 export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobProps) {
     const svgRef = useRef<SVGSVGElement>(null);
 
@@ -98,7 +99,7 @@ export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnect
                 // Dim all links
                 link.style("stroke-opacity", 0.2);
                 // Highlight connected links
-                link.filter(l => l.source === d || l.target === d)
+                link.filter(l => (l.source as any).id === d.id || (l.target as any).id === d.id)
                     .style("stroke-opacity", 1)
                     .style("stroke", "#ff0");  // Bright yellow for highlighted links
             })
