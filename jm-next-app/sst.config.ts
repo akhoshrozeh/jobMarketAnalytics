@@ -28,7 +28,7 @@
       
       api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
       api.route("GET /get-jobs", "src/functions/getJobs.handler", );
-
+      api.route("GET /get-keywords-connected-by-job", "src/functions/getKeywordsConnectedByJob.handler", );
     
     }
 
