@@ -52,7 +52,9 @@ export default async function Metrics() {
     const aggGroup = await getKeywordsCounted();
     const sliceLen: number = 50;
     const keywordsConnectedByJob = await getKeywordsConnectedByJob();
+
     console.log("HERE:", keywordsConnectedByJob)
+    console.log("AGG:", aggGroup.slice(0, sliceLen))
 
   
 
@@ -63,7 +65,7 @@ export default async function Metrics() {
             {aggGroup && <KeywordsCounted data={aggGroup.slice(0, sliceLen)}/>}
         </div>
         <div className="border rounded-lg pt-4 px-4 pb-2"> 
-            {<KeywordsConnectedByJob data={keywordsConnectedByJob.slice(0,  sliceLen)}/>}
+            {<KeywordsConnectedByJob nodes={aggGroup.slice(0, 20)} links={keywordsConnectedByJob}/>}
         </div>
         </div>
     );
