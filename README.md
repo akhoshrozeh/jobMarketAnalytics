@@ -1,15 +1,49 @@
-# Real-Time Job Market Analytics
+# JobTrendr
 
 ## What is it?
-A project that aims to provide users insightful data about trends, both past and current, in the job market (specifically Tech, at the moment).
+JobTrendr is a data analytics platform that provides real-time insights into the tech job market. By analyzing thousands of job postings daily, it helps users understand current and emerging trends in technical skills and job requirements.
 
 ## Who is it for?
-Those who want get stay ahead of the curve. The goal is to allow people to see what skills are on the rise, which are fading out, and what remains in-demand. 
+- Job seekers looking to stay competitive in the tech industry
+- Professionals planning their skill development
+- Anyone interested in understanding which technical skills are:
+  - Rising in demand
+  - Maintaining steady popularity
+  - Declining in relevance
 
-## How does it work?
-We pull thousands of different job postings every day from the big boards (more to be added). We extract the key skills that the employer is looking for and organize them by time. 
+## Features
+- Real-time job market analysis
+- Skill trend visualization
+- Historical trend data
+- Focus on technology sector jobs
+- Daily updates from major job boards
 
-### Reproducing the AWS Infrastructure Notes:
-- Make sure you're zipped package opens up as a folder named "python", with all dependencies inside. If it isn't named "python", the lambda runtime won't find your package. Your .zip canbe named anything. 
-- Delete `tests` dir from big packages (e.g. pandas). Will help keep under 250MB package deployment limit.
-test
+## Tech Stack
+### Web Application
+- Next.js 15.1 with TypeScript
+- D3.js and Observable Plot for data visualization
+- TailwindCSS for styling
+
+### Backend Infrastructure
+- AWS CDK for Infrastructure as Code
+- Amazon EventBridge for event-driven architecture
+- AWS Lambda for serverless computing
+- Amazon S3 for raw data storage
+- Amazon SQS for job processing queue
+- Amazon Bedrock for LLM processing
+- MongoDB Atlas for processed data storage and querying
+
+### Data Pipeline
+- Automated job scraping (JobSpy) every 12 hours
+- Event-driven processing flow:
+  1. Job scraping Lambda
+  2. S3 data storage
+  3. Bedrock AI processing
+  4. MongoDB data persistence
+- CloudWatch for logging and metrics
+
+### Security
+- AWS Secrets Manager for credential management
+- IAM roles and policies for secure service access
+- S3 bucket with public access blocked
+
