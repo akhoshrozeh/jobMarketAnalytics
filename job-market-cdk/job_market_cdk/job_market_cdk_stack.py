@@ -286,6 +286,26 @@ class JobMarketCdkStack(Stack):
         event_bus.grant_put_events_to(mongodb_writer_lambda)
 
         event_bus.grant_put_events_to(sync_s3_mongo_lambda)
+
+
+
+        # #################### SCHEDULE ###############################
+        scrape_schedule = events.Rule(
+            self,
+            "ScrapeScheduleRule",
+            schedule=events.Schedule.rate(Duration.hours(12)),
+            targets=[targets.LambdaFunction(scrape_jobs_lambda)]
+        )
+
+        # Add permission for EventBridge to invoke the Lambda
+        scrape_jobs_lambda.add_permission(
+            "ScheduledEventPermission",
+            principal=iam.ServicePrincipal("events.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=scrape_schedule.rule_arn
+        )
+
+        
       
 
         # Add CloudWatch logging permissions for all Lambda functions
