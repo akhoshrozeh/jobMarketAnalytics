@@ -1,7 +1,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-
+import Image from 'next/image'
 
 export default function Navbar() {
   return (
@@ -43,6 +43,7 @@ export default function Navbar() {
               </div>
             </div>
           </div>
+
           <div className="hidden sm:ml-6 sm:block">
             <div className="flex items-center">
               <button
@@ -60,13 +61,13 @@ export default function Navbar() {
                   <MenuButton className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                     <span className="absolute -inset-1.5" />
                     <span className="sr-only">Open user menu</span>
-                    {/* <Image
+                    <Image
                       alt=""
-                      src=""
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/BrownSpiderMonkey_%28edit2%29.jpg/1920px-BrownSpiderMonkey_%28edit2%29.jpg"
                       className="size-8 rounded-full"
                       height={32}
                       width={32}
-                    /> */}
+                    />
                   </MenuButton>
                 </div>
                 <MenuItems
