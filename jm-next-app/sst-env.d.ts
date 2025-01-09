@@ -10,9 +10,26 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "IdentityPool": {
+      "id": string
+      "type": "sst.aws.CognitoIdentityPool"
+    }
+    "IdentityPoolID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "JMDatabase": {
       "type": "sst.sst.Secret"
       "value": string
+    }
+    "JobTrendrUserPool": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
+    }
+    "JobTrendrUserPoolClient": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
     }
     "MongoReadURI": {
       "type": "sst.sst.Secret"
@@ -21,6 +38,18 @@ declare module "sst" {
     "MyWeb": {
       "type": "sst.aws.Nextjs"
       "url": string
+    }
+    "Region": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "UserPoolClientID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "UserPoolID": {
+      "type": "sst.sst.Secret"
+      "value": string
     }
     "api": {
       "type": "sst.aws.ApiGatewayV2"

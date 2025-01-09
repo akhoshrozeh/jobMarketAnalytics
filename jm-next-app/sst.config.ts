@@ -16,9 +16,14 @@
       const mongoReadURI = new sst.Secret("MongoReadURI");
       const JMDatabase = new sst.Secret("JMDatabase");
       const apiEndpoint = new sst.Secret("APIEndpoint");
+      const userPoolID = new sst.Secret("UserPoolID");  
+      const userPoolClientID = new sst.Secret("UserPoolClientID");
+      const identityPoolID = new sst.Secret("IdentityPoolID");
+      const region = new sst.Secret("Region");
+
 
       new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, JMDatabase, apiEndpoint],
+        link: [mongoReadURI, JMDatabase, apiEndpoint, userPoolID, userPoolClientID, identityPoolID, region],
         domain: "jobtrendr.com"
       });
 
@@ -29,6 +34,22 @@
       api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
       api.route("GET /get-jobs", "src/functions/getJobs.handler", );
       api.route("GET /get-keywords-connected-by-job", "src/functions/getKeywordsConnectedByJob.handler", );
+
+
+      const userPool = new sst.aws.CognitoUserPool("JobTrendrUserPool", {
+        usernames: ["email"]
+      });
+
+      const userPoolClient = userPool.addClient("JobTrendrUserPoolClient");
+
+      const identityPool = new sst.aws.CognitoIdentityPool("IdentityPool", {
+        userPools: [
+          {
+            userPool: userPool.id,
+            client: userPoolClient.id,
+          },
+        ],
+      });      
     
     }
 
