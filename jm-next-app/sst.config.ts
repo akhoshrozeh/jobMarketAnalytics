@@ -22,20 +22,6 @@
       const region = new sst.Secret("Region");
 
 
-      new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, JMDatabase, apiEndpoint, userPoolID, userPoolClientID, identityPoolID, region],
-        domain: "jobtrendr.com"
-      });
-
-      const api = new sst.aws.ApiGatewayV2("api", {
-        link: [mongoReadURI, JMDatabase]    
-      });
-      
-      api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
-      api.route("GET /get-jobs", "src/functions/getJobs.handler", );
-      api.route("GET /get-keywords-connected-by-job", "src/functions/getKeywordsConnectedByJob.handler", );
-
-
       const userPool = new sst.aws.CognitoUserPool("JobTrendrUserPool", {
         usernames: ["email"]
       });
@@ -49,7 +35,27 @@
             client: userPoolClient.id,
           },
         ],
-      });      
+      });   
+
+      new sst.aws.Nextjs("MyWeb", {
+        link: [mongoReadURI, JMDatabase, apiEndpoint, userPoolID, userPoolClientID, identityPoolID, region, userPool, userPoolClient, identityPool],
+        domain: "jobtrendr.com",
+        environment: {
+          NEXT_PUBLIC_USER_POOL_ID: userPool.id,
+          NEXT_PUBLIC_USER_POOL_CLIENT_ID: userPoolClient.id,
+          NEXT_PUBLIC_IDENTITY_POOL_ID: identityPool.id,
+        }
+      });
+
+      const api = new sst.aws.ApiGatewayV2("api", {
+        link: [mongoReadURI, JMDatabase]    
+      });
+      
+      api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
+      api.route("GET /get-jobs", "src/functions/getJobs.handler", );
+      api.route("GET /get-keywords-connected-by-job", "src/functions/getKeywordsConnectedByJob.handler", );
+
+
     
     }
 
