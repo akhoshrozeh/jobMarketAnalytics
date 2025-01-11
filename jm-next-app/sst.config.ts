@@ -26,7 +26,19 @@
         usernames: ["email"]
       });
 
-      const userPoolClient = userPool.addClient("JobTrendrUserPoolClient");
+
+      const userPoolClient = userPool.addClient("JobTrendrUserPoolClient", {
+          transform: {
+              client: {
+                explicitAuthFlows: ["ALLOW_USER_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_CUSTOM_AUTH", "ALLOW_USER_SRP_AUTH"],
+                accessTokenValidity: 24,
+                idTokenValidity: 24
+              }
+          }
+        }
+        
+        
+      );
 
       const identityPool = new sst.aws.CognitoIdentityPool("IdentityPool", {
         userPools: [
