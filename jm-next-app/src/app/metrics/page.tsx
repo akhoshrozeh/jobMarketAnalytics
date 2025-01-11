@@ -53,8 +53,8 @@ export default async function Metrics() {
     const sliceLen: number = 50;
     const keywordsConnectedByJob = await getKeywordsConnectedByJob();
 
-    console.log("HERE:", keywordsConnectedByJob)
-    console.log("AGG:", aggGroup.slice(0, sliceLen))
+    // console.log("HERE:", keywordsConnectedByJob)
+    // console.log("AGG:", aggGroup.slice(0, sliceLen))
 
   
 
