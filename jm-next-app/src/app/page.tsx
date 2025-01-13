@@ -1,7 +1,14 @@
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import Image from 'next/image'
+import { cookies } from 'next/headers'
+ 
 
-export default function Home() {
+
+
+export default async function Home() {
+  const cookieStore = await cookies()
+  console.log("cookieStore:", cookieStore);
+
   return (
     <div className="relative isolate">
       <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 sm:pb-32 lg:flex lg:px-8 lg:py-40">

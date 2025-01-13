@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Quicksand } from "next/font/google";
+import { Quicksand, Single_Day } from "next/font/google";
 import "./globals.css";
 import DynamicBlob from "@/app/components/DynamicBlob";
 // Components
@@ -22,6 +22,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <body className={quicksand.className}>

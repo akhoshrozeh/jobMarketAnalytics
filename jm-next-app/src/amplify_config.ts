@@ -19,8 +19,9 @@ const config = {
                 requireLowercase: true,
                 requireUppercase: true,
                 requireNumbers: true,
-                requireSpecialCharacters: false,
+                requireSpecialCharacters: 0,
               },
+              
         }
     }
 }

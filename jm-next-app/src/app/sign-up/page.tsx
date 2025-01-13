@@ -1,16 +1,24 @@
 "use client"
 
 import Link from "next/link";
-import { signUp, confirmSignUp, autoSignIn, confirmSignIn  } from "aws-amplify/auth";  
+import { signUp, confirmSignUp, autoSignIn, getCurrentUser} from "aws-amplify/auth";  
 import { Amplify } from "aws-amplify";
-import { useState, useEffect} from "react";
+import { useState } from "react";
 import config from "../../amplify_config";
 import { useRouter } from "next/navigation";
+import ErrorWarningModal from "../components/ErrorWarningModal";
+
 
 Amplify.configure(config as any);
 
 export default function SignUp() {
+
     const router = useRouter()
+
+    const [modalIsOpen, setModalIsOpen] = useState(false)
+    const [header, setHeader] = useState("")
+    const [body, setBody] = useState("")
+    const [buttonText, setButtonText] = useState("")
 
     const [waitingForConfirmation, setWaitingForConfirmation] = useState(false);
     const [email, setEmail] = useState("");
@@ -61,6 +69,10 @@ export default function SignUp() {
 
         } catch (error) {
             console.log(error, "Username already exists");
+            setModalIsOpen(true)
+            setHeader("Sign Up Error")
+            setBody(error.message || "An error occurred in sign up")
+            setButtonText("OK")
         }
 
     }
@@ -89,12 +101,17 @@ export default function SignUp() {
                 if (nextStep.signInStep === 'DONE') {
                     console.log('Successfully signed in.');
                     router.push("/")
+                    
                 }
                 
             }
             
         } catch (error) {
             console.log("err:", error)
+            setModalIsOpen(true)
+            setHeader("Sign Up Error")
+            setBody(error as string)
+            setButtonText("OK")
         }
 
     }
@@ -104,6 +121,7 @@ export default function SignUp() {
       <>
       
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+        <ErrorWarningModal isOpen={modalIsOpen} onClose={() => setModalIsOpen(false)} header={header} body={body} buttonText={buttonText}/>
           <div className="sm:mx-auto sm:w-full sm:max-w-sm">
             {/* <img
               alt="Your Company"

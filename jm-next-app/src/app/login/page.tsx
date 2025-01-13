@@ -1,9 +1,59 @@
-import Link from "next/link";
+"use client"
 
-export default function Login() {
+import Link from "next/link";
+import { Amplify } from "aws-amplify";
+import config from "../../amplify_config";
+import { signIn } from "aws-amplify/auth";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ErrorWarningModal from "../components/ErrorWarningModal";
+import { useAuth } from "@/context/AuthProvider";
+import { AuthProvider } from "@/context/AuthProvider";
+
+Amplify.configure(config as any);
+
+function Login() {
+
+    const {setIsAuthenticated} = useAuth();
+    const [modalIsOpen, setModalIsOpen] = useState(false)
+    const [header, setHeader] = useState("")
+    const [body, setBody] = useState("")
+    const [buttonText, setButtonText] = useState("")
+    const router = useRouter()
+
+    async function handleOnSubmit(event: React.FormEvent<HTMLFormElement>) {   
+        event.preventDefault()
+        console.log("signin clicked")
+        const form = event.currentTarget;
+        const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+        const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+        
+        try {
+            const res = await signIn({
+                username: email,
+                password: password
+            })
+            console.log("res from sign on:", res)
+            setIsAuthenticated(true);
+            router.push("/")
+
+        }
+
+        catch (error) {
+            console.log("ERR:", error)
+            setModalIsOpen(true)
+            setHeader("Sign In Error")
+            setBody("Please check your email and password and try again.")
+            setButtonText("OK")
+        }
+
+
+    }
+
     return (
-      <>
+      <div>
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+            <ErrorWarningModal isOpen={modalIsOpen} onClose={() => setModalIsOpen(false)} header={header} body={body} buttonText={buttonText}/>
           <div className="sm:mx-auto sm:w-full sm:max-w-sm">
             {/* <img
               alt="Your Company"
@@ -14,7 +64,7 @@ export default function Login() {
           </div>
   
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-            <form action="#" method="POST" className="space-y-6">
+            <form onSubmit={handleOnSubmit} className="space-y-6">
               <div>
                 <label htmlFor="email" className="block text-sm/6 font-medium text-white">
                   Email address
@@ -73,7 +123,15 @@ export default function Login() {
             </p>
           </div>
         </div>
-      </>
+      </div>
     )
   }
   
+
+  export default function LoginWrapped() {
+    return (
+      <AuthProvider>
+        <Login />
+      </AuthProvider>
+    )
+  }

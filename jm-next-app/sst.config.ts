@@ -23,7 +23,19 @@
 
 
       const userPool = new sst.aws.CognitoUserPool("JobTrendrUserPool", {
-        usernames: ["email"]
+        usernames: ["email"],
+        transform: {
+          userPool: {
+            passwordPolicy: {
+              minimumLength: 8,
+              requireSymbols: false,
+              requireNumbers: true,
+              requireUppercase: true,
+              requireLowercase: true,
+            }    
+          }
+        }
+
       });
 
 
