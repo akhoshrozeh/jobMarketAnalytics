@@ -64,7 +64,7 @@ export default function ResetPassword() {
         <div>    
         
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <img
                 alt="Your Company"
                 src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
@@ -74,13 +74,16 @@ export default function ResetPassword() {
             </div>
     
             { step === "ENTER_EMAIL" && (
-                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
                     <form onSubmit={handleResetPassword} className="space-y-6">
                         <div>
                             <label htmlFor="email" className="block text-md font-medium text-white">
-                                Please enter your email address. A confirmation code will be sent to it for verification.
+                                Please enter your email address. 
                             </label>
-                            <label className="text-red-500 text-sm">
+                            <label htmlFor="email" className="block text-md font-medium text-white mt-2">
+                                A confirmation code will be sent for verification.
+                            </label>
+                            <label className="text-red-500 mt-4">
                                 {errorMessage}
                             </label>
                             <div className="mt-4">
@@ -91,14 +94,14 @@ export default function ResetPassword() {
                                 required
                                 placeholder="Your Email"
                                 autoComplete="email"
-                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
                                 />
                             </div>
                         </div>
                         <div>
                             <button
                                 type="submit"
-                                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >
                                 Send Code
                             </button>
@@ -108,7 +111,7 @@ export default function ResetPassword() {
             )}
 
             { step === "CONFIRM_RESET_PASSWORD_WITH_CODE" && (
-                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
                    <form onSubmit={handleConfirmResetPassword} className="space-y-6">
                         <div>
                             <label htmlFor="email" className="block text-md font-medium text-white">
@@ -121,14 +124,14 @@ export default function ResetPassword() {
                                 type="email"
                                 required
                                 autoComplete="email"
-                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
                                 />
                             </div>
                         </div>
                         <div>
                             <button
                                 type="submit"
-                                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >
                                 Confirm
                             </button>
@@ -138,9 +141,9 @@ export default function ResetPassword() {
             )}
 
             { step === "DONE" && (
-                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="flex items-center justify-center text-white text-center text-md font-medium">
-                        Your password has successfully been reset!
+                        Your password has successfully been reset! You can 
                     </div>
                 </div>
             )}
