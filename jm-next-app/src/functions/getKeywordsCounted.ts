@@ -4,7 +4,6 @@ import { connectToDatabase } from "@/lib/mongoClient";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>  => {
     const db = await connectToDatabase();
-    console.log(event)
 
     try {   
         const pipeline = [
@@ -31,7 +30,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           ];
       
           const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-          console.log(result)
           return {
             statusCode: 200,
             headers: {
