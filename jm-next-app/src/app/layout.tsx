@@ -4,6 +4,10 @@ import "./globals.css";
 import DynamicBlob from "@/app/components/DynamicBlob";
 // Components
 import Navbar from "@/app/components/Navbar";
+import { Amplify } from "aws-amplify";
+import config from "../amplify_config";
+
+Amplify.configure(config as any, { ssr: true });
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
