@@ -1,35 +1,16 @@
-"use client"
-import { AuthContext } from "@/context/AuthProvider"
-import { useContext } from "react"
-import Link from "next/link"
-import { Menu, MenuButton, MenuItem, MenuItems, DisclosureButton} from "@headlessui/react"
-import Image from "next/image"
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { DisclosureButton} from "@headlessui/react"
+import { BellIcon } from '@heroicons/react/24/outline'
 import SignOutButton from "./SignOutButton"
-
-interface AuthContextType {
-    tokens?: {
-      signInDetails?: {
-        loginId?: string;
-      };
-      idToken?: {
-        payload?: {
-          sub?: string;
-        };
-      };
-    };
-  }
+import verifyAccessToken from "@/utils/verifyAccessToken"
 
 
-export default function NavBarAuthSmall() {
-    const sessionObj = useContext<AuthContextType>(AuthContext);
-    console.log("session in navbar:", sessionObj);
+export default async function NavBarAuthSmall() {
+
+    const payload = await verifyAccessToken();
 
     return (
-
-
         <div>
-            {sessionObj.tokens?.signInDetails?.loginId ? (
+            {payload ? (
             <div>
                 <div className="flex items-center px-5">
                     <div className="shrink-0">
@@ -40,8 +21,8 @@ export default function NavBarAuthSmall() {
                         /> */}
                     </div>
                     <div className="ml-3">
-                    <div className="text-base font-medium text-white">{sessionObj.tokens?.signInDetails?.loginId}</div>
-                    <div className="text-sm font-medium text-gray-400">{sessionObj.tokens?.idToken?.payload?.sub}</div>
+                    <div className="text-base font-medium text-white">{payload.username}</div>
+                    <div className="text-sm font-medium text-gray-400">{payload.username}</div>
                     </div>
                     <button
                     type="button"

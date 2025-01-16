@@ -3,13 +3,16 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import Image from 'next/image'
 import NavbarAuthLarge from './NavbarAuthLarge'
-import { AuthProvider } from '@/context/AuthProvider'
 import { signOut } from 'aws-amplify/auth'
 import SignOutButton from './SignOutButton'
 import NavBarAuthSmall from './NavBarAuthSmall'
+import { cookies } from 'next/headers'
 
-export default function Navbar() {
+export default async function Navbar() {
   console.log("Navbar in the server");
+  const cookieStore = await cookies()
+  console.log("cookieStore:", cookieStore);
+
   return (
     <Disclosure as="nav" className="bg-gray-900 border-b border-indigo-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-20">
@@ -51,9 +54,9 @@ export default function Navbar() {
           </div>
 
 
-          <AuthProvider>
+
             <NavbarAuthLarge />
-          </AuthProvider>
+
 
 
           {/* Mobile menu */}
@@ -104,9 +107,9 @@ export default function Navbar() {
         <div className="border-t border-gray-700 pt-2">
           <div className="space-y-1 px-2 pb-3">
             {/* <div className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"> */}
-              <AuthProvider>
+
                 <NavBarAuthSmall/>
-              </AuthProvider>
+
 
             {/* </div> */}
           </div>
