@@ -14,7 +14,9 @@ export async function middleware(request: NextRequest) {
   const accessTokenCookie = allCookies.find(cookie => cookie.name.includes('accessToken'));
 
   if (!accessTokenCookie) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    // return NextResponse.redirect(new URL('/login', request.url));
+    console.log("No access token cookie found");
+    return NextResponse.next();
   }
 
   const accessToken: string = accessTokenCookie.value;
@@ -22,10 +24,17 @@ export async function middleware(request: NextRequest) {
 
   try {
     const payload = await verifier.verify(accessToken);
+
+    if (request.nextUrl.pathname === '/login') {
+      return NextResponse.redirect(new URL('/', request.url));
+    } 
+    if (request.nextUrl.pathname === '/sign-up') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
     console.log("Token is valid. Payload:", payload);
-  } catch {
-    console.log("Token not valid!");
-    return NextResponse.redirect(new URL('/login', request.url));
+  } catch (err) {
+    console.log("Token not valid!", err);
+
   }
   
   
