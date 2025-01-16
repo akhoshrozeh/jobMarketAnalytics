@@ -5,18 +5,19 @@ import { Amplify } from "aws-amplify";
 import config from "../../amplify_config";
 import { Button } from "@headlessui/react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/AuthProvider";
 
-Amplify.configure(config as any);
+
+Amplify.configure(config as any, {
+    ssr: true
+});
 
 export default function SignOutButton() {
     const router = useRouter();
-    const {setIsAuthenticated} = useAuth();
 
     const handleSignOut = async () => {
         await signOut();
-        setIsAuthenticated(false);
-        router.push("/");
+        window.location.href = '/';
+
     }
     return (
         <Button
