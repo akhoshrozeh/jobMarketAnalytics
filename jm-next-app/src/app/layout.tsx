@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { Quicksand, Single_Day } from "next/font/google";
+import { Quicksand } from "next/font/google";
 import "./globals.css";
 import DynamicBlob from "@/app/components/DynamicBlob";
-// Components
 import Navbar from "@/app/components/Navbar";
-import { Amplify } from "aws-amplify";
-import config from "../amplify_config";
-
-Amplify.configure(config as any, { ssr: true });
+import Providers from "@/providers/AmplifyProvider";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -41,9 +37,11 @@ export default function RootLayout({
 
           {/* Content layer */}
           <div className="relative z-0">
-            <Navbar />
-            <div className="relative">
-              {children}
+            <Providers>
+              <Navbar />
+            </Providers>
+              <div className="relative">
+                {children}
             </div>
           </div>
         </div>

@@ -1,12 +1,14 @@
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems, Button } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import Image from 'next/image'
 import NavbarAuthLarge from './NavbarAuthLarge'
 import NavBarAuthSmall from './NavBarAuthSmall'
+import existsAccessToken from '@/utils/existsAccessToken'
 
 
 export default async function Navbar() {
+
+  const isLoggedIn = await existsAccessToken();
 
   return (
     <Disclosure as="nav" className="bg-gray-900 border-b border-indigo-500">
@@ -50,7 +52,7 @@ export default async function Navbar() {
 
 
 
-            <NavbarAuthLarge />
+            <NavbarAuthLarge isLoggedIn={isLoggedIn}/>
 
 
 
@@ -103,7 +105,7 @@ export default async function Navbar() {
           <div className="space-y-1 px-2 pb-3">
             {/* <div className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"> */}
 
-                <NavBarAuthSmall/>
+                <NavBarAuthSmall isLoggedIn={isLoggedIn}/>
 
 
             {/* </div> */}

@@ -1,18 +1,15 @@
 import Link from "next/link"
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react"
 import Image from "next/image"
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { BellIcon } from '@heroicons/react/24/outline'
 import SignOutButton from "./SignOutButton"
 
-import verifyAccessToken from "@/utils/verifyAccessToken"
 
-export default async function NavbarAuthLarge() {
-
-  const isAuthenticated = await verifyAccessToken();
+export default async function NavbarAuthLarge({isLoggedIn}: {isLoggedIn: boolean | string}) {
 
   return (
       <div>
-        {isAuthenticated ? (
+        {isLoggedIn ? (
           <div className="hidden sm:ml-6 sm:block">
           <div className="flex items-center">
             <button

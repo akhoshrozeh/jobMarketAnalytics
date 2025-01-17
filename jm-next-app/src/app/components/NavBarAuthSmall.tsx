@@ -1,16 +1,13 @@
 import { DisclosureButton} from "@headlessui/react"
 import { BellIcon } from '@heroicons/react/24/outline'
 import SignOutButton from "./SignOutButton"
-import verifyAccessToken from "@/utils/verifyAccessToken"
 
 
-export default async function NavBarAuthSmall() {
-
-    const payload = await verifyAccessToken();
+export default async function NavBarAuthSmall({isLoggedIn}: {isLoggedIn: boolean | string}) {
 
     return (
         <div>
-            {payload ? (
+            {isLoggedIn ? (
             <div>
                 <div className="flex items-center px-5">
                     <div className="shrink-0">
@@ -21,8 +18,8 @@ export default async function NavBarAuthSmall() {
                         /> */}
                     </div>
                     <div className="ml-3">
-                    <div className="text-base font-medium text-white">{payload.username}</div>
-                    <div className="text-sm font-medium text-gray-400">{payload.username}</div>
+                    <div className="text-base font-medium text-white">{isLoggedIn}</div>
+                    <div className="text-sm font-medium text-gray-400">{isLoggedIn}</div>
                     </div>
                     <button
                     type="button"
