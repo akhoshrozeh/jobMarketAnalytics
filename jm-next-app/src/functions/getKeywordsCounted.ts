@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/mongoClient";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>  => {
     const db = await connectToDatabase();
+    console.log("get-keywords-counted handler called");
 
     try {   
         const pipeline = [

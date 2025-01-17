@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/mongoClient";
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult>  => {
     
     const db = await connectToDatabase();
-    console.log("Database connected successfully");
+    console.log("get-jobs handler called");
 
 
     try {
