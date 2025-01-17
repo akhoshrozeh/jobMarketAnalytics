@@ -3,7 +3,7 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
 
-export default function ErrorWarningModal({ isOpen, onClose, header, body, buttonText }: { isOpen: boolean, onClose: () => void, header:String, body:String, buttonText:String }) {
+export default function ErrorWarningModal({ isOpen, onClose, header, body, buttonText }: { isOpen: boolean, onClose: () => void, header:string, body:string, buttonText:string }) {
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-10">
       <DialogBackdrop
