@@ -16,9 +16,6 @@
       const mongoReadURI = new sst.Secret("MongoReadURI");
       const JMDatabase = new sst.Secret("JMDatabase");
       const apiEndpoint = new sst.Secret("APIEndpoint");
-      const userPoolID = new sst.Secret("UserPoolID");  
-      const userPoolClientID = new sst.Secret("UserPoolClientID");
-      const identityPoolID = new sst.Secret("IdentityPoolID");
       const region = new sst.Secret("Region");
 
 
@@ -42,7 +39,11 @@
       const userPoolClient = userPool.addClient("JobTrendrUserPoolClient", {
           transform: {
               client: {
-                explicitAuthFlows: ["ALLOW_USER_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_CUSTOM_AUTH", "ALLOW_USER_SRP_AUTH"],
+                explicitAuthFlows: [
+                  "ALLOW_USER_AUTH", 
+                  "ALLOW_REFRESH_TOKEN_AUTH", 
+                  "ALLOW_CUSTOM_AUTH", 
+                  "ALLOW_USER_SRP_AUTH"],
                 accessTokenValidity: 24,
                 idTokenValidity: 24
               }
@@ -62,7 +63,7 @@
       });   
 
       new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, JMDatabase, apiEndpoint, userPoolID, userPoolClientID, identityPoolID, region, userPool, userPoolClient, identityPool],
+        link: [mongoReadURI, JMDatabase, apiEndpoint, region, userPool, userPoolClient, identityPool],
         domain: "jobtrendr.com",
         environment: {
           NEXT_PUBLIC_USER_POOL_ID: userPool.id,

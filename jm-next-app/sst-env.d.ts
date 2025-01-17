@@ -14,10 +14,6 @@ declare module "sst" {
       "id": string
       "type": "sst.aws.CognitoIdentityPool"
     }
-    "IdentityPoolID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
     "JMDatabase": {
       "type": "sst.sst.Secret"
       "value": string
@@ -40,14 +36,6 @@ declare module "sst" {
       "url": string
     }
     "Region": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "UserPoolClientID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "UserPoolID": {
       "type": "sst.sst.Secret"
       "value": string
     }
