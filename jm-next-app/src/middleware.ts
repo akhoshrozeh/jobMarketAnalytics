@@ -12,11 +12,14 @@ const verifier = CognitoJwtVerifier.create({
 export async function middleware(request: NextRequest) {
   const allCookies = Array.from(request.cookies.getAll());
   const accessTokenCookie = allCookies.find(cookie => cookie.name.includes('accessToken'));
+  console.log("PATH:", request.nextUrl.pathname);
+  console.log("ACCESS TOKEN COOKIE:", accessTokenCookie);
+  console.log("ACCESS TOKEN COOKIE VALUE:", accessTokenCookie?.value);
 
-  if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up' && accessTokenCookie) {
+
+  if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up') && accessTokenCookie !== undefined) {
     return NextResponse.redirect(new URL('/', request.url));
   } 
-
 
 
   // Check jwt
@@ -26,20 +29,19 @@ export async function middleware(request: NextRequest) {
 
     try {
       const payload = await verifier.verify(accessToken);
-
-      
       console.log("Token is valid. Payload:", payload);
+      
+    
     } catch (err) {
       console.log("Token not valid!", err);
+      return NextResponse.redirect(new URL('/', request.url));
 
     }
-
-  }
-  else {
-    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next()
+
+  
   
   
 }
