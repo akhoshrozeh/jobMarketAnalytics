@@ -5,13 +5,14 @@ import KeywordsConnectedByJob from "./KeywordsConnectedByJob";
 
 const APIEndpoint = Resource.APIEndpoint.value;
 
+
 async function getKeywordsCounted() {
   try {
     const response = await fetch(`${APIEndpoint}/get-keywords-counted`, {
       headers: {
         'Accept': 'application/json',
       },
-      next: { revalidate: 21600 },
+
     });
 
     if (!response.ok) {
