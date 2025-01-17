@@ -13,30 +13,37 @@ export async function middleware(request: NextRequest) {
   const allCookies = Array.from(request.cookies.getAll());
   const accessTokenCookie = allCookies.find(cookie => cookie.name.includes('accessToken'));
 
-  if (!accessTokenCookie) {
-    // return NextResponse.redirect(new URL('/login', request.url));
-    console.log("No access token cookie found");
-    return NextResponse.next();
-  }
+  if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up' && accessTokenCookie) {
+    return NextResponse.redirect(new URL('/', request.url));
+  } 
 
-  const accessToken: string = accessTokenCookie.value;
-  console.log("accessToken:", accessToken);
 
-  try {
-    const payload = await verifier.verify(accessToken);
 
-    if (request.nextUrl.pathname === '/login') {
-      return NextResponse.redirect(new URL('/', request.url));
-    } 
-    if (request.nextUrl.pathname === '/sign-up') {
-      return NextResponse.redirect(new URL('/', request.url));
+  // Check jwt
+  if (request.nextUrl.pathname.startsWith('/profile') && accessTokenCookie) {
+
+    const accessToken: string = accessTokenCookie.value;
+
+    try {
+      const payload = await verifier.verify(accessToken);
+
+      
+      console.log("Token is valid. Payload:", payload);
+    } catch (err) {
+      console.log("Token not valid!", err);
+
     }
-    console.log("Token is valid. Payload:", payload);
-  } catch (err) {
-    console.log("Token not valid!", err);
 
   }
-  
-  
+  else {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   return NextResponse.next()
+  
+  
+}
+
+export const config = {
+  matcher: ['/profile', '/login', '/sign-up'],
 }
