@@ -6,7 +6,6 @@ import { Amplify } from "aws-amplify";
 import { useState, useEffect } from "react";
 import config from "../../amplify_config";
 import { useRouter, useSearchParams } from "next/navigation";
-import ErrorWarningModal from "../components/ErrorWarningModal";
 
 
 Amplify.configure(config as any);
@@ -35,13 +34,10 @@ export default function SignUp() {
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        console.log("Signing up");
         const form = event.currentTarget;
         const email = (form.elements.namedItem('email') as HTMLInputElement).value;
         const password = (form.elements.namedItem('password') as HTMLInputElement).value;
         setEmail(email);
-        console.log(email);
-        console.log(password);
 
         try {
             // Sign up with amplify
@@ -55,10 +51,6 @@ export default function SignUp() {
               autoSignIn: true
             }
           });
-
-          console.log(isSignUpComplete);
-          console.log(userId);
-          console.log(nextStep);
 
 
           if (nextStep.signUpStep == "CONFIRM_SIGN_UP") {
@@ -78,7 +70,6 @@ export default function SignUp() {
 
 
         } catch (error) {
-            console.log(error, "Username already exists");
             if (error instanceof Error) {
                 if (error.message.startsWith("Password did not conform with policy")) {
                     setErrorMessage(error.message.replace("Password did not conform with policy: ", ""));
@@ -103,11 +94,9 @@ export default function SignUp() {
     // auto signs in after confirmation
     async function handleConfirmation(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        console.log("Confirming sign up");
         const form = event.currentTarget;
         const confirmationCode = (form.elements.namedItem('code') as HTMLInputElement).value;
         setConfirmationCode(confirmationCode);
-        console.log(confirmationCode);
          
         try {
             const { nextStep: confirmSignUpNextStep } = await confirmSignUp({
@@ -116,26 +105,21 @@ export default function SignUp() {
             });
     
             if (confirmSignUpNextStep.signUpStep === 'COMPLETE_AUTO_SIGN_IN') {
-                console.log("sign up confirmed.. calling autoSignIn()")
                 // Call `autoSignIn` API to complete the flow
                 const { nextStep } = await autoSignIn();
-                console.log("nextStep:", nextStep)  
             
                 if (nextStep.signInStep === 'DONE') {
-                    console.log('Successfully signed in.');
                     window.location.href = '/'
                     
                 }
                 
             }
             else if (confirmSignUpNextStep.signUpStep === 'DONE') {
-                console.log('Successfully signed in.');
-                window.location.href = '/'
+                window.location.href = '/login'
             }
 
 
         } catch (error) {
-            console.log("err:", error)
             if (error instanceof Error) {
                 switch (error.message) {
                     case "Invalid verification code provided, please try again.":

@@ -3,15 +3,10 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import Image from 'next/image'
 import NavbarAuthLarge from './NavbarAuthLarge'
-import { signOut } from 'aws-amplify/auth'
-import SignOutButton from './SignOutButton'
 import NavBarAuthSmall from './NavBarAuthSmall'
-import { cookies } from 'next/headers'
+
 
 export default async function Navbar() {
-  console.log("Navbar in the server");
-  const cookieStore = await cookies()
-  console.log("cookieStore:", cookieStore);
 
   return (
     <Disclosure as="nav" className="bg-gray-900 border-b border-indigo-500">
