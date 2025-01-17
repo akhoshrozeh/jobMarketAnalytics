@@ -1,5 +1,4 @@
 import { CognitoJwtVerifier } from 'aws-jwt-verify'
-import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers'
 
 // Create verifier once, outside the middleware function
