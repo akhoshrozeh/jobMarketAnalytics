@@ -125,6 +125,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             statusCode: 200,
             headers: {
               "Content-Type": "application/json",
+              "Cache-Control": "public, max-age=3600"
             },
             body: JSON.stringify(result)
           };
