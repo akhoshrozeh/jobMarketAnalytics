@@ -4,16 +4,13 @@ import { Resource } from "sst";
 
 const APIEndpoint = Resource.APIEndpoint.value;
 
-export const revalidate = 60 // invalidate every 60 seconds
-
-
 async function getJobs() {
     try {
         const response = await fetch(`${APIEndpoint}/get-jobs`, {
             headers: {
             'Accept': 'application/json',
             },
-            // next: { revalidate: 3600 },
+            cache: 'force-cache'
         });
 
         if (!response.ok) {
