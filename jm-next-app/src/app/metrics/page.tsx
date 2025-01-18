@@ -1,7 +1,5 @@
 import { Resource } from "sst";
-import KeywordsCounted from "./KeywordsCounted";
-import KeywordsConnectedByJob from "./KeywordsConnectedByJob";
-
+import { KeywordsConnectedByJob, KeywordsCounted } from "./Graphs";
 
 const APIEndpoint = Resource.APIEndpoint.value;
 
@@ -32,7 +30,6 @@ async function getKeywordsConnectedByJob() {
             headers: {
                 'Accept': 'application/json',
             },
-            next: { revalidate: 21600 },
         });
 
         if (!response.ok) {

@@ -14,8 +14,7 @@ interface KeywordsConnectedByJobProps {
     }>;
 }
 
-
-export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobProps) {
+export function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobProps) {
     const svgRef = useRef<SVGSVGElement>(null);
 
     useEffect(() => {
@@ -66,29 +65,25 @@ export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnect
         const simulation = d3.forceSimulation(graphNodes as any)
             .force("link", d3.forceLink(graphLinks)
                 .id(d => (d as any).id)
-                // Much larger base distance
                 .distance(d => 300 + 200 * (1 - (d as any).weight))
             )
-            // Much stronger repulsion
             .force("charge", d3.forceManyBody().strength(-2000))
-            // Larger collision radius
             .force("collide", d3.forceCollide().radius(d => Math.sqrt((d as any).value) + 50))
-            // Weaker centering forces to allow more spread
             .force("x", d3.forceX(width / 2).strength(0.05))
             .force("y", d3.forceY(height / 2).strength(0.05))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .alphaDecay(0.1)
             .velocityDecay(0.8);
 
-        // Add links
+        // Add links with initial opacity set to 0
         const link = g.append("g")
             .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
+            .attr("stroke-opacity", 0)  // Initially hidden
             .selectAll("line")
             .data(graphLinks)
             .join("line")
             .attr("stroke-width", d => Math.sqrt(d.weight))
-            .attr("class", "link");  // Add class for easier selection
+            .attr("class", "link");
 
         // Create node groups with hover effects
         const nodeGroup = g.append("g")
@@ -96,18 +91,15 @@ export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnect
             .data(graphNodes)
             .join("g")
             .on("mouseover", (event, d) => {
-                // Dim all links
-                link.style("stroke-opacity", 0.2);
-                // Highlight connected links
+                // Show only connected links
+                link.style("stroke-opacity", 0);
                 link.filter(l => (l.source as any).id === d.id || (l.target as any).id === d.id)
                     .style("stroke-opacity", 1)
-                    .style("stroke", "#ff0");  // Bright yellow for highlighted links
+                    .style("stroke", "#ff0");
             })
             .on("mouseout", () => {
-                // Reset all links
-                link
-                    .style("stroke-opacity", 0.6)
-                    .style("stroke", "#999");
+                // Hide all links
+                link.style("stroke-opacity", 0);
             });
 
         // Add circles to each group
@@ -123,7 +115,7 @@ export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnect
             .append("text")
             .text(d => (d as any).id)
             .attr("text-anchor", "middle")
-            .attr("dy", ".35em")  // Vertically center text
+            .attr("dy", ".35em")
             .attr("fill", "white")
             .attr("font-size", "12px");
 
@@ -167,3 +159,154 @@ export default function KeywordsConnectedByJob({ links, nodes }: KeywordsConnect
         </div>
     );
 }
+
+interface KeywordsCountedProps {
+    data: Array<{
+      _id: string;
+      totalOccurrences: number;
+    }>;
+  }
+  
+export function KeywordsCounted({ data }: KeywordsCountedProps) {
+    const chartRef = useRef<SVGSVGElement>(null);
+  
+    useEffect(() => {
+      if (!data || !chartRef.current) return;
+  
+      // Clear previous chart
+      d3.select(chartRef.current).selectAll("*").remove();
+  
+      // Chart dimensions
+      const width = 2000;
+      const height = 1000;
+      const marginTop = 20;
+      const marginRight = 20;
+      const marginBottom = 200;
+      const marginLeft = 60;
+  
+      // Create scales
+      const x = d3.scaleBand()
+        .domain(data.map(d => d._id))
+        .range([marginLeft, width - marginRight])
+        .padding(0.1);
+  
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.totalOccurrences) || 0]).nice()
+        .range([height - marginBottom, marginTop]);
+  
+      // Create SVG container
+      const svg = d3.select(chartRef.current)
+        .attr("viewBox", [0, 0, width, height])
+        .attr("width", width)
+        .attr("height", height)
+        .attr("style", "max-width: 100%; height: auto;").call(d3.zoom)
+  
+      // Add bars with labels
+      const bars = svg.append("g")
+        .attr("fill", "#4f46e5")
+        .selectAll("g")
+        .data(data)
+        .join("g");
+  
+      // Add the rectangles
+      bars.append("rect")
+        .attr("x", d => x(d._id) || 0)
+        .attr("y", y(0))
+        .attr("height", 0)
+        .attr("width", x.bandwidth())
+        .attr("opacity", 0.8)
+        .transition()
+        .duration(1000)
+        .ease(d3.easePoly)
+        .attr("y", d => y(d.totalOccurrences))
+        .attr("height", d => y(0) - y(d.totalOccurrences))
+        .selection();
+  
+      // Add x-axis with labels
+      const xAxis = svg.append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(d3.axisBottom(x));
+  
+      xAxis.selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end")
+        .attr("class", "label-text")
+        .style("font-size", "1.6em");
+  
+      // Add hover effects
+      bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number }) {
+        const group = d3.select(this);
+        
+        // Levitate the bar
+        group.select("rect")
+          .transition()
+          .duration(200)
+          .attr("y", y(d.totalOccurrences) - 10)
+          .attr("opacity", 1)
+          .attr("fill", "#635ce0");
+  
+        // Enlarge the corresponding label
+        xAxis.selectAll(".label-text")
+          .filter(text => text === d._id)
+          .transition()
+          .duration(200)
+          .style("font-size", "2.2em")
+          .style("font-weight", "bold");
+      })
+      .on("mouseleave", function(event, d: { _id: string; totalOccurrences: number }) {
+        const group = d3.select(this);
+        
+        // Return bar to original position
+        group.select("rect")
+          .transition()
+          .duration(200)
+          .attr("y", y(d.totalOccurrences))
+          .attr("opacity", 0.8)
+          .attr("fill", "#4f46e5");
+  
+        // Return label to original size
+        xAxis.selectAll(".label-text")
+          .filter(text => text === d._id)
+          .transition()
+          .duration(200)
+          .style("font-size", "1.6em")
+          .style("font-weight", "normal");
+      });
+  
+      // Add y-axis
+      svg.append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3.axisLeft(y))
+        .call(g => g.select(".domain").remove());
+  
+      // Add labels
+      svg.append("text")
+        .attr("class", "x-label")
+        .attr("text-anchor", "middle")
+        .attr("x", width / 2)
+        .attr("y", height - 10)
+        .style("fill", "white")
+        .style("font-size", "24px")
+        .text("Keywords");
+        
+  
+      svg.append("text")
+        .attr("class", "y-label")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", 20)
+        .style("fill", "white")
+        .style("font-size", "24px")
+        .text("Occurrences");
+  
+    }, [data]);
+  
+    return (
+      <div className="w-full overflow-x-auto">
+        <svg ref={chartRef}></svg>
+      </div>
+    );
+  }
+  
+  
