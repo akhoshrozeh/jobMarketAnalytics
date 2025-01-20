@@ -53,7 +53,7 @@ export default async function JobPostings({ jobs }: { jobs: Array<JobPost> }) {
             <div className="flex flex-wrap gap-2 my-2">
               {job.extracted_keywords && job.extracted_keywords.slice(0, 5).map((keyword) => (
                 <p key={keyword} className="text-green-700 bg-green-50 rounded-md px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset ring-green-600/20">{keyword}</p>
-              ))}
+              ))} 
             
             </div> 
 
