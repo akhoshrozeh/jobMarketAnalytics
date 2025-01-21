@@ -29,7 +29,7 @@ export default async function Navbar() {
                   Home
                 </Link>
                 <Link
-                  href="/metrics"
+                  href="/metrics/top-skills"
                   className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
                 >
                   Metrics
@@ -81,7 +81,7 @@ export default async function Navbar() {
           </DisclosureButton>
           <DisclosureButton
             as="a"
-            href="/metrics"
+            href="/metrics/top-skills"
             className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
             Metrics
