@@ -19,6 +19,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                     company: 1,
                     location: 1,
                     date_posted: 1,
+                    job_url: 1,
+                    extracted_keywords: 1,
                     site: 1
                 }
             }
