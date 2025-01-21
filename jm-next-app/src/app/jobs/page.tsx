@@ -1,17 +1,16 @@
-"force static"
 import JobFilter from './JobFilter'
 import JobPostings from './JobPostings'
 import { Resource } from "sst";
-import LoadingSkeleton from './JobsSkeleton';
 const APIEndpoint = Resource.APIEndpoint.value;
 
-async function generateStaticParams() {
+export const revalidate = 600;
+
+async function fetchJobs() {
     try {
         const response = await fetch(`${APIEndpoint}/get-jobs`, {
             headers: {
             'Accept': 'application/json',
             },
-            // next: {revalidate: 3600}
         });
 
         if (!response.ok) {
@@ -28,8 +27,7 @@ async function generateStaticParams() {
 }
 
 export default async function Jobs() {
-    let jobs = [];
-    jobs = await generateStaticParams();
+    const jobs = await fetchJobs();
 
     
     return (
