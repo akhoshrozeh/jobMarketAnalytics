@@ -8,6 +8,11 @@ module.exports = {
           pathname: '/wikipedia/**',
           search: '',
         },
+        {
+          protocol: 'https',
+          hostname: 'images.unsplash.com',
+          pathname: '/**',
+        },
       ],
     },
   }

@@ -8,6 +8,7 @@ module.exports = {
         pathname: '/wikipedia/**',
         search: '',
       },
+      
     ],
   },
 }

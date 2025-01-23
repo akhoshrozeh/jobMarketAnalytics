@@ -3,6 +3,8 @@ import { resetPassword, confirmResetPassword } from "aws-amplify/auth"
 import { useState } from "react"
 import config from "../../amplify_config"
 import { Amplify } from "aws-amplify"
+import Image from 'next/image'
+
 Amplify.configure(config as any, {ssr: true});
 
 export default function ResetPassword() {
@@ -65,7 +67,7 @@ export default function ResetPassword() {
         
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <img
+            <Image
                 alt="Your Company"
                 src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
                 className="mx-auto h-10 w-auto"

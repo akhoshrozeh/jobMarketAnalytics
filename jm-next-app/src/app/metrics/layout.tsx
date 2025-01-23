@@ -11,7 +11,7 @@ import {
   ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-
+import Image from 'next/image'
 const navigation = [
   { name: 'Top Skills', href: '/metrics/top-skills', icon: ChartBarIcon, current: true },
   { name: 'Skill Relationships', href: '/metrics/skills-connectivity', icon: ShareIcon, current: false },
@@ -55,7 +55,9 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-2 ring-1 ring-white/10">
                 <div className="flex h-16 shrink-0 items-center">
-                  <img
+                  <Image
+                    height={32}
+                    width={32}
                     alt="Your Company"
                     src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
                     className="h-8 w-auto"
@@ -131,7 +133,9 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
           <div className="flex-1 text-sm/6 font-semibold text-white">Dashboard</div>
           <a href="#">
             <span className="sr-only">Your profile</span>
-            <img
+            <Image
+                height={32}
+                width={32}
               alt=""
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
               className="size-8 rounded-full bg-gray-800"

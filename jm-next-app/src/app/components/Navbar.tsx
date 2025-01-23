@@ -4,6 +4,7 @@ import Link from 'next/link'
 import NavbarAuthLarge from './NavbarAuthLarge'
 import NavBarAuthSmall from './NavBarAuthSmall'
 import existsAccessToken from '@/utils/existsAccessToken'
+import Image from 'next/image'
 
 
 export default async function Navbar() {
@@ -16,7 +17,9 @@ export default async function Navbar() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <div className="shrink-0">
-              <img
+              <Image
+                height={32}
+                width={32}
                 alt="Your Company"
                 src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
                 className="h-8 w-auto"
