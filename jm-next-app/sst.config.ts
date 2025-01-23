@@ -24,6 +24,10 @@
         link: [mongoCreateUserURI, JMDatabase]
       })
 
+      const sanitizeSignUp = new sst.aws.Function("SanitizeSignUp", {
+        handler: "src/functions/sanitizeSignUp.handler",
+      })
+
 
       const userPool = new sst.aws.CognitoUserPool("JobTrendrUserPool", {
         usernames: ["email"],
@@ -35,11 +39,20 @@
               requireNumbers: true,
               requireUppercase: true,
               requireLowercase: true,
-            }    
+            },
+            schemas: [
+              {
+                attributeDataType: "String",
+                name: "tier",
+                mutable: true,              
+            }
+
+            ]   
           }
         },
         triggers: {
-          postConfirmation: createUser.arn
+          postConfirmation: createUser.arn,
+          preSignUp: "src/functions/sanitizeSignUp.handler"
         }
 
       });
@@ -54,8 +67,9 @@
                   "ALLOW_CUSTOM_AUTH", 
                   "ALLOW_USER_SRP_AUTH"],
                 accessTokenValidity: 24,
-                idTokenValidity: 24
+                idTokenValidity: 24,
               },
+              
           },
           
         }, 

@@ -47,6 +47,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "SanitizeSignUp": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "api": {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
