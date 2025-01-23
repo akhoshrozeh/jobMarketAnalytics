@@ -17,6 +17,12 @@
       const JMDatabase = new sst.Secret("JMDatabase");
       const apiEndpoint = new sst.Secret("APIEndpoint");
       const region = new sst.Secret("Region");
+      const mongoCreateUserURI = new sst.Secret("CreateUserURI")
+
+      const createUser = new sst.aws.Function("CreateUser", {
+        handler: "src/functions/createUser.handler",
+        link: [mongoCreateUserURI, JMDatabase]
+      })
 
 
       const userPool = new sst.aws.CognitoUserPool("JobTrendrUserPool", {
@@ -31,6 +37,9 @@
               requireLowercase: true,
             }    
           }
+        },
+        triggers: {
+          postConfirmation: createUser.arn
         }
 
       });
@@ -46,11 +55,10 @@
                   "ALLOW_USER_SRP_AUTH"],
                 accessTokenValidity: 24,
                 idTokenValidity: 24
-              }
-          }
-        }
-        
-        
+              },
+          },
+          
+        }, 
       );
 
       const identityPool = new sst.aws.CognitoIdentityPool("IdentityPool", {
@@ -63,7 +71,7 @@
       });   
 
       new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, JMDatabase, apiEndpoint, region, userPool, userPoolClient, identityPool],
+        link: [mongoReadURI, mongoCreateUserURI, JMDatabase, apiEndpoint, region, userPool, userPoolClient, identityPool],
         domain: "jobtrendr.com",
         environment: {
           NEXT_PUBLIC_USER_POOL_ID: userPool.id,

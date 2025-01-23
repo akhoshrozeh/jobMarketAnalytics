@@ -10,6 +10,14 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "CreateUser": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "CreateUserURI": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "IdentityPool": {
       "id": string
       "type": "sst.aws.CognitoIdentityPool"
