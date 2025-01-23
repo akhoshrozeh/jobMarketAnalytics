@@ -15,6 +15,10 @@ const config = {
                 email: {
                   required: true,
                 },
+                "custom:tier": {
+                    dataType: "String",
+                    mutable: true,
+                }
               },
               allowGuestAccess: true,
               passwordFormat: {

@@ -1,18 +1,17 @@
 "use client"
 
 import Link from "next/link";
-import { signUp, confirmSignUp, autoSignIn, getCurrentUser} from "aws-amplify/auth";  
+import { signUp, confirmSignUp, autoSignIn } from "aws-amplify/auth";  
 import { Amplify } from "aws-amplify";
 import { useState, useEffect } from "react";
 import config from "../../amplify_config";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 
 Amplify.configure(config as any);
 
 export default function SignUp() {
 
-    const router = useRouter()
     const searchParams = useSearchParams();
 
     const [errorMessage, setErrorMessage] = useState("");
@@ -46,7 +45,9 @@ export default function SignUp() {
             password: password,
             options: {
               userAttributes: {
-                email: email
+                email: email,
+                "custom:tier": "free"
+                
               },
               autoSignIn: true
             }
@@ -80,12 +81,14 @@ export default function SignUp() {
                             break;
                         default:
                             setErrorMessage("An error occurred in sign up.");
+                            console.log("Error: ", error)
                             break;
                     }
                 }
             }
             else {
-                setErrorMessage("An error occurred in sign up.")
+                setErrorMessage("An error occurred in sign up. ")
+                console.log("Error: ", error)
             }
         }
 
@@ -130,6 +133,7 @@ export default function SignUp() {
                         break;
                     default:
                         setErrorMessage("An error occurred in confirmation.")
+                        console.log(error)
                         break;
                 }
             }
