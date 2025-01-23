@@ -1,4 +1,3 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { connectToDatabase } from "@/lib/mongoCreateUserClient";
 
 
