@@ -9,10 +9,15 @@ module.exports = {
           search: '',
         },
         {
-          protocol: 'https',
-          hostname: 'images.unsplash.com',
-          pathname: '/**',
+            protocol: 'https',
+            hostname: 'images.unsplash.com',
+            pathname: '/**',
         },
-      ],
+        {
+            protocol: 'https',
+            hostname: 'tailwindui.com',
+            pathname: '/**',
+        },
+    ],
     },
   }
