@@ -1,3 +1,5 @@
+export const dynamic = 'force-static'
+export const revalidate = false
 import { CheckIcon } from '@heroicons/react/20/solid'
 
 const tiers = [
