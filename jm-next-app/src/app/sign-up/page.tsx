@@ -6,6 +6,7 @@ import { Amplify } from "aws-amplify";
 import { useState, useEffect } from "react";
 import config from "../../amplify_config";
 import { useSearchParams } from "next/navigation";
+import LoadingSpinner from "../components/LoadingSpinner"
 
 
 Amplify.configure(config as any);
@@ -19,6 +20,7 @@ export default function SignUp() {
     const [waitingForConfirmation, setWaitingForConfirmation] = useState(false);
     const [email, setEmail] = useState("");
     const [confirmationCode, setConfirmationCode] = useState("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     // Check the query params as soon as the page loads
     useEffect(() => {
@@ -33,6 +35,7 @@ export default function SignUp() {
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        setIsLoading(true)
         const form = event.currentTarget;
         const email = (form.elements.namedItem('email') as HTMLInputElement).value;
         const password = (form.elements.namedItem('password') as HTMLInputElement).value;
@@ -91,12 +94,16 @@ export default function SignUp() {
                 console.log("Error: ", error)
             }
         }
+        finally {
+            setIsLoading(false)
+        }
 
     }
 
     // auto signs in after confirmation
     async function handleConfirmation(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        setIsLoading(true);
         const form = event.currentTarget;
         const confirmationCode = (form.elements.namedItem('code') as HTMLInputElement).value;
         setConfirmationCode(confirmationCode);
@@ -138,6 +145,8 @@ export default function SignUp() {
                 }
             }
            
+        } finally {
+            setIsLoading(false);
         }
 
     }
@@ -186,11 +195,7 @@ export default function SignUp() {
                     <label htmlFor="password" className="block text-md font-medium text-white">
                         Password
                     </label>
-                    {/* <div className="text-sm">
-                        <a href="#" className="font-semibold text-indigo-400 hover:text-indigo-300">
-                        Forgot password?
-                        </a>
-                    </div> */}
+                    
                     </div>
                     <div className="mt-2">
                     <input
@@ -208,9 +213,8 @@ export default function SignUp() {
                     <button
                     type="submit"
                     className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                    //   onClick={onSubmit}
                     >
-                    Sign Up
+                        { isLoading ? <LoadingSpinner/> : <>Sign Up</> }
                     </button>
                 </div>
                 </form>
@@ -231,7 +235,7 @@ export default function SignUp() {
                     type="submit"
                     className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                     >
-                     Confirm
+                     { isLoading ? <LoadingSpinner/> : <>Confirm</> }
                     </button>
                   </div>
                 </form>

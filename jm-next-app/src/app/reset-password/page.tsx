@@ -4,6 +4,7 @@ import { useState } from "react"
 import config from "../../amplify_config"
 import { Amplify } from "aws-amplify"
 import Image from 'next/image'
+import LoadingSpinner from "../components/LoadingSpinner"
 
 Amplify.configure(config as any, {ssr: true});
 
@@ -11,6 +12,7 @@ export default function ResetPassword() {
 
     const [step, setStep] = useState<"ENTER_EMAIL" | "CONFIRM_RESET_PASSWORD_WITH_CODE" | "DONE">("ENTER_EMAIL");
     const [email, setEmail] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
 
     async function handleResetPassword(event: React.FormEvent<HTMLFormElement>) {
@@ -18,6 +20,7 @@ export default function ResetPassword() {
 
         try {
             const form = event.currentTarget;
+            setIsLoading(true);
             const email = (form.elements.namedItem('email') as HTMLInputElement).value;
             setEmail(email);
             const { nextStep } = await resetPassword({ username: email });
@@ -28,10 +31,6 @@ export default function ResetPassword() {
                 case 'CONFIRM_RESET_PASSWORD_WITH_CODE':
                     const codeDeliveryDetails = nextStep.codeDeliveryDetails;
                     setStep("CONFIRM_RESET_PASSWORD_WITH_CODE");
-                    alert(
-                        `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
-    
-                    );
                     break;
                 
                 case 'DONE':
@@ -46,11 +45,14 @@ export default function ResetPassword() {
                     setErrorMessage("Email not found. Please try again.");
                 }
             }
+        } finally {
+            setIsLoading(false);
         }
     }
 
     async function handleConfirmResetPassword(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        setIsLoading(true);
         try {
             const form = event.currentTarget;
             const confirmationCode = (form.elements.namedItem('confirmationCode') as HTMLInputElement).value;
@@ -64,6 +66,8 @@ export default function ResetPassword() {
             setStep("DONE")
         } catch (error) {
             console.log(`Error: failed to confirm password reset`, error)
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -112,7 +116,7 @@ export default function ResetPassword() {
                                 type="submit"
                                 className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >
-                                Send Code
+                                { isLoading ? <LoadingSpinner/> : <>Send Code</>}
                             </button>
                         </div>
                     </form> 
@@ -120,11 +124,11 @@ export default function ResetPassword() {
             )}
 
             { step === "CONFIRM_RESET_PASSWORD_WITH_CODE" && (
-                <div className="mt-10 sm:mx-auto sm:max-w-lg xs:max-w-xs">
+                <div className="mt-10 sm:mx-auto sm:max-w-full xs:max-w-xs">
                    <form onSubmit={handleConfirmResetPassword} className="space-y-6">
-                        <div>
-                            <label htmlFor="confirmationCode" className="block text-md font-medium text-white">
-                                Please enter your confirmation code from {email}
+                        <div className="border-b border-gray-400 mb-12 pb-8">
+                            <label htmlFor="confirmationCode" className="block text-md font-medium text-white mb-4">
+                                Please enter your confirmation code from <u>{email}</u>
                             </label>
                             <div className="mt-2">
                                 <input
@@ -172,7 +176,7 @@ export default function ResetPassword() {
                                 type="submit"
                                 className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >
-                                Confirm
+                                { isLoading ? <LoadingSpinner/> : <>Confirm</>}
                             </button>
                         </div>
                     </form> 

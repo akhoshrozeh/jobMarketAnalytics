@@ -6,7 +6,7 @@ import config from "../../amplify_config";
 import { signIn } from "aws-amplify/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import ErrorWarningModal from "../components/ErrorWarningModal";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 
 Amplify.configure(config as any, {ssr: true});
@@ -14,17 +14,20 @@ Amplify.configure(config as any, {ssr: true});
 export default function Login() {
 
     const [errorMessage, setErrorMessage] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter()
 
     async function handleOnSubmit(event: React.FormEvent<HTMLFormElement>) {   
         event.preventDefault()
         console.log("signin clicked")
+        setErrorMessage("")
+        setIsLoading(true);
         const form = event.currentTarget;
         const email = (form.elements.namedItem('email') as HTMLInputElement).value;
         const password = (form.elements.namedItem('password') as HTMLInputElement).value;
         
         try {
-            const { nextStep }= await signIn({
+            const { nextStep } = await signIn({
                 username: email,
                 password: password
             })
@@ -59,8 +62,9 @@ export default function Login() {
                         break;
                 }
             }
-           
-          
+        }
+        finally {
+            setIsLoading(false);
         }
 
 
@@ -126,15 +130,18 @@ export default function Login() {
                   type="submit"
                   className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
-                  Sign in
+
+                    { isLoading ? <LoadingSpinner/> : <>Login</>
+
+                    }
                 </button>
               </div>
             </form>
   
             <p className="mt-10 text-center text-md/6 text-gray-400">
               Not a member?{' '}
-              <Link href="/sign-up" className="font-semibold text-indigo-400 hover:text-indigo-300 animate-pulse">
-                Sign up here!
+              <Link href="/sign-up" className="font-semibold text-indigo-400 hover:text-indigo-300">
+                <u>Sign up here!</u>
               </Link>
 
             </p>
