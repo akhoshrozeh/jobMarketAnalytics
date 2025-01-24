@@ -55,6 +55,11 @@ export default function ResetPassword() {
             const form = event.currentTarget;
             const confirmationCode = (form.elements.namedItem('confirmationCode') as HTMLInputElement).value;
             const newPassword = (form.elements.namedItem('newPassword') as HTMLInputElement).value;
+            const newPasswordConfirmation = (form.elements.namedItem('newPasswordConfirmation') as HTMLInputElement).value;
+            if (newPassword !== newPasswordConfirmation) {
+                setErrorMessage("Passwords do not match. Please try again.");
+                return;
+            }
             await confirmResetPassword({ username: email, confirmationCode: confirmationCode, newPassword: newPassword });
             setStep("DONE")
         } catch (error) {
@@ -71,6 +76,8 @@ export default function ResetPassword() {
                 alt="Your Company"
                 src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
                 className="mx-auto h-10 w-auto"
+                width={100}
+                height={100}
             />
             <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">Reset Password</h2>
             </div>
@@ -113,21 +120,51 @@ export default function ResetPassword() {
             )}
 
             { step === "CONFIRM_RESET_PASSWORD_WITH_CODE" && (
-                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
+                <div className="mt-10 sm:mx-auto sm:max-w-lg xs:max-w-xs">
                    <form onSubmit={handleConfirmResetPassword} className="space-y-6">
                         <div>
-                            <label htmlFor="email" className="block text-md font-medium text-white">
+                            <label htmlFor="confirmationCode" className="block text-md font-medium text-white">
                                 Please enter your confirmation code from {email}
                             </label>
                             <div className="mt-2">
                                 <input
-                                id="email"
-                                name="email"
-                                type="email"
+                                id="confirmationCode"
+                                name="confirmationCode"
                                 required
-                                autoComplete="email"
                                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
                                 />
+                                
+                            </div>
+                        </div>
+                        <div className="text-red-500">
+                            {errorMessage}
+                        </div>
+                        <div>
+                            <label htmlFor="newPassword" className="block text-md font-medium text-white">
+                                New password:
+                            </label>    
+                            <div className="mt-2">
+                                <input
+                                    id="newPassword"
+                                    name="newPassword"
+                                    type="password"
+                                    required
+                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                                    />
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="newPasswordConfirmation" className="block text-md font-medium text-white">
+                                Confirm new password:
+                            </label>    
+                            <div className="mt-2">
+                                <input
+                                    id="newPasswordConfirmation"
+                                    name="newPasswordConfirmation"
+                                    type="password"
+                                    required
+                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                                    />
                             </div>
                         </div>
                         <div>
@@ -143,9 +180,9 @@ export default function ResetPassword() {
             )}
 
             { step === "DONE" && (
-                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
+                <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-lg">
                     <div className="flex items-center justify-center text-white text-center text-md font-medium">
-                        Your password has successfully been reset! You can 
+                        Your password has successfully been reset! You can now login.
                     </div>
                 </div>
             )}
