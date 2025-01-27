@@ -33,7 +33,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
   return (
     <>
       <div>
-        <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
+        <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50">
           <DialogBackdrop
             transition
             className="fixed inset-0 bg-emc/5 transition-opacity duration-300 ease-linear data-[closed]:opacity-0"
@@ -48,12 +48,12 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
                 <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0">
                   <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
                     <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon aria-hidden="true" className="size-6 text-white" />
+                    <XMarkIcon aria-hidden="true" className="size-10 text-white bg-black rounded-3xl border-2 border-emc" />
                   </button>
                 </div>
               </TransitionChild>
               {/* Sidebar component, swap this element with another sidebar if you like */}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 ring-1 ring-emc/50">
+              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500">
                 <div className="flex h-16 shrink-0 items-center">
                   <Image
                     height={32}
@@ -71,6 +71,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
                           <li key={item.name}>
                             <Link
                               href={item.href}
+                              onClick={() => setSidebarOpen(false)}
                               className={classNames(
                                 pathname === item.href
                                   ? 'bg-emc/50 hover:bg-emc/70 text-white'
@@ -94,8 +95,8 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
         </Dialog>
 
         {/* Static sidebar for desktop */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col mt-24 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500 p-2">
-          {/* Sidebar component, swap this element with another sidebar if you like */}
+        {/* <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col mt-24 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500 p-2">
+
           <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-inherit px-6">
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7 mt-4">
@@ -123,18 +124,19 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
               </ul>
             </nav>
           </div>
-        </div>
+        </div> */}
 
-        <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-inherit  px-4 py-4 shadow-sm sm:px-6 lg:hidden">
-          <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400 lg:hidden">
+        <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-inherit  px-4 py-4 shadow-sm sm:px-6">
+          <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400">
             <span className="sr-only">Open sidebar</span>
-            <Bars3Icon aria-hidden="true" className="size-6" />
+            <Bars3Icon aria-hidden="true" className="size-6 text-emc" />
           </button>
-          <div className="flex-1 text-sm/6 font-semibold text-white">Dashboard</div>
+          <div className="flex-1 text-lg font-semibold text-white">Analytics Dashboard</div>
           
         </div>
 
-        <main className="py-10 lg:pl-72">
+        {/* <main className="py-10 lg:pl-72"> */}
+        <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
