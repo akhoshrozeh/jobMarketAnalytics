@@ -1,25 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { Radio, RadioGroup } from '@headlessui/react'
 import { CheckIcon } from '@heroicons/react/20/solid'
 
 const tiers = [
+  // {
+  //   name: 'Basic',
+  //   id: 'tier-basic',
+  //   href: '#',
+  //   price: "$0",
+  //   description: 'The essentials to provide your best work for clients.',
+  //   features: ['5 products', 'Up to 1,000 subscribers', 'Basic analytics', '48-hour support response time'],
+  //   mostPopular: false,
+  // },
   {
-    name: 'Basic',
-    id: 'tier-basic',
-    href: '#',
-    price: { monthly: '$0', annually: '$0' },
-    description: 'The essentials to provide your best work for clients.',
-    features: ['5 products', 'Up to 1,000 subscribers', 'Basic analytics', '48-hour support response time'],
-    mostPopular: false,
-  },
-  {
-    name: 'Standard',
+    name: 'Standard Lifetime Membership',
     id: 'tier-standard',
     href: '#',
-    price: { monthly: '$9.99', annually: '$69.99' },
-    description: 'A plan that scales with your rapidly growing business.',
+    originalPrice: "$79.99",
+    price: "$39.99",
+    description: 'This plan will provide a strong insight into your journey.',
     features: [
       '25 products',
       'Up to 10,000 subscribers',
@@ -27,23 +27,25 @@ const tiers = [
       '24-hour support response time',
       'Marketing automations',
     ],
-    mostPopular: true,
+    mostPopular: false,
   },
   {
-    name: 'Premium',
+    name: 'Premium Lifetime Membership',
     id: 'tier-premium',
     href: '#',
-    price: { monthly: '$24.99', annually: '$200' },
-    description: 'Dedicated support and infrastructure for your company.',
+    originalPrice: "$139.99",
+    price: "$69.99",
+    description: 'Unlimited and full access to analytics and support for journey.',
     features: [
-      'Unlimited products',
+      'Unlimited access to all features',
       'Unlimited subscribers',
       'Advanced analytics',
       '1-hour, dedicated support response time',
       'Marketing automations',
       'Custom reporting tools',
+      'Custom analytics requests',
     ],
-    mostPopular: false,
+    mostPopular: true,
   },
 ]
 
@@ -51,34 +53,38 @@ function classNames(...classes: any) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function Example() {
+export default function Pricing() {
 
   return (
     <div className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-base/7 font-semibold text-emerald-400">Pricing</h2>
+          <h2 className="text-3xl font-semibold text-emerald-400">Pricing</h2>
           <p className="mt-2 text-balance text-5xl font-semibold tracking-tight text-white sm:text-6xl">
-            Pricing that grows with you
+            One-time payment, lifetime access
           </p>
         </div>
-        <p className="mx-auto mt-6 max-w-2xl text-pretty text-center text-lg font-medium text-gray-400 sm:text-xl/8">
-          Choose an affordable plan that’s packed with the best features for engaging your audience, creating customer
+        <p className="mx-auto mt-6 max-w-2xl text-pretty text-center text-lg font-medium text-gray-200 sm:text-xl/8">
+          Choose an affordable plan that's packed with the best features for engaging your audience, creating customer
           loyalty, and driving sales.
         </p>
-        <div className="mt-16 flex justify-center">
-          
+        <div className="mt-8 mb-16 flex flex-col text-center justify-center text-4xl text-white">
+          <p className="font-bold text-rose-500 mb-1 animate-pulse">🚨 EARLY BIRD OFFER 🚨 </p>
+          50% off for the first 100 customers!
         </div>
-        <div className="isolate mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+        <div className="isolate mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:max-w-5xl lg:grid-cols-2">
           {tiers.map((tier) => (
             <div
               key={tier.id}
               className={classNames(
-                tier.mostPopular ? 'bg-white/5 ring-2 ring-emerald-500' : 'ring-1 ring-white/10',
-                'rounded-3xl p-8 xl:p-10',
+                tier.mostPopular ? 'bg-emerald-300/10 ring-2 ring-emerald-500' : 'ring-1 ring-white/50',
+                'relative rounded-3xl p-8 xl:p-10',
               )}
             >
-              <div className="flex items-center justify-between gap-x-4">
+              <div className="absolute -top-3 -right-3 flex h-16 w-16 items-center justify-center rounded-full bg-rose-500 text-white text-xl font-bold">
+                50%
+              </div>
+              <div className="flex items-center justify-center gap-x-4">
                 <h3 id={tier.id} className="text-lg/8 font-semibold text-white">
                   {tier.name}
                 </h3>
@@ -89,9 +95,15 @@ export default function Example() {
                 ) : null}
               </div>
               <p className="mt-4 text-sm/6 text-gray-300">{tier.description}</p>
+
               <p className="mt-6 flex items-baseline gap-x-1">
-                <span className="text-4xl font-semibold tracking-tight text-white">{tier.price.monthly}</span>
-                <span className="text-sm/6 font-semibold text-gray-300">{}</span>
+                <span className="text-2xl font-semibold tracking-tight text-gray-400 line-through " style={{ textDecorationColor: 'red' }}>{tier.originalPrice}</span>
+                {/* <span className="text-sm/6 font-semibold text-gray-300"></span> */}
+              </p>
+
+              <p className="mt-2 flex items-baseline gap-x-1">
+                <span className="text-4xl font-semibold tracking-tight text-white">{tier.price}</span>
+                {/* <span className="text-sm/6 font-semibold text-gray-300"></span> */}
               </p>
               <a
                 href={tier.href}

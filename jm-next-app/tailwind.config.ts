@@ -11,6 +11,7 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "emc": "#14E8A2",
       },
       animation: {
         'spin-slow': 'spin 40s linear infinite',

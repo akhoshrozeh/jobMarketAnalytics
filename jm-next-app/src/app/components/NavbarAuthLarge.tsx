@@ -3,7 +3,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react"
 // import Image from "next/image"
 // import { BellIcon } from '@heroicons/react/24/outline'
 import SignOutButton from "./SignOutButton"
-import {UserCircleIcon} from "@heroicons/react/24/outline"
+import {Cog6ToothIcon} from "@heroicons/react/24/outline"
 
 
 export default async function NavbarAuthLarge({isLoggedIn}: {isLoggedIn: boolean | string}) {
@@ -30,7 +30,7 @@ export default async function NavbarAuthLarge({isLoggedIn}: {isLoggedIn: boolean
                   <MenuButton className="relative flex ">
                     <span className="absolute -inset-1.5" />
                     <span className="sr-only">Open user menu</span>
-                    <UserCircleIcon aria-hidden="true" className="h-8 w-8" />
+                    <Cog6ToothIcon aria-hidden="true" className="h-6 w-6" />
                     {/* <Image
                       alt=""
                       src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/BrownSpiderMonkey_%28edit2%29.jpg/1920px-BrownSpiderMonkey_%28edit2%29.jpg"
@@ -70,7 +70,7 @@ export default async function NavbarAuthLarge({isLoggedIn}: {isLoggedIn: boolean
 
         ) : (
           <div className="hidden sm:block">
-          <Link href="/login" className="rounded-md px-3 py-2 text-md font-bold text-white/90 bg-emerald-500">
+          <Link href="/login" className="rounded-md px-3 py-2 text-md font-bold text-white/90 bg-emerald-500/90">
               Login
           </Link>
           </div>

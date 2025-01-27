@@ -36,7 +36,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
         <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
           <DialogBackdrop
             transition
-            className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-[closed]:opacity-0"
+            className="fixed inset-0 bg-emc/5 transition-opacity duration-300 ease-linear data-[closed]:opacity-0"
           />
 
           <div className="fixed inset-0 flex">
@@ -53,13 +53,13 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
                 </div>
               </TransitionChild>
               {/* Sidebar component, swap this element with another sidebar if you like */}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-2 ring-1 ring-white/10">
+              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 ring-1 ring-emc/50">
                 <div className="flex h-16 shrink-0 items-center">
                   <Image
                     height={32}
                     width={32}
                     alt="Your Company"
-                    src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
+                    src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
                     className="h-8 w-auto"
                   />
                 </div>
@@ -73,8 +73,8 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
                               href={item.href}
                               className={classNames(
                                 pathname === item.href
-                                  ? 'bg-gray-800 text-white'
-                                  : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                                  ? 'bg-emc/50 hover:bg-emc/70 text-white'
+                                  : 'text-gray-400 hover:bg-emc/70 hover:text-white',
                                 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                               )}
                             >
@@ -94,7 +94,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
         </Dialog>
 
         {/* Static sidebar for desktop */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col mt-24 border-t-4 border-r-4 border-b  rounded-xl border-emerald-500/70 p-2">
+        <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col mt-24 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500 p-2">
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-inherit px-6">
             <nav className="flex flex-1 flex-col">
@@ -107,8 +107,8 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
                           href={item.href}
                           className={classNames(
                             pathname === item.href
-                              ? 'bg-gray-800 text-white'
-                              : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                              ? 'bg-emc/50 hover:bg-emc/70 text-white'
+                              : 'text-gray-400 hover:bg-emc/70 hover:text-white',
                             'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                           )}
                         >

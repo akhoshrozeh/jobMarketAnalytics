@@ -17,14 +17,7 @@ export default async function Navbar() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <div className="shrink-0 text-emerald-500 font-bold text-2xl">
-              JobTrendr
-              {/* <Image
-                height={32}
-                width={32}
-                alt="Your Company"
-                src="/logo.png"
-                className="h-8 w-auto"
-              /> */}
+              Job<span className="text-emc">Trendr</span>
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
