@@ -68,6 +68,7 @@
                   "ALLOW_USER_SRP_AUTH"],
                 accessTokenValidity: 24,
                 idTokenValidity: 24,
+                writeAttributes: []
               },
               
           },

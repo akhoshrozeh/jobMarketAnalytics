@@ -77,7 +77,7 @@ export default function Login() {
           <div className="sm:mx-auto sm:w-full sm:max-w-sm">
             {/* <img
               alt="Your Company"
-              src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
+              src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
               className="mx-auto h-10 w-auto"
             /> */}
             <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">Sign in to your account</h2>
@@ -97,7 +97,7 @@ export default function Login() {
                     type="email"
                     required
                     autoComplete="email"
-                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                   />
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function Login() {
                     Password
                   </label>
                   <div className="text-md">
-                    <Link href="/reset-password" className="font-semibold text-indigo-400 hover:text-indigo-300">
+                    <Link href="/reset-password" className="font-semibold text-emerald-400 hover:text-emerald-300">
                       Forgot password?
                     </Link>
                   </div>
@@ -120,7 +120,7 @@ export default function Login() {
                     type="password"
                     required
                     autoComplete="current-password"
-                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                   />
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function Login() {
               <div>
                 <button
                   type="submit"
-                  className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                  className="flex w-full justify-center rounded-md bg-emerald-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                 >
 
                     { isLoading ? <LoadingSpinner/> : <>Login</>
@@ -140,7 +140,7 @@ export default function Login() {
   
             <p className="mt-10 text-center text-md/6 text-gray-400">
               Not a member?{' '}
-              <Link href="/sign-up" className="font-semibold text-indigo-400 hover:text-indigo-300">
+              <Link href="/sign-up" className="font-semibold text-emerald-400 hover:text-emerald-300">
                 <u>Sign up here!</u>
               </Link>
 

@@ -12,40 +12,44 @@ export default async function Navbar() {
   const isLoggedIn = await existsAccessToken();
 
   return (
-    <Disclosure as="nav" className="bg-gray-900 border-b border-indigo-500">
+    <Disclosure as="nav" className="bg-black border-b-2 border-emerald-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-20">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <div className="shrink-0">
-              <Image
+            <div className="shrink-0 text-emerald-500 font-bold text-2xl">
+              JobTrendr
+              {/* <Image
                 height={32}
                 width={32}
                 alt="Your Company"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
+                src="/logo.png"
                 className="h-8 w-auto"
-              />
+              /> */}
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
                 {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
-                <Link href="/" className="rounded-md bg-gray-900 px-3 py-2 text-md font-bold text-white">
+                <Link 
+                  href="/" 
+                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
+                >
                   Home
                 </Link>
                 <Link
                   href="/metrics/top-skills"
-                  className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
                 >
                   Metrics
                 </Link>
                 <Link
                   href="/jobs"
-                  className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
                 >
                   Jobs
                 </Link>
                 <Link
                   href="/pricing"
-                  className="rounded-md px-3 py-2 text-md font-bold text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
                 >
                   Pricing
                 </Link>
@@ -78,7 +82,7 @@ export default async function Navbar() {
           <DisclosureButton
             as="a"
             href="/"
-            className="block rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white"
+            className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
           >
             Home
           </DisclosureButton>

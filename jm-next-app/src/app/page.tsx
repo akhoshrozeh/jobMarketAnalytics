@@ -13,14 +13,14 @@ export default async function Home() {
         <div className="mx-auto max-w-2xl shrink-0 lg:mx-0 lg:pt-8">
           <Image
             alt="Your Company"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
+            src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
             className="h-11"
             width={100}
             height={100}
           />
           <div className="mt-24 sm:mt-32 lg:mt-16">
             <a href="#" className="inline-flex space-x-6">
-              <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-sm/6 font-semibold text-indigo-400 ring-1 ring-inset ring-indigo-500/20">
+              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm/6 font-semibold text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
                 What&apos;s new
               </span>
               <span className="inline-flex items-center space-x-2 text-sm/6 font-medium text-gray-300">
@@ -38,7 +38,7 @@ export default async function Home() {
           <div className="mt-10 flex items-center gap-x-6">
             <a
               href="#"
-              className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+              className="rounded-md bg-emerald-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
             >
               Get started
             </a>

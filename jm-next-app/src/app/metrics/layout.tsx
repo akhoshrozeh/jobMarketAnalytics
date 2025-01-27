@@ -94,9 +94,9 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
         </Dialog>
 
         {/* Static sidebar for desktop */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col mt-24 border-t border-r border-b rounded-xl border-indigo-500 p-2">
+        <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col mt-24 border-t-4 border-r-4 border-b  rounded-xl border-emerald-500/70 p-2">
           {/* Sidebar component, swap this element with another sidebar if you like */}
-          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6">
+          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-inherit px-6">
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7 mt-4">
                 <li>
@@ -125,22 +125,13 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
           </div>
         </div>
 
-        <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-gray-900 px-4 py-4 shadow-sm sm:px-6 lg:hidden">
+        <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-inherit  px-4 py-4 shadow-sm sm:px-6 lg:hidden">
           <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400 lg:hidden">
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon aria-hidden="true" className="size-6" />
           </button>
           <div className="flex-1 text-sm/6 font-semibold text-white">Dashboard</div>
-          <a href="#">
-            <span className="sr-only">Your profile</span>
-            <Image
-                height={32}
-                width={32}
-              alt=""
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              className="size-8 rounded-full bg-gray-800"
-            />
-          </a>
+          
         </div>
 
         <main className="py-10 lg:pl-72">

@@ -78,7 +78,7 @@ export default function ResetPassword() {
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <Image
                 alt="Your Company"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
+                src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
                 className="mx-auto h-10 w-auto"
                 width={100}
                 height={100}
@@ -107,14 +107,14 @@ export default function ResetPassword() {
                                 required
                                 placeholder="Your Email"
                                 autoComplete="email"
-                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                 />
                             </div>
                         </div>
                         <div>
                             <button
                                 type="submit"
-                                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                className="flex w-full justify-center rounded-md bg-emerald-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                             >
                                 { isLoading ? <LoadingSpinner/> : <>Send Code</>}
                             </button>
@@ -135,7 +135,7 @@ export default function ResetPassword() {
                                 id="confirmationCode"
                                 name="confirmationCode"
                                 required
-                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                 />
                                 
                             </div>
@@ -153,7 +153,7 @@ export default function ResetPassword() {
                                     name="newPassword"
                                     type="password"
                                     required
-                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                     />
                             </div>
                         </div>
@@ -167,14 +167,14 @@ export default function ResetPassword() {
                                     name="newPasswordConfirmation"
                                     type="password"
                                     required
-                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-md/6"
+                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                     />
                             </div>
                         </div>
                         <div>
                             <button
                                 type="submit"
-                                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                className="flex w-full justify-center rounded-md bg-emerald-500 px-3 py-1.5 text-md/6 font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                             >
                                 { isLoading ? <LoadingSpinner/> : <>Confirm</>}
                             </button>

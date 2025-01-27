@@ -160,7 +160,7 @@ export default function SignUp() {
           <div className="sm:mx-auto sm:w-full sm:max-w-sm md:max-w-md">
             {/* <img
               alt="Your Company"
-              src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
+              src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
               className="mx-auto h-10 w-auto"
             /> */}
 
@@ -185,7 +185,7 @@ export default function SignUp() {
                         type="email"
                         required
                         autoComplete="email"
-                        className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                        className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-sm/6"
                     />
                     </div>
                 </div>
@@ -204,7 +204,7 @@ export default function SignUp() {
                         type="password"
                         required
                         autoComplete="current-password"
-                        className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                        className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-sm/6"
                     />
                     </div>
                 </div>
@@ -212,7 +212,7 @@ export default function SignUp() {
                 <div>
                     <button
                     type="submit"
-                    className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    className="flex w-full justify-center rounded-md bg-emerald-500 px-3 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                     >
                         { isLoading ? <LoadingSpinner/> : <>Sign Up</> }
                     </button>
@@ -228,12 +228,12 @@ export default function SignUp() {
                     <label htmlFor="code" className="block text-md mb-4 font-medium text-white">
                       {/* Confirmation Code */}
                     </label>
-                    <input id="code" name="code" type="text" required autoComplete="confirmation-code" className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6" />
+                    <input id="code" name="code" type="text" required autoComplete="confirmation-code" className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-sm/6" />
                   </div>
                   <div>
                   <button
                     type="submit"
-                    className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    className="flex w-full justify-center rounded-md bg-emerald-500 px-3 py-1.5 text-md font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                     >
                      { isLoading ? <LoadingSpinner/> : <>Confirm</> }
                     </button>
@@ -244,7 +244,7 @@ export default function SignUp() {
   
             <p className="mt-10 text-center text-md text-gray-400">
              Already have an account?{' '}
-              <Link href="/login" className="font-semibold text-indigo-400 hover:text-indigo-300">
+              <Link href="/login" className="font-semibold text-emerald-400 hover:text-emerald-300">
                 Login
               </Link>
             </p>

@@ -203,7 +203,7 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
   
       // Add bars with labels
       const bars = svg.append("g")
-        .attr("fill", "#4f46e5")
+        .attr("fill", "#10B981")
         .selectAll("g")
         .data(data)
         .join("g");
@@ -243,7 +243,7 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
           .duration(200)
           .attr("y", y(d.totalOccurrences) - 10)
           .attr("opacity", 1)
-          .attr("fill", "#635ce0");
+          .attr("fill", "#10B981");
   
         // Enlarge the corresponding label
         xAxis.selectAll(".label-text")
@@ -262,7 +262,7 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
           .duration(200)
           .attr("y", y(d.totalOccurrences))
           .attr("opacity", 0.8)
-          .attr("fill", "#4f46e5");
+          .attr("fill", "#10B981");
   
         // Return label to original size
         xAxis.selectAll(".label-text")

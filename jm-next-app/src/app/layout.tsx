@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={quicksand.className}>
         <div>
           {/* Background layer */}
-          <div className="fixed inset-0 bg-gray-900 -z-20" />
+          <div className="fixed inset-0 bg-gray-900/10 -z-20" />
           
           {/* Blob layer */}
           <div className="fixed inset-0 -z-10">
