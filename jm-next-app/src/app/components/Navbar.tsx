@@ -4,7 +4,6 @@ import Link from 'next/link'
 import NavbarAuthLarge from './NavbarAuthLarge'
 import NavBarAuthSmall from './NavBarAuthSmall'
 import existsAccessToken from '@/utils/existsAccessToken'
-import Image from 'next/image'
 
 
 export default async function Navbar() {
