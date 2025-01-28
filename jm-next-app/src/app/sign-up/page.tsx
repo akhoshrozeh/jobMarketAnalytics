@@ -113,19 +113,20 @@ export default function SignUp() {
                 username: String(email),
                 confirmationCode: confirmationCode,
             });
-    
+
+            // TODO: clean up the flow. sign user in on signup
             if (confirmSignUpNextStep.signUpStep === 'COMPLETE_AUTO_SIGN_IN') {
                 // Call `autoSignIn` API to complete the flow
                 const { nextStep } = await autoSignIn();
             
                 if (nextStep.signInStep === 'DONE') {
-                    window.location.href = '/'
+                    window.location.href = '/pricing'
                     
                 }
                 
             }
             else if (confirmSignUpNextStep.signUpStep === 'DONE') {
-                window.location.href = '/login'
+                window.location.href = '/pricing'
             }
 
 
