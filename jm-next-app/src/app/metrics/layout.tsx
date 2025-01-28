@@ -45,7 +45,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
               className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-[closed]:-translate-x-full"
             >
               <TransitionChild>
-                <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0">
+                <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0 mt-8">
                   <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
                     <span className="sr-only">Close sidebar</span>
                     <XMarkIcon aria-hidden="true" className="size-10 text-white bg-black rounded-3xl border-2 border-emc" />
@@ -53,7 +53,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
                 </div>
               </TransitionChild>
               {/* Sidebar component, swap this element with another sidebar if you like */}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500">
+              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500 mt-16">
                 <div className="flex h-16 shrink-0 items-center">
                   <Image
                     height={32}
@@ -129,7 +129,7 @@ export default function SidebarLayout({children}: {children: React.ReactNode}) {
         <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-inherit  px-4 py-4 shadow-sm sm:px-6">
           <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400">
             <span className="sr-only">Open sidebar</span>
-            <Bars3Icon aria-hidden="true" className="size-6 text-emc" />
+            <Bars3Icon aria-hidden="true" className="size-6 text-emc animate-pulse" />
           </button>
           <div className="flex-1 text-lg font-semibold text-white">Analytics Dashboard</div>
           
