@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Quicksand } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import DynamicBlob from "@/app/components/DynamicBlob";
 import Navbar from "@/app/components/Navbar";
 import Providers from "@/providers/AmplifyProvider";
 
-const quicksand = Quicksand({
-  variable: "--font-quicksand",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-}); 
+});
 
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={quicksand.className}>
+      <body className={spaceGrotesk.className}>
         <div>
           {/* Background layer */}
           <div className="fixed inset-0 bg-gray-900/10 -z-20" />
