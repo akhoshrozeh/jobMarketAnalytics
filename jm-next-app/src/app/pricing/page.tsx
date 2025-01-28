@@ -1,22 +1,13 @@
-'use client'
+'use server'
 
-import { useState } from 'react'
 import { CheckIcon } from '@heroicons/react/20/solid'
+import existsAccessToken from '@/utils/existsAccessToken'
 
 const tiers = [
-  // {
-  //   name: 'Basic',
-  //   id: 'tier-basic',
-  //   href: '#',
-  //   price: "$0",
-  //   description: 'The essentials to provide your best work for clients.',
-  //   features: ['5 products', 'Up to 1,000 subscribers', 'Basic analytics', '48-hour support response time'],
-  //   mostPopular: false,
-  // },
   {
     name: 'Standard Lifetime Membership',
     id: 'tier-standard',
-    href: '#',
+    href: 'https://buy.stripe.com/test_9AQcNQ3qg1cj0Q86or',
     originalPrice: "$79.99",
     price: "$39.99",
     description: 'This plan will provide a strong insight into your journey.',
@@ -32,7 +23,7 @@ const tiers = [
   {
     name: 'Premium Lifetime Membership',
     id: 'tier-premium',
-    href: '#',
+    href: 'https://buy.stripe.com/test_14kg021i808f2Yg8wy',
     originalPrice: "$139.99",
     price: "$69.99",
     description: 'Unlimited and full access to analytics and support for journey.',
@@ -53,7 +44,18 @@ function classNames(...classes: any) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function Pricing() {
+export default async function Pricing() {
+
+  const isLoggedIn = await existsAccessToken();
+
+  // Redirect users to signup before purchasing
+  if (!isLoggedIn) {
+    tiers.forEach(tier => {
+      tier.href = '/login'
+    })
+  }
+
+
 
   return (
     <div className="py-24 sm:py-32">
@@ -65,8 +67,7 @@ export default function Pricing() {
           </p>
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-center text-lg font-medium text-gray-200 sm:text-xl/8">
-          Choose an affordable plan that's packed with the best features for engaging your audience, creating customer
-          loyalty, and driving sales.
+         No recurring payments. No subscriptions. No BS.
         </p>
         <div className="mt-8 mb-16 flex flex-col text-center justify-center text-4xl text-white">
           <p className="font-bold text-rose-500 mb-1 animate-pulse">🚨 EARLY BIRD OFFER 🚨 </p>
