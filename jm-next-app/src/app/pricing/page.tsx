@@ -1,13 +1,15 @@
 'use server'
 
 import { CheckIcon } from '@heroicons/react/20/solid'
-import existsAccessToken from '@/utils/existsAccessToken'
+import { verifyIdToken } from '@/utils/verifyAccessToken'
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 const tiers = [
   {
     name: 'Standard Lifetime Membership',
     id: 'tier-standard',
-    href: 'https://buy.stripe.com/test_9AQcNQ3qg1cj0Q86or',
+    href: (isProduction ? "#" : 'https://buy.stripe.com/test_9AQcNQ3qg1cj0Q86or') + '?prefilled_email=' ,
     originalPrice: "$79.99",
     price: "$39.99",
     description: 'This plan will provide a strong insight into your journey.',
@@ -23,7 +25,7 @@ const tiers = [
   {
     name: 'Premium Lifetime Membership',
     id: 'tier-premium',
-    href: 'https://buy.stripe.com/test_14kg021i808f2Yg8wy',
+    href: isProduction ? "#" : 'https://buy.stripe.com/test_14kg021i808f2Yg8wy',
     originalPrice: "$139.99",
     price: "$69.99",
     description: 'Unlimited and full access to analytics and support for journey.',
@@ -39,19 +41,25 @@ const tiers = [
     mostPopular: true,
   },
 ]
-
+console.log("env", process.env.NODE_ENV)
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(' ')
 }
 
 export default async function Pricing() {
 
-  const isLoggedIn = await existsAccessToken();
+  const idToken = await verifyIdToken();
+  console.log("idToken", idToken?.email)
 
   // Redirect users to signup before purchasing
-  if (!isLoggedIn) {
+  if (!idToken) {
     tiers.forEach(tier => {
       tier.href = '/login'
+    })
+  }
+   else {
+    tiers.forEach(tier => {
+      tier.href = `${tier.href}${encodeURIComponent(String(idToken?.email))}`
     })
   }
 

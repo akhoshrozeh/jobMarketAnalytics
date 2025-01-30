@@ -2,13 +2,19 @@ import { CognitoJwtVerifier } from 'aws-jwt-verify'
 import { cookies } from 'next/headers'
 
 // Create verifier once, outside the middleware function
-const verifier = CognitoJwtVerifier.create({
+const verifierAccessToken = CognitoJwtVerifier.create({
     userPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
     tokenUse: "access",
     clientId: String(process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID),
 });
 
-export default async function verifyAccessToken() {
+const verifierIdToken = CognitoJwtVerifier.create({
+    userPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
+    tokenUse: "id",
+    clientId: String(process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID),
+});
+
+export async function verifyAccessToken() {
 
     const cookieStore = await cookies();
     const allCookies = Array.from(cookieStore.getAll());
@@ -21,7 +27,7 @@ export default async function verifyAccessToken() {
 
 
     try {
-        const payload = await verifier.verify(accessTokenCookie.value);
+        const payload = await verifierAccessToken.verify(accessTokenCookie.value);
         return payload;
     } catch {
         console.log("Token not valid!");
@@ -29,3 +35,26 @@ export default async function verifyAccessToken() {
     }
 
   }
+
+
+export async function verifyIdToken() {
+    const cookieStore = await cookies();
+    const allCookies = Array.from(cookieStore.getAll());
+    const idTokenCookie = allCookies.find(cookie => cookie.name.includes('idToken'));
+    console.log("idTokenCookie", idTokenCookie?.value)
+
+    if (!idTokenCookie) {
+        console.log("No id token cookie found");
+        return null;
+    }
+
+    try {
+        console.log(idTokenCookie)
+        const payload = await verifierIdToken.verify(idTokenCookie.value);
+        return payload;
+    } catch {
+        console.log("Token not valid!");
+        return null;
+    }
+
+}
