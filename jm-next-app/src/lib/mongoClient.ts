@@ -3,7 +3,7 @@ import * as mongodb from "mongodb";
 
 const MongoClient = mongodb.MongoClient;
 const mongoURI = Resource.MongoReadURI.value;
-const db = Resource.JMDatabase.value;
+const db = Resource.JobsDatabase.value;
 
 let cachedDb: mongodb.Db | null = null;
 

@@ -22,7 +22,7 @@ declare module "sst" {
       "id": string
       "type": "sst.aws.CognitoIdentityPool"
     }
-    "JMDatabase": {
+    "JobTrendrAppDB": {
       "type": "sst.sst.Secret"
       "value": string
     }
@@ -34,6 +34,10 @@ declare module "sst" {
       "id": string
       "secret": string
       "type": "sst.aws.CognitoUserPoolClient"
+    }
+    "JobsDatabase": {
+      "type": "sst.sst.Secret"
+      "value": string
     }
     "MongoReadURI": {
       "type": "sst.sst.Secret"

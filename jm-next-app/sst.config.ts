@@ -14,14 +14,20 @@
     
     async run() {
       const mongoReadURI = new sst.Secret("MongoReadURI");
-      const JMDatabase = new sst.Secret("JMDatabase");
+
+      // There's one database for the job data, which is used in both production and dev environments
+      const JobsDatabase = new sst.Secret("JobsDatabase");
+      // Then there's two databases for App data (i.e. User data)
+      // In SST secrets, the names of the DBs are different depending on production or dev environments
+      const JobTrendrAppDB = new sst.Secret("JobTrendrAppDB")
+
       const apiEndpoint = new sst.Secret("APIEndpoint");
       const region = new sst.Secret("Region");
       const mongoCreateUserURI = new sst.Secret("CreateUserURI")
 
       const createUser = new sst.aws.Function("CreateUser", {
         handler: "src/functions/createUser.handler",
-        link: [mongoCreateUserURI, JMDatabase]
+        link: [mongoCreateUserURI, JobTrendrAppDB]
       })
 
       const sanitizeSignUp = new sst.aws.Function("SanitizeSignUp", {
@@ -68,7 +74,8 @@
                   "ALLOW_USER_SRP_AUTH"],
                 accessTokenValidity: 24,
                 idTokenValidity: 24,
-                writeAttributes: []
+                writeAttributes: [],
+                readAttributes: ["email", "custom:tier"]
               },
               
           },
@@ -86,7 +93,7 @@
       });   
 
       new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, mongoCreateUserURI, JMDatabase, apiEndpoint, region, userPool, userPoolClient, identityPool],
+        link: [mongoReadURI, mongoCreateUserURI, JobTrendrAppDB, JobsDatabase, apiEndpoint, region, userPool, userPoolClient, identityPool],
         domain: "jobtrendr.com",
         environment: {
           NEXT_PUBLIC_USER_POOL_ID: userPool.id,
@@ -96,7 +103,7 @@
       });
 
       const api = new sst.aws.ApiGatewayV2("api", {
-        link: [mongoReadURI, JMDatabase]    
+        link: [mongoReadURI, JobTrendrAppDB, JobsDatabase]    
       });
       
       api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
