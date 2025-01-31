@@ -10,6 +10,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "BasicMembershipPriceId": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "CreateUser": {
       "name": string
       "type": "sst.aws.Function"
@@ -47,7 +51,23 @@ declare module "sst" {
       "type": "sst.aws.Nextjs"
       "url": string
     }
+    "PremiumMembershipPriceId": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Region": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "STRIPE_PUBLISHABLE_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "STRIPE_SECRET_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "STRIPE_WEBHOOK_SIG": {
       "type": "sst.sst.Secret"
       "value": string
     }

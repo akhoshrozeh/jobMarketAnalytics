@@ -25,6 +25,14 @@
       const region = new sst.Secret("Region");
       const mongoCreateUserURI = new sst.Secret("CreateUserURI")
 
+      const stripeSecretKey = new sst.Secret("STRIPE_SECRET_KEY");
+      const stripePublishableKey = new sst.Secret("STRIPE_PUBLISHABLE_KEY");
+      const stripeWebhookSig = new sst.Secret("STRIPE_WEBHOOK_SIG");
+      const basicMembershipPriceId = new sst.Secret("BasicMembershipPriceId")
+      const premiumMembershipPriceId = new sst.Secret("PremiumMembershipPriceId")
+
+
+
       const createUser = new sst.aws.Function("CreateUser", {
         handler: "src/functions/createUser.handler",
         link: [mongoCreateUserURI, JobTrendrAppDB]
@@ -93,7 +101,20 @@
       });   
 
       new sst.aws.Nextjs("MyWeb", {
-        link: [mongoReadURI, mongoCreateUserURI, JobTrendrAppDB, JobsDatabase, apiEndpoint, region, userPool, userPoolClient, identityPool],
+        link: [
+          mongoReadURI, 
+          mongoCreateUserURI, 
+          JobTrendrAppDB,
+          JobsDatabase,
+          apiEndpoint,
+          region,
+          userPool,
+          userPoolClient,
+          identityPool,
+          basicMembershipPriceId,
+          premiumMembershipPriceId,
+          stripeSecretKey
+        ],
         domain: "jobtrendr.com",
         environment: {
           NEXT_PUBLIC_USER_POOL_ID: userPool.id,
@@ -103,12 +124,13 @@
       });
 
       const api = new sst.aws.ApiGatewayV2("api", {
-        link: [mongoReadURI, JobTrendrAppDB, JobsDatabase]    
+        link: [mongoReadURI, JobTrendrAppDB, JobsDatabase, stripeSecretKey, stripePublishableKey, stripeWebhookSig, mongoCreateUserURI, basicMembershipPriceId, premiumMembershipPriceId]    
       });
       
       api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
       api.route("GET /get-jobs", "src/functions/getJobs.handler", );
       api.route("GET /get-keywords-connected-by-job", "src/functions/getKeywordsConnectedByJob.handler", );
+      api.route("POST /webhook", "src/functions/webhook.handler", );
 
 
     
