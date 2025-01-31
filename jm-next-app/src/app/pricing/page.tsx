@@ -2,14 +2,20 @@
 
 import { CheckIcon } from '@heroicons/react/20/solid'
 import { verifyIdToken } from '@/utils/verifyAccessToken'
+import { Stripe } from 'stripe';
+import { Resource } from 'sst';
 
-const isProduction = process.env.NODE_ENV === 'production';
+const stripeSecretKey = Resource.STRIPE_SECRET_KEY.value;
+const stripe = new Stripe(stripeSecretKey)
+const basicPriceId = Resource.BasicMembershipPriceId.value;
+const premiumPriceId = Resource.PremiumMembershipPriceId.value;
+
 
 const tiers = [
   {
     name: 'Standard Lifetime Membership',
     id: 'tier-standard',
-    href: (isProduction ? "#" : 'https://buy.stripe.com/test_9AQcNQ3qg1cj0Q86or') + '?prefilled_email=' ,
+    href: '',
     originalPrice: "$79.99",
     price: "$39.99",
     description: 'This plan will provide a strong insight into your journey.',
@@ -25,7 +31,7 @@ const tiers = [
   {
     name: 'Premium Lifetime Membership',
     id: 'tier-premium',
-    href: isProduction ? "#" : 'https://buy.stripe.com/test_14kg021i808f2Yg8wy',
+    href: '',
     originalPrice: "$139.99",
     price: "$69.99",
     description: 'Unlimited and full access to analytics and support for journey.',
@@ -41,29 +47,45 @@ const tiers = [
     mostPopular: true,
   },
 ]
-console.log("env", process.env.NODE_ENV)
+
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(' ')
 }
 
 export default async function Pricing() {
 
+  // Returns null if invalid token or dne
   const idToken = await verifyIdToken();
-  console.log("idToken", idToken?.email)
 
-  // Redirect users to signup before purchasing
-  if (!idToken) {
-    tiers.forEach(tier => {
-      tier.href = '/login'
-    })
+  if (idToken) {
+      const basicPaymentLink = await stripe.paymentLinks.create({
+        line_items: [
+          {
+            price: basicPriceId,
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          jobTrenderEmail: String(idToken?.email)
+        }
+      });
+    
+      const premiumPaymentLink = await stripe.paymentLinks.create({
+        line_items: [
+          {
+            price: premiumPriceId,
+            quantity: 1
+          }
+        ],
+        metadata: {
+          jobTrenderEmail: String(idToken?.email)
+        }
+        
+      })
+
+    tiers[0].href = basicPaymentLink.url + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
+    tiers[1].href = premiumPaymentLink.url + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
   }
-   else {
-    tiers.forEach(tier => {
-      tier.href = `${tier.href}${encodeURIComponent(String(idToken?.email))}`
-    })
-  }
-
-
 
   return (
     <div className="py-24 sm:py-32">
