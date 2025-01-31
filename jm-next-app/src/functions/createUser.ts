@@ -1,4 +1,4 @@
-import { connectToDatabase } from "@/lib/mongoCreateUserClient";
+import { connectToDatabase } from "@/lib/mongoCreateUpdateUserClient";
 
 
 export const handler = async (event: any): Promise<any>  => {
