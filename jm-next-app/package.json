@@ -24,7 +24,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sst": "3.4.18",
-    "stripe": "^17.5.0"
+    "stripe": "^17.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
