@@ -56,6 +56,7 @@ export default async function Pricing() {
 
   // Returns null if invalid token or dne
   const idToken = await verifyIdToken();
+  console.log("idToken: ", idToken)
 
   if (idToken) {
       const basicPaymentLink = await stripe.paymentLinks.create({
@@ -66,7 +67,8 @@ export default async function Pricing() {
           },
         ],
         metadata: {
-          jobTrenderEmail: String(idToken?.email)
+          metadata_email: String(idToken?.email),
+          metadata_username: String(idToken?.sub)
         }
       });
     
@@ -78,7 +80,8 @@ export default async function Pricing() {
           }
         ],
         metadata: {
-          jobTrenderEmail: String(idToken?.email)
+          metadata_email: String(idToken?.email),
+          metadata_username: String(idToken?.sub)
         }
         
       })
