@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-amplify/adapter-nextjs": "^1.4.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.738.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@observablehq/plot": "^0.6.16",
