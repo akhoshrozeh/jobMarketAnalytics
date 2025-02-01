@@ -7,8 +7,6 @@ export const handler = async (event: any): Promise<any>  => {
 
     const basicPriceId = Resource.BasicMembershipPriceId.value
     const premiumPriceId = Resource.PremiumMembershipPriceId.value
-    
-    // console.log("webhook handler called. event:", event);
 
     let stripe;
     let stripeEvent;
@@ -22,7 +20,7 @@ export const handler = async (event: any): Promise<any>  => {
         );
         
     } catch (err) {
-        console.log(`Stripe webhook signature verification failed: ${err}`);
+        console.log(`Error: Stripe webhook signature verification failed: ${err}`);
         return {
             statusCode: 400,
             body: JSON.stringify({ error: err  })
@@ -30,45 +28,28 @@ export const handler = async (event: any): Promise<any>  => {
     }
 
     
-    // console.log("StripeEvent: ", stripeEvent)
-    // console.log("EventType: ", eventType)
-    // console.log("StripeEventDetails: ", stripeEvent.data.object.customer_details)
-    // console.log("StripeEventDetails: ", stripeEvent.data.object.metadata.jobTrenderEmail)
-    
-    const eventType = stripeEvent.type ? stripeEvent.type : '';
-    
-    console.log('eventType:', eventType)
-
     
     // Extract data from Stripe event
     try {
         const db = await connectToDatabase();
-        console.log("stripeEvent.data.object: ", stripeEvent.data.object)
-        const jobTrenderEmail = stripeEvent.data.object.metadata.metadata_email;
-        const username = stripeEvent.data.object.metadata.metadata_username;
-        console.log("jobTrenderEmail: ", jobTrenderEmail)
-        console.log("username: ", username)
 
-
-        // const user = await db.collection("Users").findOne({ email: jobTrenderEmail });
-        // console.log("useR", user)
-
-
+        const eventType = stripeEvent.type ? stripeEvent.type : '';
+        const jobTrenderEmail = (stripeEvent.data.object as any).metadata.metadata_email ;
+        const username = (stripeEvent.data.object as any).metadata.metadata_username;
 
         switch (eventType) {
+            
             case 'checkout.session.completed': {
-                console.log("hereeeee")
 
                 // Need to get the session to see what was purchased
                 const session = await stripe.checkout.sessions.retrieve(
-                    stripeEvent.data.object?.id,
+                    (stripeEvent.data.object as any)?.id,
                     {
                         expand: ['line_items']
                     }
                 )
                 const purchasedPriceId = session.line_items?.data[0]?.price?.id;
 
-            
                 // Connect to Cognito to update user attribute "tier" after purchase
                 const config = {
                     userPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
@@ -77,14 +58,9 @@ export const handler = async (event: any): Promise<any>  => {
                 }
                 const cognitoClient = new CognitoIdentityProviderClient(config)
 
-
-                
-
-                
-
-
+                // User bought Basic plan
                 if (purchasedPriceId == basicPriceId) {
-                    console.log("basic purchased");
+                    console.log(`${jobTrenderEmail} purchased basic membership.`);
 
                     const input = {
                         UserAttributes: [ 
@@ -95,23 +71,30 @@ export const handler = async (event: any): Promise<any>  => {
                         ],
                         UserPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
                         Username: username,
-                        
                     }
                     
                     const command = new AdminUpdateUserAttributesCommand(input);
                     const response = await cognitoClient.send(command);
-                    console.log("response: ", response)
+
                     if (response.$metadata.httpStatusCode != 200) {
-                        const err = `AdminUpdateUserAttributes returned HTTP response code ${response.$metadata.httpStatusCode}. User info was not updated.`;
+                        const err = `AdminUpdateUserAttributes returned HTTP response code ${response.$metadata.httpStatusCode}. Cognito User info was not updated.`;
                         throw new Error(err)
+                    }
+
+                    const res = await db.collection("Users").updateOne(
+                        { username: username },
+                        { $set: { tier: "premium", updatedAt: new Date() }}
+                    )
+                    if (res.modifiedCount != 1) {
+                        throw new Error("User document was not updated in MongoDB")
                     }
                     
                     
                 } 
 
-                // User bought premium
+                // User bought Premium plan
                 else if (purchasedPriceId == premiumPriceId) {
-                    console.log("premium purchased")
+                    console.log(`${jobTrenderEmail} purchased premium membership.`);
 
                     const input = {
                         UserAttributes: [ 
@@ -127,11 +110,20 @@ export const handler = async (event: any): Promise<any>  => {
                     
                     const command = new AdminUpdateUserAttributesCommand(input);
                     const response = await cognitoClient.send(command);
-                    console.log("response: ", response)
+ 
                     if (response.$metadata.httpStatusCode != 200) {
-                        const err = `AdminUpdateUserAttributes returned HTTP response code ${response.$metadata.httpStatusCode}. User info was not updated.`;
+                        const err = `AdminUpdateUserAttributes returned HTTP response code ${response.$metadata.httpStatusCode}. Cognito User info was not updated.`;
                         throw new Error(err)
                     }
+
+                    const res = await db.collection("Users").updateOne(
+                        { username: username },
+                        { $set: { tier: "premium", updatedAt: new Date() }}
+                    )
+                    if (res.modifiedCount != 1) {
+                        throw new Error("User document was not updated in MongoDB")
+                    }
+
                     
 
                 }
@@ -161,37 +153,8 @@ export const handler = async (event: any): Promise<any>  => {
     }
 
 
-
     return {
         statusCode: 200,
         body: JSON.stringify({ message: "Stripe webhook successfully processed." })
     }
-
-    // const initDate = new Date()
-
-    // try {
-
-
-    //     const userDocument = {
-    //         username: event.userName,
-    //         email: event.request.userAttributes.email,
-    //         firstName: "",
-    //         lastName: "",
-    //         createdAt: initDate,
-    //         updatedAt: initDate,
-    //         tier: "free",
-    //         profilePicture: "",
-    //         resume: "",
-    //         skills: [], // user's skills 
-    //         applications: [], // tracks a user
-    //     }
-
-    //     await db.collection("Users").insertOne(userDocument)
-
-    //     // Since this function is called by Cognito on postConfirmation, it expects the event returned
-    //     return event
-    // } catch (error) {
-    //     console.error("Error:", error)       
-    //     return event 
-    // }
 }
