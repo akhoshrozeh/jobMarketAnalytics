@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/mongoCreateUpdateUserClient";
 export const handler = async (event: any): Promise<any>  => {
     
     const db = await connectToDatabase();
-    console.log("createUser handler called. event:", event);
+    console.log("createUser invoked");
 
     const initDate = new Date()
 
