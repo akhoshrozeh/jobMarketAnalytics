@@ -42,6 +42,8 @@
         handler: "src/functions/sanitizeSignUp.handler",
       })
 
+      
+
 
       const userPool = new sst.aws.CognitoUserPool("JobTrendrUserPool", {
         usernames: ["email"],
@@ -59,17 +61,19 @@
                 attributeDataType: "String",
                 name: "tier",
                 mutable: true,              
-            }
+              }
+            ],
+          },
 
-            ]   
-          }
         },
         triggers: {
           postConfirmation: createUser.arn,
           preSignUp: "src/functions/sanitizeSignUp.handler"
         }
 
+
       });
+
 
 
       const userPoolClient = userPool.addClient("JobTrendrUserPoolClient", {
@@ -123,6 +127,22 @@
         }
       });
 
+      const webhookHandler = new sst.aws.Function("WebhookHandler", {
+        handler: "src/functions/webhook.handler",
+        permissions: [
+          {
+            actions: ["cognito-idp:AdminUpdateUserAttributes"],
+            resources: [userPool.arn] // Or "arn:aws:cognito-idp:REGION:ACCOUNT:userpool/POOL_ID"
+          }
+        ],
+        link: [stripeSecretKey, stripeWebhookSig, basicMembershipPriceId, premiumMembershipPriceId, mongoCreateUserURI, JobTrendrAppDB],
+        environment: {
+            NEXT_PUBLIC_USER_POOL_ID: userPool.id,
+            NEXT_PUBLIC_USER_POOL_CLIENT_ID: userPoolClient.id,
+            NEXT_PUBLIC_IDENTITY_POOL_ID: identityPool.id,
+        }
+      });
+
       const api = new sst.aws.ApiGatewayV2("api", {
         link: [mongoReadURI, JobTrendrAppDB, JobsDatabase, stripeSecretKey, stripePublishableKey, stripeWebhookSig, mongoCreateUserURI, basicMembershipPriceId, premiumMembershipPriceId]    
       });
@@ -130,10 +150,10 @@
       api.route("GET /get-keywords-counted", "src/functions/getKeywordsCounted.handler", );
       api.route("GET /get-jobs", "src/functions/getJobs.handler", );
       api.route("GET /get-keywords-connected-by-job", "src/functions/getKeywordsConnectedByJob.handler", );
-      api.route("POST /webhook", "src/functions/webhook.handler", );
+      api.route("POST /webhook", webhookHandler.arn);
 
 
-    
+      
     }
 
 })
