@@ -20,7 +20,7 @@ export const handler = async (event: any): Promise<any>  => {
 
 
         const userDocument = {
-            username: event.userName,
+            username: event.request.userAttributes.sub,
             email: event.request.userAttributes.email,
             firstName: "",
             lastName: "",
@@ -34,11 +34,13 @@ export const handler = async (event: any): Promise<any>  => {
         }
 
         await db.collection("Users").insertOne(userDocument)
-
-        // Since this function is called by Cognito on postConfirmation, it expects the event returned
-        return event
+        
+        
     } catch (error) {
         console.error("Error:", error)       
-        return event 
+        
+    // Since this function is called by Cognito on postConfirmation, it expects the event returned
+    } finally {
+        return event
     }
 }
