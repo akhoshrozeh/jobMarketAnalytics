@@ -69,6 +69,13 @@ export default async function Pricing() {
         metadata: {
           metadata_email: String(idToken?.email),
           metadata_username: String(idToken?.sub)
+        },
+        after_completion: {
+          type: 'redirect',
+          redirect: {
+          url: process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation" 
+          }
+
         }
       });
     
@@ -82,6 +89,13 @@ export default async function Pricing() {
         metadata: {
           metadata_email: String(idToken?.email),
           metadata_username: String(idToken?.sub)
+        },
+        after_completion: {
+          type: 'redirect',
+          redirect: {
+          url: process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation" 
+          }
+
         }
         
       })
