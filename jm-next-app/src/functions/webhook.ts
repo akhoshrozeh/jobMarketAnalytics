@@ -1,14 +1,14 @@
 import { connectToDatabase } from "@/lib/mongoCreateUpdateUserClient";
 import { Stripe } from "stripe";
 import { Resource } from "sst";
-
+import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } from "@aws-sdk/client-cognito-identity-provider";
 
 export const handler = async (event: any): Promise<any>  => {
 
     const basicPriceId = Resource.BasicMembershipPriceId.value
     const premiumPriceId = Resource.PremiumMembershipPriceId.value
     
-    console.log("webhook handler called. event:", event);
+    // console.log("webhook handler called. event:", event);
 
     let stripe;
     let stripeEvent;
@@ -43,32 +43,100 @@ export const handler = async (event: any): Promise<any>  => {
     // Extract data from Stripe event
     try {
         const db = await connectToDatabase();
-        const jobTrenderEmail = stripeEvent.data.object.metadata.jobTrenderEmail;
-        const user = await db.collection("Users").findOne({ email: jobTrenderEmail });
-        console.log("useR", user)
+        console.log("stripeEvent.data.object: ", stripeEvent.data.object)
+        const jobTrenderEmail = stripeEvent.data.object.metadata.metadata_email;
+        const username = stripeEvent.data.object.metadata.metadata_username;
+        console.log("jobTrenderEmail: ", jobTrenderEmail)
+        console.log("username: ", username)
+
+
+        // const user = await db.collection("Users").findOne({ email: jobTrenderEmail });
+        // console.log("useR", user)
 
 
 
         switch (eventType) {
             case 'checkout.session.completed': {
                 console.log("hereeeee")
+
+                // Need to get the session to see what was purchased
                 const session = await stripe.checkout.sessions.retrieve(
                     stripeEvent.data.object?.id,
                     {
                         expand: ['line_items']
                     }
                 )
-
-                console.log('session', session.line_items?.data[0]?.price?.id)
                 const purchasedPriceId = session.line_items?.data[0]?.price?.id;
 
+            
+                // Connect to Cognito to update user attribute "tier" after purchase
+                const config = {
+                    userPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
+                    userPoolClientId: String(process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID),
+                    identityPoolId: String(process.env.NEXT_PUBLIC_IDENTITY_POOL_ID),
+                }
+                const cognitoClient = new CognitoIdentityProviderClient(config)
+
+
+                
+
+                
+
+
                 if (purchasedPriceId == basicPriceId) {
-                    console.log("basic purchased")
+                    console.log("basic purchased");
+
+                    const input = {
+                        UserAttributes: [ 
+                            {
+                                Name: "custom:tier",
+                                Value: "basic"
+                            }   
+                        ],
+                        UserPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
+                        Username: username,
+                        
+                    }
+                    
+                    const command = new AdminUpdateUserAttributesCommand(input);
+                    const response = await cognitoClient.send(command);
+                    console.log("response: ", response)
+                    if (response.$metadata.httpStatusCode != 200) {
+                        const err = `AdminUpdateUserAttributes returned HTTP response code ${response.$metadata.httpStatusCode}. User info was not updated.`;
+                        throw new Error(err)
+                    }
+                    
+                    
                 } 
+
+                // User bought premium
                 else if (purchasedPriceId == premiumPriceId) {
                     console.log("premium purchased")
 
+                    const input = {
+                        UserAttributes: [ 
+                            {
+                                Name: "custom:tier",
+                                Value: "premium"
+                            }   
+                        ],
+                        UserPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
+                        Username: username,
+                        
+                    }
+                    
+                    const command = new AdminUpdateUserAttributesCommand(input);
+                    const response = await cognitoClient.send(command);
+                    console.log("response: ", response)
+                    if (response.$metadata.httpStatusCode != 200) {
+                        const err = `AdminUpdateUserAttributes returned HTTP response code ${response.$metadata.httpStatusCode}. User info was not updated.`;
+                        throw new Error(err)
+                    }
+                    
+
                 }
+
+                // TODO: User upgrades from basic to premium
 
                 break;
 
@@ -102,14 +170,6 @@ export const handler = async (event: any): Promise<any>  => {
     // const initDate = new Date()
 
     // try {
-
-    //     // Validate required fields
-    //     if (!event.userName) {
-    //         throw new Error("Username is required");
-    //     }
-    //     if (!event.request?.userAttributes?.email) {
-    //         throw new Error("Email is required");
-    //     }
 
 
     //     const userDocument = {
