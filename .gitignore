@@ -1,3 +1,4 @@
 /jm-next-app/node_modules/*
 .DS_Store
 */**/.DS_Store
+/job-market-cdk/.DS_Store
