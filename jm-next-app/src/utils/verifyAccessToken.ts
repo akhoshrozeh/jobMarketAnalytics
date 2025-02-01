@@ -29,8 +29,8 @@ export async function verifyAccessToken() {
     try {
         const payload = await verifierAccessToken.verify(accessTokenCookie.value);
         return payload;
-    } catch {
-        console.log("Token not valid!");
+    } catch (err) {
+        console.log("Token not valid!", err);
         return false;
     }
 
@@ -52,8 +52,8 @@ export async function verifyIdToken() {
         console.log(idTokenCookie)
         const payload = await verifierIdToken.verify(idTokenCookie.value);
         return payload;
-    } catch {
-        console.log("Token not valid!");
+    } catch (err) {
+        console.log("Token not valid!", err);
         return null;
     }
 
