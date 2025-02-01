@@ -32,7 +32,8 @@
       const premiumMembershipPriceId = new sst.Secret("PremiumMembershipPriceId")
 
 
-
+      // Creates a user document in MongoDB after account creation
+      // Invoked as a userPool Trigger
       const createUser = new sst.aws.Function("CreateUser", {
         handler: "src/functions/createUser.handler",
         link: [mongoCreateUserURI, JobTrendrAppDB]
