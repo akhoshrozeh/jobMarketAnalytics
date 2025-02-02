@@ -5,37 +5,50 @@ import { CognitoJwtVerifier } from 'aws-jwt-verify'
 // Create verifier once, outside the middleware function
 const verifier = CognitoJwtVerifier.create({
   userPoolId: String(process.env.NEXT_PUBLIC_USER_POOL_ID),
-  tokenUse: "access",
+  tokenUse: "id",
   clientId: String(process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID),
 });
 
 export async function middleware(request: NextRequest) {
   const allCookies = Array.from(request.cookies.getAll());
-  const accessTokenCookie = allCookies.find(cookie => cookie.name.includes('accessToken'));
+  const idTokenCookie = allCookies.find(cookie => cookie.name.includes('idToken'));
+
+  let validToken = false;
+  let tier = 'free';
+
+  // check the validity and tier
+  if (idTokenCookie) {
+
+    try {
+      const payload = await verifier.verify(idTokenCookie.value);
+      validToken = true;
+      tier = String(payload["custom:tier"])
+
+    } catch (err) {
+      // refresh here?
+      console.log("Token not valid!", err);
+
+    }
+  }
 
 
 
-  if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up') && accessTokenCookie !== undefined) {
+  // block login/sign up page if already logged in
+  // TODO: what happens when their token is stale? should check tokens in middleware>>>?
+  if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up') && validToken) {
     return NextResponse.redirect(new URL('/', request.url));
   } 
 
 
-  // Check jwt
-  if (request.nextUrl.pathname.startsWith('/profile') && accessTokenCookie) {
-
-    const accessToken: string = accessTokenCookie.value;
-
-    try {
-      const payload = await verifier.verify(accessToken);
-      console.log("Token is valid. Payload:", payload);
-      
-    
-    } catch (err) {
-      console.log("Token not valid!", err);
-      return NextResponse.redirect(new URL('/', request.url));
-
-    }
+  // Must have premium
+  if (request.nextUrl.pathname.startsWith('/metrics/search') && tier != 'premium') {
+      return NextResponse.redirect(new URL('/pricing', request.url))
   }
+
+  // Route needs basic or premium
+  if (request.nextUrl.pathname.startsWith('/metrics/skills-connectivity') && tier == 'free') {
+    return NextResponse.redirect(new URL('/pricing', request.url))
+}
 
   return NextResponse.next()
 
@@ -45,5 +58,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/profile', '/login', '/sign-up'],
+  matcher: ['/profile', '/login', '/sign-up', '/metrics/:path*'],
 }
