@@ -1,7 +1,7 @@
 'use server'
 
 import { CheckIcon } from '@heroicons/react/20/solid'
-import { verifyIdToken } from '@/utils/verifyAccessToken'
+import { verifyIdToken } from '../../utils/verifyToken'
 import { Stripe } from 'stripe';
 import { Resource } from 'sst';
 
@@ -56,7 +56,12 @@ export default async function Pricing() {
 
   // Returns null if invalid token or dne
   const idToken = await verifyIdToken();
-  console.log("idToken: ", idToken)
+  // let userTier = 'free';
+  // if (idToken) {
+  //   userTier = String(idToken["custom:tier"])
+  //   console.log("userTier", userTier)
+  // }
+  // console.log("idToken: ", idToken)
 
   if (idToken) {
       const basicPaymentLink = await stripe.paymentLinks.create({
