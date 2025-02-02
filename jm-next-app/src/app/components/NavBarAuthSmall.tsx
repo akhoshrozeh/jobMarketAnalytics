@@ -1,9 +1,9 @@
-import { DisclosureButton} from "@headlessui/react"
+import { DisclosureButton, DisclosurePanel } from "@headlessui/react"
 import { BellIcon } from '@heroicons/react/24/outline'
 import SignOutButton from "./SignOutButton"
 
 
-export default async function NavBarAuthSmall({isLoggedIn}: {isLoggedIn: boolean | string}) {
+export default async function NavBarAuthSmall({isLoggedIn, tier}: {isLoggedIn: boolean | string, tier: string}) {
 
     return (
         <div>
@@ -25,12 +25,20 @@ export default async function NavBarAuthSmall({isLoggedIn}: {isLoggedIn: boolean
                     type="button"
                     className="relative ml-auto shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
                     >
-                    <span className="absolute -inset-1.5" />
+                    {/* <span className="absolute -inset-1.5" />
                     <span className="sr-only">View notifications</span>
-                    <BellIcon aria-hidden="true" className="size-6" />
+                    <BellIcon aria-hidden="true" className="size-6" /> */}
                     </button>
                 </div>
                 <div className="mt-3 space-y-1 px-2">
+                    <DisclosurePanel
+                    as="div"
+                    
+                    className="block rounded-md px-3 py-2 text-base font-medium text-white"
+                    >
+                    Tier: {tier}
+                    </DisclosurePanel>
+
                     <DisclosureButton
                     as="a"
                     href="#"
@@ -38,6 +46,7 @@ export default async function NavBarAuthSmall({isLoggedIn}: {isLoggedIn: boolean
                     >
                     Your Profile
                     </DisclosureButton>
+                    
                     <DisclosureButton
                     as="a"
                     href="#"
@@ -45,6 +54,7 @@ export default async function NavBarAuthSmall({isLoggedIn}: {isLoggedIn: boolean
                     >
                     Settings
                     </DisclosureButton>
+
                     <DisclosureButton
                     as="div"
                     

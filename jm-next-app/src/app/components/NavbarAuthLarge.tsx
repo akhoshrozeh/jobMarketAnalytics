@@ -6,7 +6,7 @@ import SignOutButton from "./SignOutButton"
 import {Cog6ToothIcon} from "@heroicons/react/24/outline"
 
 
-export default async function NavbarAuthLarge({isLoggedIn}: {isLoggedIn: boolean | string}) {
+export default async function NavbarAuthLarge({isLoggedIn, tier}: {isLoggedIn: boolean | string, tier: string}) {
 
   return (
       <div>
@@ -24,7 +24,9 @@ export default async function NavbarAuthLarge({isLoggedIn}: {isLoggedIn: boolean
           
 
               {/* Profile dropdown */}
-              
+              <div>
+                {tier}
+              </div>
               <Menu as="div" className="relative ml-3">
                 <div>
                   <MenuButton className="relative flex ">

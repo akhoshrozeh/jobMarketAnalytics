@@ -3,12 +3,16 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import NavbarAuthLarge from './NavbarAuthLarge'
 import NavBarAuthSmall from './NavBarAuthSmall'
-import existsAccessToken from '@/utils/existsAccessToken'
+// import { existsIdToken } from '@/utils/existsToken'
+import { verifyIdToken } from '../../utils/verifyToken'
 
 
 export default async function Navbar() {
 
-  const isLoggedIn = await existsAccessToken();
+  const tokenPayload = await verifyIdToken();
+  const tier = tokenPayload?.["custom:tier"] as string || "free";
+  console.log(tier);
+  const isLoggedIn = tokenPayload ? true : false;
 
   return (
     <Disclosure as="nav" className="bg-black border-b-2 border-emerald-500">
@@ -51,7 +55,7 @@ export default async function Navbar() {
 
 
 
-            <NavbarAuthLarge isLoggedIn={isLoggedIn}/>
+            <NavbarAuthLarge isLoggedIn={isLoggedIn} tier={tier} />
 
 
 
@@ -104,7 +108,7 @@ export default async function Navbar() {
           <div className="space-y-1 px-2 pb-3">
             {/* <div className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"> */}
 
-                <NavBarAuthSmall isLoggedIn={isLoggedIn}/>
+                <NavBarAuthSmall isLoggedIn={isLoggedIn} tier={tier}/>
 
 
             {/* </div> */}
