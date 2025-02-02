@@ -6,17 +6,21 @@ import Link from "next/link";
 
 export default function Confirmation() {
     useEffect(() => {
-        const refreshTokens = async () => {
-          try {
-            await fetchAuthSession({ forceRefresh: true });
-          } catch (error) {
-            console.error('Error refreshing tokens:', error);
-          }
-        };
-        refreshTokens();
-      }, []);
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('refreshed')) {
+            const refreshAndReload = async () => {
+                try {
+                    await fetchAuthSession({ forceRefresh: true });
+                    window.location.search = '?refreshed=true';
+                } catch (error) {
+                    console.error('Error refreshing session:', error);
+                }
+            };
+            refreshAndReload();
+        }
+    }, []);
     
-      return (
+    return (
         <div className="mx-16">
             <h1 className="flex flex-col justify-center text-center mt-32 
               text-lg    
@@ -44,5 +48,5 @@ export default function Confirmation() {
             </Link>
             
         </div>
-      );
+    );
 }
