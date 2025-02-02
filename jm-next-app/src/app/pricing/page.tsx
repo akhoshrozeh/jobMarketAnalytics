@@ -64,7 +64,7 @@ export default async function Pricing() {
   // console.log("idToken: ", idToken)
 
   if (idToken) {
-      const basicPaymentLink = await stripe.paymentLinks.create({
+      const basicPaymentLink = await stripe.checkout.sessions.create({
         line_items: [
           {
             price: basicPriceId,
@@ -75,16 +75,14 @@ export default async function Pricing() {
           metadata_email: String(idToken?.email),
           metadata_username: String(idToken?.sub)
         },
-        after_completion: {
-          type: 'redirect',
-          redirect: {
-          url: process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation" 
-          }
-
-        }
+        success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation"),
+        mode: "payment"
+        
+        
+        
       });
-    
-      const premiumPaymentLink = await stripe.paymentLinks.create({
+      
+      const premiumPaymentLink = await stripe.checkout.sessions.create({
         line_items: [
           {
             price: premiumPriceId,
@@ -95,18 +93,14 @@ export default async function Pricing() {
           metadata_email: String(idToken?.email),
           metadata_username: String(idToken?.sub)
         },
-        after_completion: {
-          type: 'redirect',
-          redirect: {
-          url: process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation" 
-          }
-
-        }
-        
+        success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation"),
+        mode: "payment"        
       })
 
-    tiers[0].href = basicPaymentLink.url + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
-    tiers[1].href = premiumPaymentLink.url + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
+
+
+    tiers[0].href = basicPaymentLink.url || "" // + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
+    tiers[1].href = premiumPaymentLink.url || ""// + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
   }
 
   return (
