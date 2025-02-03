@@ -29,6 +29,7 @@ function classNames(...classes: string[]) {
 export default function Sidebar({children, tier}: {children: React.ReactNode, tier: 'free' | 'basic' | 'premium'}) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradeRequiredTier, setUpgradeRequiredTier] = useState<null | 'free' | 'basic' | 'premium'>(null)
   const pathname = usePathname()
 
 
@@ -50,7 +51,9 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
             <DialogPanel className="w-full max-w-md rounded-xl bg-black p-6 border-2 border-emc">
               <h3 className="text-lg font-semibold text-white">Upgrade Required</h3>
               <p className="mt-4 text-gray-300">
-                You need to upgrade your plan to access this feature.
+                {upgradeRequiredTier
+                  ? `You need to upgrade your plan to the ${upgradeRequiredTier} tier to access this feature.`
+                  : 'You need to upgrade your plan to access this feature.'}
               </p>
               <div className="mt-6 flex justify-end gap-4">
                 <button
@@ -60,7 +63,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                   Cancel
                 </button>
                 <Link
-                  href="/billing"
+                  href="/pricing"
                   onClick={() => setShowUpgradeModal(false)}
                   className="px-4 py-2 bg-emc text-black rounded-md hover:bg-emerald-400"
                 >
@@ -109,7 +112,10 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                           <li key={item.name}>
                             {!hasAccess(item.tier) ? (
                               <button
-                                onClick={() => setShowUpgradeModal(true)}
+                                onClick={() => {
+                                  setUpgradeRequiredTier(item.tier as 'free' | 'basic' | 'premium')
+                                  setShowUpgradeModal(true)
+                                }}
                                 className={classNames(
                                   'text-gray-600 hover:text-gray-400 group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold w-full'
                                 )}
