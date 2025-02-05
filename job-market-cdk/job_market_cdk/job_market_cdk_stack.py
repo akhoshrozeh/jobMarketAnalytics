@@ -165,7 +165,8 @@ class JobMarketCdkStack(Stack):
                 "EVENT_BUS_NAME": event_bus.event_bus_name
             },
             timeout=Duration.minutes(5),
-            memory_size=512
+            memory_size=512,
+            reserved_concurrent_executions=1
         )
 
         bedrock_queue.grant_consume_messages(bedrock_processor_lambda)

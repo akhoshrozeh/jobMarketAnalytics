@@ -1,0 +1,372 @@
+digraph "Diagram" {
+  splines = "ortho";
+  pad = "1.0";
+  nodesep = "0.60";
+  ranksep = "0.75";
+  fontname = "Sans-Serif";
+  fontsize = "15";
+  dpi = "200";
+  rankdir = "BT";
+  compound = "true";
+  fontcolor = "#222222";
+  edge [
+    color = "#D5871488",
+    penwidth = 2,
+    arrowhead = "dot",
+    arrowtail = "dot",
+  ];
+  node [
+    shape = "box",
+    style = "rounded",
+    fixedsize = true,
+    width = 1.7,
+    height = 1.7,
+    labelloc = "c",
+    imagescale = true,
+    fontname = "Sans-Serif",
+    fontsize = 8,
+    margin = 8,
+  ];
+  subgraph "JobMarketCdkStack" {
+    subgraph "cluster-SubGraph.JobMarketCdkStack" {
+      graph [
+        label = "JobMarketCdkStack",
+        labelloc = "b",
+        labeljust = "l",
+        margin = "10",
+        fontsize = "16",
+        penwidth = "2",
+        pencolor = "#888888",
+        style = "filled,rounded",
+        fillcolor = "#e4e4e4",
+      ];
+      "JobMarketCdkStack/JobPostingsRawData" [
+        label = " JobPostingsRawData",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Storage/64/Arch_Amazon-S3-Standard_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/JobScrapeEventBus" [
+        label = " JobScrapeEventBus",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_Amazon-EventBridge_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/BedrockProcessorQueue" [
+        label = "\nBedrockProcessorQueue",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_AWS-Simple-Queue-Service_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.4819999999999998,
+      ];
+      "JobMarketCdkStack/PymongoLayer" [
+        label = " PymongoLayer",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/boto3Layer" [
+        label = " boto3Layer",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/JobspyLayer" [
+        label = " JobspyLayer",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/SyncS3MongoFunction" [
+        label = " SyncS3MongoFunction",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/ScrapeJobsFunction" [
+        label = " ScrapeJobsFunction",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/S3WriterFunction" [
+        label = " S3WriterFunction",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.266,
+      ];
+      "JobMarketCdkStack/BedrockAccessRole" [
+        label = " BedrockAccessRole",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Security-Identity-Compliance/64/Arch_AWS-Identity-and-Access-Management_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/BedrockProcessorFunction" [
+        label = "\nBedrockProcessorFunct",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.4819999999999998,
+      ];
+      "JobMarketCdkStack/MongoDBWriterFunction" [
+        label = "\nMongoDBWriterFunction",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Compute/64/Arch_AWS-Lambda_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 2,
+        height = 2.4819999999999998,
+      ];
+      "JobMarketCdkStack/SyncS3MongoRule" [
+        label = " SyncS3MongoRule",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_Amazon-EventBridge_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/S3WriterRule" [
+        label = " S3WriterRule",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_Amazon-EventBridge_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/BedrockProcessorRule" [
+        label = " BedrockProcessorRule",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_Amazon-EventBridge_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/MongoDBWriterRule" [
+        label = " MongoDBWriterRule",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_Amazon-EventBridge_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/ScrapeScheduleRule" [
+        label = " ScrapeScheduleRule",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_App-Integration/Arch_64/Arch_Amazon-EventBridge_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+      "JobMarketCdkStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole" [
+        label = " ServiceRole",
+        fontsize = 12,
+        image = "/Users/akhoshrozeh/Projects/jobMarketAnalytics/job-market-cdk/node_modules/cdk-dia/icons/aws/Service/Arch_Security-Identity-Compliance/64/Arch_AWS-Identity-and-Access-Management_64@5x.png",
+        imagescale = "true",
+        imagepos = "tc",
+        penwidth = "0",
+        shape = "node",
+        fixedsize = "true",
+        labelloc = "b",
+        width = 1.2,
+        height = 1.466,
+      ];
+    }
+  }
+  "JobMarketCdkStack/SyncS3MongoFunction" -> "JobMarketCdkStack/JobPostingsRawData" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/SyncS3MongoFunction" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/SyncS3MongoFunction" -> "JobMarketCdkStack/BedrockProcessorQueue" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/SyncS3MongoFunction" -> "JobMarketCdkStack/PymongoLayer" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/SyncS3MongoFunction" -> "JobMarketCdkStack/boto3Layer" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/ScrapeJobsFunction" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/ScrapeJobsFunction" -> "JobMarketCdkStack/boto3Layer" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/ScrapeJobsFunction" -> "JobMarketCdkStack/JobspyLayer" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/ScrapeJobsFunction" -> "JobMarketCdkStack/ScrapeScheduleRule" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/S3WriterFunction" -> "JobMarketCdkStack/JobPostingsRawData" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/S3WriterFunction" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/S3WriterFunction" -> "JobMarketCdkStack/BedrockProcessorQueue" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/S3WriterFunction" -> "JobMarketCdkStack/S3WriterRule" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockAccessRole" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockAccessRole" -> "JobMarketCdkStack/BedrockProcessorQueue" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockProcessorFunction" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockProcessorFunction" -> "JobMarketCdkStack/BedrockProcessorQueue" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockProcessorFunction" -> "JobMarketCdkStack/BedrockAccessRole" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockProcessorFunction" -> "JobMarketCdkStack/BedrockProcessorRule" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/MongoDBWriterFunction" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/MongoDBWriterFunction" -> "JobMarketCdkStack/PymongoLayer" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/MongoDBWriterFunction" -> "JobMarketCdkStack/MongoDBWriterRule" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/SyncS3MongoRule" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/SyncS3MongoRule" -> "JobMarketCdkStack/BedrockProcessorFunction" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/S3WriterRule" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/S3WriterRule" -> "JobMarketCdkStack/S3WriterFunction" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockProcessorRule" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/BedrockProcessorRule" -> "JobMarketCdkStack/BedrockProcessorFunction" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/MongoDBWriterRule" -> "JobMarketCdkStack/JobScrapeEventBus" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/MongoDBWriterRule" -> "JobMarketCdkStack/MongoDBWriterFunction" [
+    dir = "both",
+  ];
+  "JobMarketCdkStack/ScrapeScheduleRule" -> "JobMarketCdkStack/ScrapeJobsFunction" [
+    dir = "both",
+  ];
+}
