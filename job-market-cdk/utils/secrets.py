@@ -51,3 +51,24 @@ def get_db_collection():
 
     return mongodb_db, mongodb_collection
 
+def get_openai_api_key():
+    secret_name = "openai/api_key"
+    region_name = "us-east-1"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(    
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name)   
+    except ClientError as e:
+        raise e
+
+    secrets = get_secret_value_response['SecretString']
+    secret_dict = json.loads(secrets)
+    openai_api_key = secret_dict['OPENAI_API_KEY']
+    return openai_api_key
