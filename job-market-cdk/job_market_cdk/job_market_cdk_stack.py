@@ -155,11 +155,11 @@ class JobMarketCdkStack(Stack):
             layers=[jobspy_layer, boto3_layer],
             environment={
                 "OPENAI_API_KEY": openai_api_key_secret,
-                "BATCH_BUCKET": raw_job_scrapes_bucket.bucket_name,
+                "RAW_JOB_SCRAPES_BUCKET": raw_job_scrapes_bucket.bucket_name,
                 "DEDUP_TABLE": dedup_jobs_table.table_name
             },
-            timeout=Duration.minutes(5),
-            memory_size=512
+            timeout=Duration.minutes(15),
+            memory_size=1024
         )
 
         # Batch processor Lambda
@@ -206,7 +206,6 @@ class JobMarketCdkStack(Stack):
         raw_job_scrapes_bucket.add_event_notification(
             _s3.EventType.OBJECT_CREATED,
             aws_s3_notifications.LambdaDestination(batch_processor),
-            _s3.NotificationKeyFilter(prefix="raw_jobs/")
         )
 
         # scraper can write to s3
@@ -217,19 +216,19 @@ class JobMarketCdkStack(Stack):
 
         # scraper can read/write to dedup table
         scrape_jobs_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=["dynamodb:Query", "dynamodb:PutItem"],
+            actions=["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:BatchWriteItem"],
             resources=[dedup_jobs_table.table_arn]
         ))
 
 
         # batch processor can read/write to batch jobs table for tracking
         batch_processor.add_to_role_policy(iam.PolicyStatement(
-            actions=["dynamodb:Query", "dynamodb:PutItem"],
+            actions=["dynamodb:Query", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
             resources=[batch_jobs_table.table_arn]
         ))
 
         batch_poller.add_to_role_policy(iam.PolicyStatement(
-            actions=["dynamodb:Query", "dynamodb:PutItem"],
+            actions=["dynamodb:Query", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
             resources=[batch_jobs_table.table_arn]
         ))
 
