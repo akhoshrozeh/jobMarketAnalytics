@@ -6,8 +6,9 @@ from aws_cdk import (
     aws_events as events,
     aws_events_targets as targets, 
     aws_iam as iam,
-    dynamodb,
+    aws_dynamodb as dynamodb,
     aws_secretsmanager as sm,
+    aws_s3_notifications as aws_s3_notifications,
     Duration, 
     CfnOutput,
     aws_sqs as sqs,
@@ -37,8 +38,9 @@ class JobMarketCdkStack(Stack):
             block_public_access=_s3.BlockPublicAccess.BLOCK_ALL
         )
 
-        batch_bucket = _s3.Bucket(self, "JobPostsBatches", 
+        raw_job_scrapes_bucket = _s3.Bucket(self, "JobTrendrRawJobScrapes", 
             block_public_access=_s3.BlockPublicAccess.BLOCK_ALL,
+            bucket_name="job-trendr-raw-job-scrapes",
             versioned=True,
             lifecycle_rules=[
                 _s3.LifecycleRule(
@@ -54,22 +56,42 @@ class JobMarketCdkStack(Stack):
             ]
         )
 
+        # Used to track batch jobs' statuses from OpenAI API.
         batch_jobs_table = dynamodb.Table(self, "BatchJobsTable",
-            description="Tracks batch jobs' statuses from OpenAI API.",
-            partition_key=dynamodb.Attribute(name="batch_id", type=dynamodb.AttributeType.STRING),
-            sort_key=dynamodb.Attribute(name="batch_id", type=dynamodb.AttributeType.STRING),
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST
-        )
-
-        dedup_jobs_table = dynamodb.Table(
-            self, "JobDedupe",
-            description="Tracks jobs to avoid duplicates.",
             partition_key=dynamodb.Attribute(
-                name="source",  # indeed, linkedin, etc
+                name="batch_id",
                 type=dynamodb.AttributeType.STRING
             ),
             sort_key=dynamodb.Attribute(
-                name="job_id",
+                name="created_at",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+        )
+
+        # Add a Global Secondary Index for querying by 'status'
+        batch_jobs_table.add_global_secondary_index(
+            index_name="StatusIndex",
+            partition_key=dynamodb.Attribute(
+                name="status",
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="created_at",
+                type=dynamodb.AttributeType.STRING
+            ),
+            projection_type=dynamodb.ProjectionType.ALL
+        )
+
+        # Used to avoid duplicates.
+        dedup_jobs_table = dynamodb.Table(
+            self, "JobDedupe",
+            partition_key=dynamodb.Attribute(
+                name="site",  # indeed, linkedin, etc
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="id",
                 type=dynamodb.AttributeType.STRING
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -132,7 +154,9 @@ class JobMarketCdkStack(Stack):
             code=_lambda.Code.from_asset("lambda"),
             layers=[jobspy_layer, boto3_layer],
             environment={
-                "OPENAI_API_KEY": openai_api_key_secret
+                "OPENAI_API_KEY": openai_api_key_secret,
+                "BATCH_BUCKET": raw_job_scrapes_bucket.bucket_name,
+                "DEDUP_TABLE": dedup_jobs_table.table_name
             },
             timeout=Duration.minutes(5),
             memory_size=512
@@ -146,20 +170,14 @@ class JobMarketCdkStack(Stack):
             description="Gets triggered by S3 writes (new jobs scraped), sends a batch job to OpenAI, and tracks the job in DynamoDB.",
             code=_lambda.Code.from_asset("lambda"),
             environment={
-                "BATCH_BUCKET": batch_bucket.bucket_name,
-                "BATCH_TABLE": batch_table.table_name,
+                "BATCH_TABLE": batch_jobs_table.table_name,
                 "OPENAI_API_KEY": openai_api_key_secret
             },
             timeout=Duration.minutes(15),
             memory_size=1024
         )
 
-        # Grant permissions to the batch processor
-        batch_bucket.grant_write(batch_processor)
-        batch_table.grant_read_write_data(batch_processor)  
-        openai_secret.grant_read(batch_processor)
-
-
+        # Polls batch jobs from OpenAI API. Writes to Mongo when new jobs completed.
         batch_poller = _lambda.Function(self, "JobTrendrBackend-BatchPoller",
             runtime=_lambda.Runtime.PYTHON_3_12,
             function_name="JobTrendrBackend-BatchPoller",
@@ -167,8 +185,8 @@ class JobMarketCdkStack(Stack):
             handler="batch_poller.handler",
             code=_lambda.Code.from_asset("lambda"),
             environment={
-                "BATCH_TABLE": batch_table.table_name,
-                "OPENAI_SECRET_ARN": openai_secret.secret_arn,
+                "BATCH_TABLE": batch_jobs_table.table_name,
+                "OPENAI_API_KEY": openai_api_key_secret,
                 "MONGODB_URI": mongodb_uri_secret,
                 "MONGODB_DATABASE": mongodb_db,
                 "MONGODB_COLLECTION": mongodb_collection
@@ -178,52 +196,52 @@ class JobMarketCdkStack(Stack):
 
 
 
-        # configs and permissions
+        # ************************************************************
+        # *                                                          *
+        # *                 Configs and Permissions                  * 
+        # *                                                          *
+        # ************************************************************
 
-
-         # S3 event trigger for new scrapes
-        batch_bucket.add_event_notification(
+        # write to s3 triggers batch processor
+        raw_job_scrapes_bucket.add_event_notification(
             _s3.EventType.OBJECT_CREATED,
-            s3n.LambdaDestination(batch_processor),
+            aws_s3_notifications.LambdaDestination(batch_processor),
             _s3.NotificationKeyFilter(prefix="raw_jobs/")
         )
 
+        # scraper can write to s3
         scrape_jobs_lambda.add_to_role_policy(iam.PolicyStatement(
             actions=["s3:PutObject"],
-            resources=[f"{batch_bucket.bucket_arn}/*"]
+            resources=[f"{raw_job_scrapes_bucket.bucket_arn}/*"]
         ))
 
+        # scraper can read/write to dedup table
         scrape_jobs_lambda.add_to_role_policy(iam.PolicyStatement(
             actions=["dynamodb:Query", "dynamodb:PutItem"],
-            resources=[batch_table.table_arn]
+            resources=[dedup_jobs_table.table_arn]
         ))
 
 
-        # Add to batch processor role
-        batch_processor.add_to_role_policy(iam.PolicyStatement(
-            actions=["s3:GetObject", "s3:PutObject"],
-            resources=[f"{batch_bucket.bucket_arn}/*"]
-        ))
-
+        # batch processor can read/write to batch jobs table for tracking
         batch_processor.add_to_role_policy(iam.PolicyStatement(
             actions=["dynamodb:Query", "dynamodb:PutItem"],
-            resources=[batch_table.table_arn]
+            resources=[batch_jobs_table.table_arn]
         ))
 
         batch_poller.add_to_role_policy(iam.PolicyStatement(
             actions=["dynamodb:Query", "dynamodb:PutItem"],
-            resources=[batch_table.table_arn]
+            resources=[batch_jobs_table.table_arn]
         ))
 
 
 
         # Add permission for EventBridge to invoke the Lambda
-        scrape_jobs_lambda.add_permission(
-            "ScheduledEventPermission",
-            principal=iam.ServicePrincipal("events.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=scrape_schedule.rule_arn
-        )
+        # scrape_jobs_lambda.add_permission(
+        #     "ScheduledEventPermission",
+        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=scrape_schedule.rule_arn
+        # )
 
 
 
@@ -231,21 +249,21 @@ class JobMarketCdkStack(Stack):
         # #################### SCHEDULE ###############################
 
         # Scheduled rule for status checks
-        batch_poller_schedule = events.Rule(
-            self, 
-            "BatchPollerSchedule",
-            schedule=events.Schedule.cron(Duration.hours(6)),
-            targets=[targets.LambdaFunction(batch_poller)]
-        )
+        # batch_poller_schedule = events.Rule(
+        #     self, 
+        #     "BatchPollerSchedule",
+        #     schedule=events.Schedule.cron(Duration.hours(6)),
+        #     targets=[targets.LambdaFunction(batch_poller)]
+        # )
 
 
-        # Scheduled rule for scraping
-        scrape_schedule = events.Rule(
-            self,
-            "ScrapeScheduleRule",
-            schedule=events.Schedule.rate(Duration.hours(12)),
-            targets=[targets.LambdaFunction(scrape_jobs_lambda)]
-        )
+        # # Scheduled rule for scraping
+        # scrape_schedule = events.Rule(
+        #     self,
+        #     "ScrapeScheduleRule",
+        #     schedule=events.Schedule.rate(Duration.hours(12)),
+        #     targets=[targets.LambdaFunction(scrape_jobs_lambda)]
+        # )
 
         
 
@@ -287,8 +305,9 @@ class JobMarketCdkStack(Stack):
 
         # Create CloudWatch Log group outputs for easy reference
         CfnOutput(self, "ScrapeJobsLogGroup", value=scrape_jobs_lambda.log_group.log_group_name)
-        CfnOutput(self, "S3WriterLogGroup", value=s3_writer_lambda.log_group.log_group_name)
-        CfnOutput(self, "MongoDBWriterLogGroup", value=mongodb_writer_lambda.log_group.log_group_name)
+        CfnOutput(self, "BatchPollerLogGroup", value=batch_poller.log_group.log_group_name)
+        CfnOutput(self, "BatchProcessorLogGroup", value=batch_processor.log_group.log_group_name)
+
 
 
 
