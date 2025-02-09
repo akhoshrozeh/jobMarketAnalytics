@@ -55,14 +55,28 @@ class JobMarketCdkStack(Stack):
         )
 
         batch_jobs_table = dynamodb.Table(self, "BatchJobsTable",
+            description="Tracks batch jobs' statuses from OpenAI API.",
             partition_key=dynamodb.Attribute(name="batch_id", type=dynamodb.AttributeType.STRING),
             sort_key=dynamodb.Attribute(name="batch_id", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST
         )
+
+        dedup_jobs_table = dynamodb.Table(
+            self, "JobDedupe",
+            description="Tracks jobs to avoid duplicates.",
+            partition_key=dynamodb.Attribute(
+                name="source",  # indeed, linkedin, etc
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="job_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+        )           
         
         
 
-        batch_bucket.grant_write(sync_s3_mongo_lambda)
 
         # ************************************************************
         # *                                                          *
@@ -109,27 +123,12 @@ class JobMarketCdkStack(Stack):
         # *                                                          *
         # ************************************************************
 
-        sync_s3_mongo_lambda = _lambda.Function(self, "SyncS3MongoFunction",
-            runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="sync_s3_mongo.handler",
-            code=_lambda.Code.from_asset("lambda"),
-            layers=[boto3_layer, pymongo_layer],
-            environment={
-                "MONGODB_URI": mongodb_uri_secret,
-                "MONGODB_DATABASE": mongodb_db,
-                "MONGODB_COLLECTION": mongodb_collection, 
-            },
-            timeout=Duration.minutes(5),
-            memory_size=512
-        )
-
-
-        s3_bucket.grant_read(sync_s3_mongo_lambda)
-
         # Lambda for scraping jobs
-        scrape_jobs_lambda = _lambda.Function(self, "ScrapeJobsFunction",
+        scrape_jobs_lambda = _lambda.Function(self, "JobTrendrBackend-ScrapeJobsFunction",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="jobspy_scrapers.handler",
+            function_name="JobTrendrBackend-ScrapeJobsFunction",
+            description="Scrapes jobs and writes to S3.",
             code=_lambda.Code.from_asset("lambda"),
             layers=[jobspy_layer, boto3_layer],
             environment={
@@ -139,60 +138,71 @@ class JobMarketCdkStack(Stack):
             memory_size=512
         )
 
-       
-
-  
-
-
-        # Lambda to write data to S3
-        s3_writer_lambda = _lambda.Function(self, "S3WriterFunction",
+        # Batch processor Lambda
+        batch_processor = _lambda.Function(self, "JobTrendrBackend-BatchProcessor",
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="s3_writer.handler",
+            handler="batch_processor.handler",
+            function_name="JobTrendrBackend-BatchProcessor",
+            description="Gets triggered by S3 writes (new jobs scraped), sends a batch job to OpenAI, and tracks the job in DynamoDB.",
             code=_lambda.Code.from_asset("lambda"),
             environment={
-                "BUCKET_NAME": s3_bucket.bucket_name,
+                "BATCH_BUCKET": batch_bucket.bucket_name,
+                "BATCH_TABLE": batch_table.table_name,
+                "OPENAI_API_KEY": openai_api_key_secret
             },
-            timeout=Duration.minutes(5),
-            memory_size=512
+            timeout=Duration.minutes(15),
+            memory_size=1024
         )
 
-        # Grant the Lambda function permissions to write to S3
-        s3_bucket.grant_write(s3_writer_lambda)
+        # Grant permissions to the batch processor
+        batch_bucket.grant_write(batch_processor)
+        batch_table.grant_read_write_data(batch_processor)  
+        openai_secret.grant_read(batch_processor)
 
 
-
-
-        # Create MongoDB writer Lambda
-        mongodb_writer_lambda = _lambda.Function(
-            self,
-            "MongoDBWriterFunction",
+        batch_poller = _lambda.Function(self, "JobTrendrBackend-BatchPoller",
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="mongodb_writer.handler",
+            function_name="JobTrendrBackend-BatchPoller",
+            description="Polls batch jobs from OpenAI API. Writes to Mongo when new jobs completed.",
+            handler="batch_poller.handler",
             code=_lambda.Code.from_asset("lambda"),
-            layers=[pymongo_layer],
             environment={
+                "BATCH_TABLE": batch_table.table_name,
+                "OPENAI_SECRET_ARN": openai_secret.secret_arn,
                 "MONGODB_URI": mongodb_uri_secret,
                 "MONGODB_DATABASE": mongodb_db,
                 "MONGODB_COLLECTION": mongodb_collection
             },
-            timeout=Duration.minutes(5),
-            memory_size=512
+            timeout=Duration.minutes(5)
         )
 
 
 
+        # configs 
 
-        
+
+         # S3 event trigger for new scrapes
+        batch_bucket.add_event_notification(
+        _s3.EventType.OBJECT_CREATED,
+        s3n.LambdaDestination(batch_processor),
+        _s3.NotificationKeyFilter(prefix="raw_scrapes/")
+)
 
 
-        # Grant lambdas to put events on the event bus
-        event_policy = iam.PolicyStatement(effect=iam.Effect.ALLOW, resources=['*'], actions=['events:PutEvents'])
-        scrape_jobs_lambda.add_to_role_policy(event_policy)
-        s3_writer_lambda.add_to_role_policy(event_policy)
-        sync_s3_mongo_lambda.add_to_role_policy(event_policy)
 
 
         # #################### SCHEDULE ###############################
+
+        # Scheduled rule for status checks
+        batch_poller_schedule = events.Rule(
+            self, 
+            "BatchPollerSchedule",
+            schedule=events.Schedule.cron(Duration.hours(6)),
+            targets=[targets.LambdaFunction(batch_poller)]
+        )
+
+
+        # Scheduled rule for scraping
         scrape_schedule = events.Rule(
             self,
             "ScrapeScheduleRule",
@@ -207,6 +217,7 @@ class JobMarketCdkStack(Stack):
             action="lambda:InvokeFunction",
             source_arn=scrape_schedule.rule_arn
         )
+
 
         
       
@@ -224,8 +235,9 @@ class JobMarketCdkStack(Stack):
 
         # Add logging configuration for each Lambda
         scrape_jobs_lambda.add_to_role_policy(cloudwatch_policy)
-        s3_writer_lambda.add_to_role_policy(cloudwatch_policy)
-        mongodb_writer_lambda.add_to_role_policy(cloudwatch_policy)
+        batch_poller.add_to_role_policy(cloudwatch_policy)
+        batch_processor.add_to_role_policy(cloudwatch_policy)
+
 
         # Add CloudWatch Metrics permissions
         metrics_policy = iam.PolicyStatement(
@@ -239,7 +251,7 @@ class JobMarketCdkStack(Stack):
         )
 
         # Add metrics permissions to all Lambdas
-        for lambda_func in [scrape_jobs_lambda, s3_writer_lambda, mongodb_writer_lambda]:
+        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_processor]:
             lambda_func.add_to_role_policy(metrics_policy)
 
         # Create CloudWatch Log group outputs for easy reference
