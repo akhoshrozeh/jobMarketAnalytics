@@ -4,6 +4,9 @@ from jobspy import scrape_jobs
 import pandas as pd
 import logging
 import time
+import uuid
+import datetime
+import os
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -70,11 +73,15 @@ def get_scrape_params():
     ]
     
 def handler(event, context):
-    eventbridge = boto3.client('events')
+    dynamodb = boto3.resource('dynamodb')
+    dedup_table = dynamodb.Table(os.environ['DEDUP_TABLE'])
+    s3 = boto3.client('s3')
 
     scrape_params = get_scrape_params()
     total_jobs = 0
     err_count = 0
+    # Jobs with no duplicates.
+    final_jobs = []
     for params in scrape_params:
         try:
             jobs = scrape_jobs(
@@ -96,30 +103,68 @@ def handler(event, context):
                         job[key] = None
                     elif isinstance(value, pd.Timestamp) or hasattr(value, 'isoformat'):
                         job[key] = value.isoformat()
-                        
-            # Send each job to EventBridge
-            # Claude Haiku 3.5 can handle 2000 req/min or 33 req/sec
-            # We want to limit the number of requests to 25 per second
-            logger.info(f"Sending {len(jobs_dict)} jobs to EventBridge")
-            for job in jobs_dict:
-                eventbridge.put_events(
-                    Entries=[
-                        {
-                            'Source': 'job.scraper',
-                            'DetailType': 'JobScrapeEvent',
-                            'Detail': json.dumps({'job': job}),
-                            'EventBusName': 'JobScrapeEventBus'
-                        }
-                    ]
-                )
+          
+
+            logger.info(f"Collected {len(jobs_dict)} jobs. Params: {params['site_name']} {params['search_term']} {params['location']} {params['results_wanted']}")
+            logger.info(f"Deduping {len(jobs_dict)} jobs...")
             total_jobs += len(jobs_dict)
+
+            # Dedup
+            for job in jobs_dict:
+                response = dedup_table.get_item(Key={"id": job['id']})
+                if 'Item' not in response:
+                    final_jobs.append(job)
+                
+
+            logger.info(f"{len(final_jobs)} jobs after deduping.")
+
+                    
 
         except Exception as e:
             logger.error(f"ERROR: scraping jobs with params: {params} \n ERROR: {e}")
             err_count += 1
             continue
 
+    # Write to DynamoDB
+    try:
+        logger.info(f"Writing {len(final_jobs)} jobs to DynamoDB...")
+        with dedup_table.batch_writer() as writer:
+            for job in final_jobs:
+                to_write = {}
+                for field in ['id', 'site', 'title', 'company', 'job_url', 'job_url_direct']:
+                    if field in job and job[field] is not None:
+                        to_write[field] = job[field]
+                
+                # Skip if no fields to write
+                if not to_write:
+                    logger.warning(f"Skipping job - no valid fields to write: {job}")
+                    continue
+                    
+                writer.put_item(Item=to_write)
+    except ClientError as err:
+        logger.error(
+            "Couldn't load data into table %s. Here's why: %s: %s",
+            self.table.name,
+            err.response["Error"]["Code"],
+            err.response["Error"]["Message"],
+        )
 
+    # Write to S3
+    if len(final_jobs) > 0:
+        now = datetime.datetime.utcnow()
+        # Append a short UUID to ensure the key is unique, even if multiple files
+        # are created within the same second.
+        unique_id = str(uuid.uuid4())[:8]
+        s3_key = f"raw_job_scrapes/{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_new_jobs.json"
+        bucket_name = os.environ['BUCKET_NAME']
+        
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=json.dumps(final_jobs),
+            ContentType="application/json"  # Ensures S3 understands the file type
+        )
+        logger.info(f"New jobs file written to S3: s3://{bucket_name}/{s3_key}")
 
     if err_count > 0:
        return {
@@ -130,7 +175,7 @@ def handler(event, context):
     else:
         return {
             'statusCode': 200,
-            'body': f"{total_jobs} jobs found."
+            'body': f"{len(final_jobs)} jobs found."
         }
 
 
