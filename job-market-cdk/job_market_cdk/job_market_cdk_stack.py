@@ -178,15 +178,52 @@ class JobMarketCdkStack(Stack):
 
 
 
-        # configs 
+        # configs and permissions
 
 
          # S3 event trigger for new scrapes
         batch_bucket.add_event_notification(
-        _s3.EventType.OBJECT_CREATED,
-        s3n.LambdaDestination(batch_processor),
-        _s3.NotificationKeyFilter(prefix="raw_scrapes/")
-)
+            _s3.EventType.OBJECT_CREATED,
+            s3n.LambdaDestination(batch_processor),
+            _s3.NotificationKeyFilter(prefix="raw_jobs/")
+        )
+
+        scrape_jobs_lambda.add_to_role_policy(iam.PolicyStatement(
+            actions=["s3:PutObject"],
+            resources=[f"{batch_bucket.bucket_arn}/*"]
+        ))
+
+        scrape_jobs_lambda.add_to_role_policy(iam.PolicyStatement(
+            actions=["dynamodb:Query", "dynamodb:PutItem"],
+            resources=[batch_table.table_arn]
+        ))
+
+
+        # Add to batch processor role
+        batch_processor.add_to_role_policy(iam.PolicyStatement(
+            actions=["s3:GetObject", "s3:PutObject"],
+            resources=[f"{batch_bucket.bucket_arn}/*"]
+        ))
+
+        batch_processor.add_to_role_policy(iam.PolicyStatement(
+            actions=["dynamodb:Query", "dynamodb:PutItem"],
+            resources=[batch_table.table_arn]
+        ))
+
+        batch_poller.add_to_role_policy(iam.PolicyStatement(
+            actions=["dynamodb:Query", "dynamodb:PutItem"],
+            resources=[batch_table.table_arn]
+        ))
+
+
+
+        # Add permission for EventBridge to invoke the Lambda
+        scrape_jobs_lambda.add_permission(
+            "ScheduledEventPermission",
+            principal=iam.ServicePrincipal("events.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=scrape_schedule.rule_arn
+        )
 
 
 
@@ -210,13 +247,7 @@ class JobMarketCdkStack(Stack):
             targets=[targets.LambdaFunction(scrape_jobs_lambda)]
         )
 
-        # Add permission for EventBridge to invoke the Lambda
-        scrape_jobs_lambda.add_permission(
-            "ScheduledEventPermission",
-            principal=iam.ServicePrincipal("events.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=scrape_schedule.rule_arn
-        )
+        
 
 
         
