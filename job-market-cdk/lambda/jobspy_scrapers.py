@@ -17,59 +17,59 @@ def get_scrape_params():
                 "site_name": ["indeed"],
                 "search_term": "software engineer",
                 "location": "San Francisco, CA",
-                "results_wanted": 100,
+                "results_wanted": 10,
                 "hours_old": 72,
                 "country_indeed": "USA"
         },
-        {
-                "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "Los Angeles, CA",
-                "results_wanted": 100,
-                "hours_old": 72,
-                "country_indeed": "USA"
-        },
-        {
-                "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "New York City, NY",
-                "results_wanted": 100,
-                "hours_old": 72,
-                "country_indeed": "USA"
-        },
-        {
-                "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "Seattle, WA",
-                "results_wanted": 100,
-                "hours_old": 72,
-                "country_indeed": "USA"
-        },
-        {
-                "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "Boston, MA",
-                "results_wanted": 100,
-                "hours_old": 72,
-                "country_indeed": "USA"
-        },
-        {
-                "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "San Diego, CA",
-                "results_wanted": 100,
-                "hours_old": 72,
-                "country_indeed": "USA"
+        # {
+        #         "site_name": ["indeed"],
+        #         "search_term": "software engineer",
+        #         "location": "Los Angeles, CA",
+        #         "results_wanted": 100,
+        #         "hours_old": 72,
+        #         "country_indeed": "USA"
+        # },
+        # {
+        #         "site_name": ["indeed"],
+        #         "search_term": "software engineer",
+        #         "location": "New York City, NY",
+        #         "results_wanted": 100,
+        #         "hours_old": 72,
+        #         "country_indeed": "USA"
+        # },
+        # {
+        #         "site_name": ["indeed"],
+        #         "search_term": "software engineer",
+        #         "location": "Seattle, WA",
+        #         "results_wanted": 100,
+        #         "hours_old": 72,
+        #         "country_indeed": "USA"
+        # },
+        # {
+        #         "site_name": ["indeed"],
+        #         "search_term": "software engineer",
+        #         "location": "Boston, MA",
+        #         "results_wanted": 100,
+        #         "hours_old": 72,
+        #         "country_indeed": "USA"
+        # },
+        # {
+        #         "site_name": ["indeed"],
+        #         "search_term": "software engineer",
+        #         "location": "San Diego, CA",
+        #         "results_wanted": 100,
+        #         "hours_old": 72,
+        #         "country_indeed": "USA"
 
-        },
-        {
-                "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "Chicago, IL",
-                "results_wanted": 100,
-                "hours_old": 72,
-                "country_indeed": "USA"
-        }
+        # },
+        # {
+        #         "site_name": ["indeed"],
+        #         "search_term": "software engineer",
+        #         "location": "Chicago, IL",
+        #         "results_wanted": 100,
+        #         "hours_old": 72,
+        #         "country_indeed": "USA"
+        # }
     ]
     
 def handler(event, context):
@@ -111,8 +111,9 @@ def handler(event, context):
 
             # Dedup
             for job in jobs_dict:
-                response = dedup_table.get_item(Key={"id": job['id']})
+                response = dedup_table.get_item(Key={'site': job['site'], 'id': job['id']})
                 if 'Item' not in response:
+                    logger.info(f"New job found: {job['id']}")
                     final_jobs.append(job)
                 
 
@@ -141,13 +142,17 @@ def handler(event, context):
                     continue
                     
                 writer.put_item(Item=to_write)
-    except ClientError as err:
+    except Exception as err:
         logger.error(
             "Couldn't load data into table %s. Here's why: %s: %s",
-            self.table.name,
+            dedup_table.name,
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
+        return {
+            'statusCode': 500,
+            'body': f"Error writing to DynamoDB: {err}"
+        }
 
     # Write to S3
     if len(final_jobs) > 0:
@@ -155,8 +160,8 @@ def handler(event, context):
         # Append a short UUID to ensure the key is unique, even if multiple files
         # are created within the same second.
         unique_id = str(uuid.uuid4())[:8]
-        s3_key = f"raw_job_scrapes/{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_new_jobs.json"
-        bucket_name = os.environ['BUCKET_NAME']
+        s3_key = f"{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_new_jobs.json"
+        bucket_name = os.environ['RAW_JOB_SCRAPES_BUCKET']
         
         s3.put_object(
             Bucket=bucket_name,
