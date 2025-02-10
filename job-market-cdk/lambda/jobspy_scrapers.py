@@ -154,22 +154,29 @@ def handler(event, context):
             'body': f"Error writing to DynamoDB: {err}"
         }
 
+    try:
     # Write to S3
-    if len(final_jobs) > 0:
-        now = datetime.datetime.utcnow()
-        # Append a short UUID to ensure the key is unique, even if multiple files
-        # are created within the same second.
-        unique_id = str(uuid.uuid4())
-        s3_key = f"{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_new_jobs.json"
-        bucket_name = os.environ['RAW_JOB_SCRAPES_BUCKET']
-        
-        s3.put_object(
-            Bucket=bucket_name,
-            Key=s3_key,
-            Body=json.dumps(final_jobs),
-            ContentType="application/json"  # Ensures S3 understands the file type
-        )
-        logger.info(f"New jobs file written to S3: s3://{bucket_name}/{s3_key}")
+        if len(final_jobs) > 0:
+            jsonl_payload = "\n".join(json.dumps(job, separators=(',', ':')) for job in final_jobs)
+
+            now = datetime.datetime.utcnow()
+            unique_id = str(uuid.uuid4())
+            s3_key = f"{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_jobs.jsonl"
+            bucket_name = os.environ['RAW_JOB_SCRAPES_BUCKET']
+            
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=s3_key,
+                Body=jsonl_payload.encode('utf-8'),
+                ContentType="application/json"  # Ensures S3 understands the file type
+            )
+            logger.info(f"New jobs file written to S3: s3://{bucket_name}/{s3_key}")
+    except Exception as err:
+        logger.error(f"Error writing to S3: {err}")
+        return {
+            'statusCode': 500,
+            'body': f"Error writing to S3: {err}"
+        }
 
     if err_count > 0:
        return {
