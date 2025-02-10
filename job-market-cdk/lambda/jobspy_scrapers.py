@@ -159,7 +159,7 @@ def handler(event, context):
         now = datetime.datetime.utcnow()
         # Append a short UUID to ensure the key is unique, even if multiple files
         # are created within the same second.
-        unique_id = str(uuid.uuid4())[:8]
+        unique_id = str(uuid.uuid4())
         s3_key = f"{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_new_jobs.json"
         bucket_name = os.environ['RAW_JOB_SCRAPES_BUCKET']
         
