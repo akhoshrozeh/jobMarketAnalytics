@@ -115,6 +115,15 @@ class JobMarketCdkStack(Stack):
         # *                   Lambda Layers                          * 
         # *                                                          *
         # ************************************************************
+
+        openai_layer = _lambda.LayerVersion(
+            self,
+            "OpenaiLayer",
+            code=_lambda.Code.from_asset("layer/openai_layer/openai_layer.zip"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
+            description="Layer containing openai library and dependencies"
+        )
+
         pymongo_layer = _lambda.LayerVersion(
             self,
             "PymongoLayer",
@@ -173,6 +182,7 @@ class JobMarketCdkStack(Stack):
                 "BATCH_TABLE": batch_jobs_table.table_name,
                 "OPENAI_API_KEY": openai_api_key_secret
             },
+            layers=[openai_layer],
             timeout=Duration.minutes(15),
             memory_size=1024
         )
@@ -220,6 +230,11 @@ class JobMarketCdkStack(Stack):
             resources=[dedup_jobs_table.table_arn]
         ))
 
+
+        batch_processor.add_to_role_policy(iam.PolicyStatement(
+            actions=["s3:GetObject"],
+            resources=[f"{raw_job_scrapes_bucket.bucket_arn}/*"]
+        ))
 
         # batch processor can read/write to batch jobs table for tracking
         batch_processor.add_to_role_policy(iam.PolicyStatement(
