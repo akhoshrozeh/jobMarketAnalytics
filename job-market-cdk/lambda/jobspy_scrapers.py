@@ -74,7 +74,8 @@ def get_scrape_params():
     
 def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
-    dedup_table = dynamodb.Table(os.environ['DEDUP_TABLE'])
+    lambda_client = boto3.resource('lambda')
+    jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
     s3 = boto3.client('s3')
 
     scrape_params = get_scrape_params()
@@ -82,6 +83,12 @@ def handler(event, context):
     err_count = 0
     # Jobs with no duplicates.
     final_jobs = []
+
+    now = datetime.datetime.utcnow()
+    unique_id = str(uuid.uuid4())
+    internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
+
+    # Scrape jobs and check for duplicates
     for params in scrape_params:
         try:
             jobs = scrape_jobs(
@@ -106,18 +113,16 @@ def handler(event, context):
           
 
             logger.info(f"Collected {len(jobs_dict)} jobs. Params: {params['site_name']} {params['search_term']} {params['location']} {params['results_wanted']}")
-            logger.info(f"Deduping {len(jobs_dict)} jobs...")
             total_jobs += len(jobs_dict)
 
             # Dedup
             for job in jobs_dict:
-                response = dedup_table.get_item(Key={'site': job['site'], 'id': job['id']})
+                response = jobs_table.get_item(Key={'site': job['site'], 'id': job['id']})
                 if 'Item' not in response:
-                    logger.info(f"New job found: {job['id']}")
                     final_jobs.append(job)
                 
 
-            logger.info(f"{len(final_jobs)} jobs after deduping.")
+        logger.info(f"{len(final_jobs)} jobs for {internal_group_batch_id}")
 
                     
 
@@ -126,26 +131,30 @@ def handler(event, context):
             err_count += 1
             continue
 
-    # Write to DynamoDB
+    # Write final_jobs to DynamoDB, attaching an internal batch group id
     try:
         logger.info(f"Writing {len(final_jobs)} jobs to DynamoDB...")
-        with dedup_table.batch_writer() as writer:
+        
+
+        with jobs_table.batch_writer() as writer:
             for job in final_jobs:
                 to_write = {}
-                for field in ['id', 'site', 'title', 'company', 'job_url', 'job_url_direct']:
+                for field in job:
                     if field in job and job[field] is not None:
                         to_write[field] = job[field]
-                
+                to_write['internal_group_batch_id'] = internal_group_batch_id
+
                 # Skip if no fields to write
                 if not to_write:
                     logger.warning(f"Skipping job - no valid fields to write: {job}")
                     continue
                     
                 writer.put_item(Item=to_write)
+
     except Exception as err:
         logger.error(
             "Couldn't load data into table %s. Here's why: %s: %s",
-            dedup_table.name,
+            jobs_table.name,
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
@@ -154,29 +163,23 @@ def handler(event, context):
             'body': f"Error writing to DynamoDB: {err}"
         }
 
-    try:
-    # Write to S3
-        if len(final_jobs) > 0:
-            jsonl_payload = "\n".join(json.dumps(job, separators=(',', ':')) for job in final_jobs)
 
-            now = datetime.datetime.utcnow()
-            unique_id = str(uuid.uuid4())
-            s3_key = f"{now.strftime('%Y/%m/%d')}/{now.strftime('%H%M%S')}_{unique_id}_jobs.jsonl"
-            bucket_name = os.environ['RAW_JOB_SCRAPES_BUCKET']
-            
-            s3.put_object(
-                Bucket=bucket_name,
-                Key=s3_key,
-                Body=jsonl_payload.encode('utf-8'),
-                ContentType="application/json"  # Ensures S3 understands the file type
-            )
-            logger.info(f"New jobs file written to S3: s3://{bucket_name}/{s3_key}")
-    except Exception as err:
-        logger.error(f"Error writing to S3: {err}")
-        return {
-            'statusCode': 500,
-            'body': f"Error writing to S3: {err}"
+    # Invoke the batch dispatcher, passing the interal group batch id
+    try:
+         payload = {
+            "internal_group_batch_id": internal_group_batch_id,
         }
+        # Using asynchronous invocation ("Event") so the call is fire-and-forget.
+        response = lambda_client.invoke(
+            FunctionName=os.environ["BATCH_DISPATCHER_LAMBDA"],
+            InvocationType="Event",  
+            Payload=json.dumps(payload)
+        )
+        logger.info(f"Batch dispatcher invoked. Response: {response}")
+    except Exception as err:
+        logger.error(f"Error invoking batch dispatcher lambda: {err}")
+        # Optionally, you can updat
+    
 
     if err_count > 0:
        return {
