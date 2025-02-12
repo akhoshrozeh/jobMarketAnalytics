@@ -142,6 +142,7 @@ def handler(event, context):
                             job[field] = str(job[field])
                         to_write[field] = job[field]
                 to_write['internal_group_batch_id'] = internal_group_batch_id
+                to_write['created_at'] = now.isoformat()
 
                 # Skip if no fields to write
                 if not to_write:
