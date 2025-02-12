@@ -157,11 +157,11 @@ class JobMarketCdkStack(Stack):
         batch_dispatcher = _lambda.Function(self, "JobTrendrBackend-BatchDispatcher",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="batch_dispatcher.handler",
-            function_name="JobTrendrBackend-BatchProcessor",
             description="Gets by job scraper lambda, sends a batch job to OpenAI, and tracks the batch in DynamoDB.",
             code=_lambda.Code.from_asset("lambda"),
             environment={
                 "BATCHES_TABLE": batches_table.table_name,
+                "JOBS_TABLE": jobs_table.table_name,
                 "OPENAI_API_KEY": openai_api_key_secret
             },
             layers=[openai_layer],
@@ -173,7 +173,6 @@ class JobMarketCdkStack(Stack):
         scrape_jobs_lambda = _lambda.Function(self, "JobTrendrBackend-ScrapeJobsFunction",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="jobspy_scrapers.handler",
-            function_name="JobTrendrBackend-ScrapeJobsFunction",
             description="Scrapes jobs, creates an internal batch id, writes to DDB, then triggers the batch dispatcher.",
             code=_lambda.Code.from_asset("lambda"),
             layers=[jobspy_layer, boto3_layer],
@@ -189,14 +188,13 @@ class JobMarketCdkStack(Stack):
         # Polls batch jobs from OpenAI API. Writes to Mongo when new jobs completed.
         batch_poller = _lambda.Function(self, "JobTrendrBackend-BatchPoller",
             runtime=_lambda.Runtime.PYTHON_3_12,
-            function_name="JobTrendrBackend-BatchPoller",
             description="Polls batch jobs from OpenAI API. Writes to Mongo when new jobs completed.",
             handler="batch_poller.handler",
             code=_lambda.Code.from_asset("lambda"),
             environment={
-                "BATCHES_TABLE": batch_jobs_table.table_name,
+                "BATCHES_TABLE": batches_table.table_name,
                 "OPENAI_API_KEY": openai_api_key_secret,
-                "MONGODB_URI": mon godb_uri_secret,
+                "MONGODB_URI": mongodb_uri_secret,
                 "MONGODB_DATABASE": mongodb_db,
                 "MONGODB_COLLECTION": mongodb_collection
             },
