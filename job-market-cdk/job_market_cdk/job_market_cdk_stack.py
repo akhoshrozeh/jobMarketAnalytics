@@ -68,7 +68,7 @@ class JobMarketCdkStack(Stack):
         # Used to track batch jobs' statuses from OpenAI API.
         batches_table = dynamodb.Table(self, "BatchesTable",
             partition_key=dynamodb.Attribute(
-                name="batch_id",
+                name="internal_group_batch_id",
                 type=dynamodb.AttributeType.STRING
             ),
             sort_key=dynamodb.Attribute(
@@ -191,6 +191,7 @@ class JobMarketCdkStack(Stack):
             description="Polls batch jobs from OpenAI API. Writes to Mongo when new jobs completed.",
             handler="batch_poller.handler",
             code=_lambda.Code.from_asset("lambda"),
+            layers=[pymongo_layer, boto3_layer, openai_layer],
             environment={
                 "BATCHES_TABLE": batches_table.table_name,
                 "OPENAI_API_KEY": openai_api_key_secret,
@@ -225,12 +226,20 @@ class JobMarketCdkStack(Stack):
         # batch processor can read/write to batch jobs table for tracking
         batch_dispatcher.add_to_role_policy(iam.PolicyStatement(
             actions=["dynamodb:Query", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
-            resources=[jobs_table.table_arn, batches_table.table_arn]
+            resources=[
+                jobs_table.table_arn,
+                batches_table.table_arn,
+                f"{jobs_table.table_arn}/index/InternalGroupBatchIndex"
+                ]
         ))
 
         batch_poller.add_to_role_policy(iam.PolicyStatement(
             actions=["dynamodb:Query", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
-            resources=[jobs_table.table_arn, batches_table.table_arn]
+            resources=[
+                jobs_table.table_arn, 
+                batches_table.table_arn,
+                f"{batches_table.table_arn}/index/StatusIndex"
+                ]
         ))
 
 
