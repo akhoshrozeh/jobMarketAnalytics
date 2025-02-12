@@ -74,7 +74,7 @@ def get_scrape_params():
     
 def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
-    lambda_client = boto3.resource('lambda')
+    lambda_client = boto3.client('lambda')
     jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
     s3 = boto3.client('s3')
 
@@ -122,25 +122,24 @@ def handler(event, context):
                     final_jobs.append(job)
                 
 
-        logger.info(f"{len(final_jobs)} jobs for {internal_group_batch_id}")
-
-                    
-
         except Exception as e:
             logger.error(f"ERROR: scraping jobs with params: {params} \n ERROR: {e}")
             err_count += 1
             continue
 
+    logger.info(f"{len(final_jobs)} jobs for {internal_group_batch_id}")
+
     # Write final_jobs to DynamoDB, attaching an internal batch group id
     try:
         logger.info(f"Writing {len(final_jobs)} jobs to DynamoDB...")
         
-
         with jobs_table.batch_writer() as writer:
             for job in final_jobs:
                 to_write = {}
                 for field in job:
                     if field in job and job[field] is not None:
+                        if isinstance(job[field], float):
+                            job[field] = str(job[field])
                         to_write[field] = job[field]
                 to_write['internal_group_batch_id'] = internal_group_batch_id
 
@@ -153,10 +152,8 @@ def handler(event, context):
 
     except Exception as err:
         logger.error(
-            "Couldn't load data into table %s. Here's why: %s: %s",
-            jobs_table.name,
-            err.response["Error"]["Code"],
-            err.response["Error"]["Message"],
+            f"Couldn't load data into jobs table. {err}",
+            
         )
         return {
             'statusCode': 500,
@@ -166,7 +163,7 @@ def handler(event, context):
 
     # Invoke the batch dispatcher, passing the interal group batch id
     try:
-         payload = {
+        payload = {
             "internal_group_batch_id": internal_group_batch_id,
         }
         # Using asynchronous invocation ("Event") so the call is fire-and-forget.
@@ -190,7 +187,7 @@ def handler(event, context):
     else:
         return {
             'statusCode': 200,
-            'body': f"{len(final_jobs)} jobs found."
+            'body': f"{len(final_jobs)} jobs written."
         }
 
 
