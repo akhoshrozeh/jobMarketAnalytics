@@ -195,6 +195,7 @@ class JobMarketCdkStack(Stack):
             environment={
                 "BATCHES_TABLE": batches_table.table_name,
                 "OPENAI_API_KEY": openai_api_key_secret,
+                "JOBS_TABLE": jobs_table.table_name,
                 "MONGODB_URI": mongodb_uri_secret,
                 "MONGODB_DATABASE": mongodb_db,
                 "MONGODB_COLLECTION": mongodb_collection
@@ -238,7 +239,8 @@ class JobMarketCdkStack(Stack):
             resources=[
                 jobs_table.table_arn, 
                 batches_table.table_arn,
-                f"{batches_table.table_arn}/index/StatusIndex"
+                f"{batches_table.table_arn}/index/StatusIndex",
+                f"{jobs_table.table_arn}/index/InternalGroupBatchIndex"
                 ]
         ))
 
