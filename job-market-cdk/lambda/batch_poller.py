@@ -3,12 +3,15 @@ import logging
 from openai import OpenAI
 import os
 import json
+import datetime
+import time 
+import random
+import pymongo as pymongo
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 dynamodb = boto3.resource('dynamodb')
-mongodb = boto3.client('s3')  # Update with actual MongoDB client config
 openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
 
@@ -32,7 +35,8 @@ def handler(event, context):
 
         response = batches_table.query(
             IndexName="StatusIndex",
-            KeyConditionExpression:'status = :status',
+            KeyConditionExpression='#status = :status',
+            ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={':status': 'pending'}
         )
         pending_batches = response.get('Items', [])
@@ -41,8 +45,9 @@ def handler(event, context):
             logger.info("batch_poller: No pending batches found")
             return
 
-        logger.info(f"batch_poller: Found {len(pending_batches)} pending batches")
+        logger.info(f"batch_poller: {len(pending_batches)} pending batches: {pending_batches}")
 
+        # Process pending batches
         for batch in pending_batches:
             process_batch(batch, batches_table)
 
@@ -52,97 +57,177 @@ def handler(event, context):
 
 def process_batch(batch, batches_table):
     try:
+        # openAI returns its own batch_id it returns when creating a batch
         batch_id = batch['openai_batch_id']
-        logger.info(f"batch_poller: Processing batch {batch_id}")
+        logger.info(f"batch_poller: Processing batch {batch_id}") 
         
         # Check OpenAI batch status
         openai_batch = openai_client.batches.retrieve(batch_id)
 
         logger.info(f"batch_poller: OpenAI batch status: {openai_batch.status}")
-        
-        if openai_batch.status != 'completed':
-            logger.info(f"batch_poller: Batch {batch_id} not complete. Current status: {openai_batch.status}")
-            return
+
+        match openai_batch.status:
+            case 'validating' | 'in_progress' | 'finalizing' | 'cancelling' | 'cancelled':
+                logger.info(f"batch_poller: Batch {batch_id} not complete. Current status: {openai_batch.status}")
+                return
+            case 'failed':
+                logger.error(f"batch_poller: FAILURE - OpenAI failed to process the batch. openai_batch_id {batch_id}")
+                return
+            case 'expired':
+                logger.error(f"batch_poller: EXPIRED - OpenAI was unable to complete the batch job in time. openai_batch_id {batch_id}")
+                return 
+            case 'completed':
+                logger.info(f"batch_poller: Batch job completed. openai_batch_id: {batch_id}")
+            case _:
+                logger.error(f"batch_poller: ERROR - openai_batch.status couldn't be matched")
+                return
+
+
 
         # Download and process results
         output_file = openai_client.files.content(openai_batch.output_file_id)
         results = [json.loads(line) for line in output_file.text.splitlines()]
 
-        logger.info(f"batch_poller: results: {results}")
+        # logger.info(f"batch_poller: Batch results: {results}")
         
-        # Process each result
+        # # Process each result
         jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
-        keywords_data = []
-        
+
+        site_keys = {
+            'gd':'glassdoor',
+            'go':'google',
+            'in':'indeed',
+            'li':'linkedin',
+            'zr':'ziprecruiter'
+        }
+
+        # we need to bundle up results for batch writes to jobs table (ddb) and mongo
         for result in results:
             if result['response']['status_code'] == 200:
-                process_successful_result(result, jobs_table, keywords_data)
+                # keys for jobs tables
+                jobs_table_job_id = result['custom_id']
+                site = site_keys[jobs_table_job_id[:2]]
+
+                extracted_keywords_str = result['response']['body']['choices'][0]['message']['content']
+                extracted_keywords = [keyword.strip() for keyword in extracted_keywords_str.split(',')]
+
+                # Update jobs table with extracted keywords
+                jobs_table.update_item(
+                    Key={
+                        'id': jobs_table_job_id,
+                        'site': site
+                    },
+                    UpdateExpression='SET extracted_keywords = :keywords',
+                    ExpressionAttributeValues={
+                        ':keywords': extracted_keywords
+                    }
+                )
+
+        max_retries = 3
+        base_delay = 0.5  # seconds
+        jobs = []
+    
+        # Can't do consistent reads on GSI. Wait for updates with retrys; need to check extracted_keywords were added to all jobs
+        for attempt in range(max_retries):
+            # Read in all the jobs for this batch, including newly written extracted keywords
+            try:
+                response = jobs_table.query(
+                    IndexName='InternalGroupBatchIndex',
+                    KeyConditionExpression='internal_group_batch_id = :id',
+                    ProjectionExpression='site, id, company, company_addresses, company_revenue, created_at, date_posted, is_remote, #loc, job_url, job_url_direct, max_amount, min_amount, title, extracted_keywords, internal_group_batch_id',
+                    ExpressionAttributeNames={
+                        '#loc': 'location'
+                    },
+                    ExpressionAttributeValues={':id': batch['internal_group_batch_id']},
+                )
+                
+                current_jobs = response.get('Items', [])
         
-        # Store keywords in MongoDB
-        if keywords_data:
-            store_in_mongodb(batch, keywords_data)
+                # Verify all jobs have keywords
+                missing_keywords = [j['id'] for j in current_jobs if 'extracted_keywords' not in j]
+                
+                # none missing
+                if len(missing_keywords) == 0:
+                    jobs = current_jobs
+                    break
+                    
+                logger.warning(f"Attempt {attempt+1}: {len(missing_keywords)} jobs missing keywords")
+                
+                # Exponential backoff with jitter
+                sleep_time = base_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                time.sleep(sleep_time)
+                
+            except Exception as e:
+                logger.error(f"Query attempt {attempt+1} failed: {e}")
+                if attempt == max_retries - 1:
+                    raise
+
+        if not jobs:
+            logger.error("Failed to retrieve jobs with keywords after retries")
+            return
+        elif len(missing_keywords) > 0:
+            logger.error(f"Permanent missing keywords in jobs: {missing_keywords[:3]}...")
+            
+
+         # Store keywords in MongoDB
+        try:
+            mongo_client = pymongo.MongoClient(os.environ['MONGODB_URI'])
+            db = mongo_client[os.environ['MONGODB_DATABASE']]
+            collection = db[os.environ['MONGODB_COLLECTION']]
+
+            operations = []
+            for job in jobs:
+                if job['extracted_keywords']:
+                    job['inserted_at'] = datetime.datetime.utcnow()
+                    operations.append(
+                        pymongo.UpdateOne(
+                            {'id': job['id']},
+                            {'$setOnInsert': job},
+                            upsert=True
+                        )
+                    )
+
+            res = collection.bulk_write(operations)
+            logger.info(f"batch_poller: bulk_write response:{res}")
+            
+            if res.bulk_api_result['writeErrors']:
+                logger.error(f"batch_poller: writeErrors during bulk_write: {res.bulk_api_result['writeErrors']}")
+
+        except Exception as e:
+            logger.error(f"batch_poller: Error when attempting to bulk_write to MongoDB: {e}")
+            raise
         
         # Update batch status
-        batches_table.update_item(
-            Key={'openai_batch_id': batch_id},
-            UpdateExpression='SET #status = :complete, output_file_id = :file_id',
-            ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={
-                ':complete': 'complete',
-                ':file_id': openai_batch.output_file_id
-            },
-            ConditionExpression='#status = :pending',
-        )
-        logger.info(f"batch_poller: Successfully updated batch {batch_id}")
+        try:
+            batches_table.update_item(
+                Key={
+                    'internal_group_batch_id': batch['internal_group_batch_id'],
+                    'created_at': batch['created_at']
+                    },
+                UpdateExpression='SET #status = :completed  , output_file_id = :file_id',
+                ExpressionAttributeNames={'#status': 'status'},
+                ExpressionAttributeValues={
+                    ':completed': 'completed',
+                    ':file_id': openai_batch.output_file_id
+                },
+            )
+            logger.info(f"batch_poller: Successfully updated batch {batch_id}")
+        except Exception as e:
+            logger.error(f"batch_poller: Error updating the batch table to 'complete' ")
+            raise
 
     except Exception as e:
         logger.error(f"batch_poller: Error processing batch {batch.get('openai_batch_id')}: {e}")
         batches_table.update_item(
-            Key={'openai_batch_id': batch_id},
-            UpdateExpression='SET #status = :failed',
+            Key={
+                'internal_group_batch_id': batch['internal_group_batch_id'],
+                'created_at': batch['created_at']
+                },
+            UpdateExpression='SET #status = :error',
             ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={':failed': 'failed'}
-        )
+            ExpressionAttributeValues={':error': 'error'}
+        # )
         raise
-
-def process_successful_result(result, jobs_table, keywords_data):
-    custom_id = result['custom_id']
-    response_body = json.loads(result['response']['body'])
-    keywords = response_body['choices'][0]['message']['content'].strip()
-    
-    if not keywords:
-        return
-
-    # Update job in DynamoDB
-    jobs_table.update_item(
-        Key={'id': custom_id},
-        UpdateExpression='SET extracted_keywords = :keywords',
-        ExpressionAttributeValues={':keywords': keywords}
-    )
-    
-    # Prepare for MongoDB storage
-    keywords_data.append({
-        'job_id': custom_id,
-        'keywords': keywords.split(','),
-        'batch_id': result['custom_id']
-    })
-
-def store_in_mongodb(batch, keywords_data):
-    pass
-    # try:
-    #     # Replace with actual MongoDB storage logic
-    #     mongodb.put_object(
-    #         Bucket=os.environ['KEYWORDS_BUCKET'],
-    #         Key=f"keywords/{batch['openai_batch_id']}.json",
-    #         Body=json.dumps(keywords_data)
-    #     )
-    #     logger.info(f"batch_poller: Stored {len(keywords_data)} keyword sets in MongoDB")
-    # except Exception as e:
-    #     logger.error(f"batch_poller: Failed to store keywords in MongoDB: {e}")
-    #     raise
-
-
-   
 
 
     
