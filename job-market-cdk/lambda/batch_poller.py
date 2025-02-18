@@ -73,7 +73,7 @@ def process_batch(batch, batches_table):
 
             case 'failed':
                 if openai_batch.errors.data[0].code == 'token_limit_exceeded':
-                    logger.info(f"batch_poller: batch creation caused token_limit_exceeded error. Updating batch status to 'retry'")
+                    logger.info(f"batch_poller: token_limit_exceeded error. Updating batch status to 'retry'")
                     handle_token_limit_error(batch, batches_table)
                 else:
                     logger.error(f"batch_poller: FAILURE - OpenAI failed to process the batch. openai_batch_id {batch_id}")
