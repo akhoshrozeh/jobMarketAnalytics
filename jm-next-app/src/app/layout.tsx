@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import DynamicBlob from "@/app/components/DynamicBlob";
 import Navbar from "@/app/components/Navbar";
 import Providers from "@/providers/AmplifyProvider";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
@@ -25,7 +27,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={spaceGrotesk.className}>
+      <body className={plusJakartaSans.className}>
         <div>
           {/* Background layer */}
           <div className="fixed inset-0 bg-gray-900/10 -z-20" />
