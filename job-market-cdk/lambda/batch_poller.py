@@ -226,7 +226,7 @@ def process_batch(batch, batches_table):
             UpdateExpression='SET #status = :error',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={':error': 'error'}
-        # )
+        )
         raise
 
 
