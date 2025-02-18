@@ -40,7 +40,7 @@ class JobMarketCdkStack(Stack):
 
          # Contains all jobs and which batch they're in
         jobs_table = dynamodb.Table(
-            self, "JobsTable",
+            self, "JobsTable_",
             partition_key=dynamodb.Attribute(
                 name="site",  # indeed, linkedin, etc
                 type=dynamodb.AttributeType.STRING
@@ -178,6 +178,7 @@ class JobMarketCdkStack(Stack):
             layers=[jobspy_layer, boto3_layer],
             environment={
                 "OPENAI_API_KEY": openai_api_key_secret,
+                "BATCHES_TABLE": batches_table.table_name,
                 "JOBS_TABLE": jobs_table.table_name,
                 "BATCH_DISPATCHER_LAMBDA": batch_dispatcher.function_name
             },
@@ -230,7 +231,8 @@ class JobMarketCdkStack(Stack):
             resources=[
                 jobs_table.table_arn,
                 batches_table.table_arn,
-                f"{jobs_table.table_arn}/index/InternalGroupBatchIndex"
+                f"{jobs_table.table_arn}/index/InternalGroupBatchIndex",
+                f"{batches_table.table_arn}/index/StatusIndex"
                 ]
         ))
 
@@ -248,24 +250,17 @@ class JobMarketCdkStack(Stack):
 
 
 
-        # Add permission for EventBridge to invoke the Lambda
-        # scrape_jobs_lambda.add_permission(
-        #     "ScheduledEventPermission",
-        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
-        #     action="lambda:InvokeFunction",
-        #     source_arn=scrape_schedule.rule_arn
-        # )
 
 
 
 
         # #################### SCHEDULE ###############################
 
-        # Scheduled rule for status checks
+        # # Scheduled rule for status checks
         # batch_poller_schedule = events.Rule(
         #     self, 
         #     "BatchPollerSchedule",
-        #     schedule=events.Schedule.cron(Duration.hours(6)),
+        #     schedule=events.Schedule.rate(Duration.hours(1)),
         #     targets=[targets.LambdaFunction(batch_poller)]
         # )
 
@@ -278,6 +273,20 @@ class JobMarketCdkStack(Stack):
         #     targets=[targets.LambdaFunction(scrape_jobs_lambda)]
         # )
 
+        # # Add permission for EventBridge to invoke the Lambda
+        # scrape_jobs_lambda.add_permission(
+        #     "ScheduledEventPermission",
+        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=scrape_schedule.rule_arn, 
+        # )
+
+        # batch_poller.add_permission(
+        #     "ScheduledEventPermission",
+        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=batch_poller_schedule.rule_arn, 
+        # )
         
 
 
