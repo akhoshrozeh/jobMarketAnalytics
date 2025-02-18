@@ -252,7 +252,6 @@ def handle_retry_batch(batch, batches_table, openai_client):
 
     
     
-    
     # Store batch info in DynamoDB
     try:
         batches_table.update_item(
