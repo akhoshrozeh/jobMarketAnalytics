@@ -15,7 +15,7 @@ dynamodb = boto3.resource('dynamodb')
 openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
 
-# reads the batches table from Dynamo, where status = pending
+# reads the batches table from Dynamo, where status = processing
     # saves those open_ai_batch_ids
 
     # api call to openai, checking the status
@@ -30,25 +30,25 @@ openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 # gets triggered periodically (every hr)
 def handler(event, context):
     try:
-        # Get pending batches from DynamoDB
+        # Get processing batches from DynamoDB
         batches_table = dynamodb.Table(os.environ['BATCHES_TABLE'])
 
         response = batches_table.query(
             IndexName="StatusIndex",
             KeyConditionExpression='#status = :status',
             ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={':status': 'pending'}
+            ExpressionAttributeValues={':status': 'processing'}
         )
-        pending_batches = response.get('Items', [])
+        processing_batches = response.get('Items', [])
         
-        if not pending_batches:
-            logger.info("batch_poller: No pending batches found")
+        if not processing_batches:
+            logger.info("batch_poller: No processing batches found")
             return
 
-        logger.info(f"batch_poller: {len(pending_batches)} pending batches: {pending_batches}")
+        logger.info(f"batch_poller: {len(processing_batches)} processing batches: {processing_batches}")
 
-        # Process pending batches
-        for batch in pending_batches:
+        # Process processing batches
+        for batch in processing_batches:
             process_batch(batch, batches_table)
 
     except Exception as e:
@@ -64,20 +64,28 @@ def process_batch(batch, batches_table):
         # Check OpenAI batch status
         openai_batch = openai_client.batches.retrieve(batch_id)
 
-        logger.info(f"batch_poller: OpenAI batch status: {openai_batch.status}")
+        logger.info(f"batch_poller: OpenAI batch: {openai_batch}")
 
         match openai_batch.status:
             case 'validating' | 'in_progress' | 'finalizing' | 'cancelling' | 'cancelled':
                 logger.info(f"batch_poller: Batch {batch_id} not complete. Current status: {openai_batch.status}")
                 return
+
             case 'failed':
-                logger.error(f"batch_poller: FAILURE - OpenAI failed to process the batch. openai_batch_id {batch_id}")
+                if openai_batch.errors.data[0].code == 'token_limit_exceeded':
+                    logger.info(f"batch_poller: batch creation caused token_limit_exceeded error. Updating batch status to 'retry'")
+                    handle_token_limit_error(batch, batches_table)
+                else:
+                    logger.error(f"batch_poller: FAILURE - OpenAI failed to process the batch. openai_batch_id {batch_id}")
                 return
+
             case 'expired':
                 logger.error(f"batch_poller: EXPIRED - OpenAI was unable to complete the batch job in time. openai_batch_id {batch_id}")
                 return 
+                
             case 'completed':
                 logger.info(f"batch_poller: Batch job completed. openai_batch_id: {batch_id}")
+
             case _:
                 logger.error(f"batch_poller: ERROR - openai_batch.status couldn't be matched")
                 return
@@ -230,4 +238,20 @@ def process_batch(batch, batches_table):
         raise
 
 
-    
+# Sets the status to 'retry', which is then handled by 'batch_dispatcher' lambda
+def handle_token_limit_error(batch, batches_table):
+    try:
+        batches_table.update_item(
+            Key={
+                'internal_group_batch_id': batch['internal_group_batch_id'],
+                'created_at': batch['created_at']
+                },
+            UpdateExpression='SET #status = :val',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={':val': 'retry'}
+        )
+        logger.info(f"batch_poller: Updated batch {batch['internal_group_batch_id']} to 'retry' in DynamoDB")
+
+    except Exception as e:
+        logger.error(f"batch_poller: Failed to set batch status to 'retry' in DynamoDB: {e}")
+        return
