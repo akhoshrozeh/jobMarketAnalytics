@@ -114,7 +114,6 @@ def handler(event, context):
 
         except Exception as e:
             logger.error(f"ERROR: scraping jobs with params: {params} \n ERROR: {e}")
-            err_count += 1
             continue
 
     logger.info(f"{len(final_jobs)} jobs ready for processing.")
@@ -124,22 +123,59 @@ def handler(event, context):
 
     
 
-    # Create batches of size 500. OpenAI has batch limit of 2mil tokens for gpt-4o-mini
+    # Create batches of size 500. OpenAI has batch limit of 2mil enqueued tokens for gpt-4o-mini
     # Write final_jobs to DynamoDB, attaching an internal batch group id
+    # Create the Batch Item in Batches Table.
     try:
         logger.info(f"Splitting {len(final_jobs)} jobs into batches in DynamoDB.")
     
-        batch_size = 500    
-        now = datetime.datetime.utcnow()
+        BATCH_SIZE = 300    
+        batches_table = dynamodb.Table(os.environ['BATCHES_TABLE'])
+
+        # Initialize 
+        now = datetime.datetime.utcnow().isoformat()
         unique_id = str(uuid.uuid4())
         internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
         batch_ids = [internal_group_batch_id]
+        
+        # init: jobs are stored waiting to upload to openai (handled by batch_dispatcher)
+        # processing: the batch has been uploaded to openai and is currently being processed (handled by batch_poller)
+        # completed: the batch has been downloaded from openai, and stored both in dynamo and mongo (done; can be deleted after a certain amount of time?)
+        # retry: the batch upload to openai failed. needs to be attempted again (handled by batch_dispatcher)
+        # failure: something went wrong; manual debugging (handled by ??? - create error handling lambda? - write errors to the table)
+        try:
+            batches_table.put_item(
+                Item={
+                    'internal_group_batch_id': internal_group_batch_id,
+                    'created_at': now,
+                    'status': 'init',
+                }
+            )
+            logger.info(f"jobspy_scraper: stored batch {internal_group_batch_id} in DynamoDB")
+        except Exception as e:
+            logger.error(f"jobspy_scraper: Failed to store batch info in DynamoDB: {e}")
+            return
 
         with jobs_table.batch_writer() as writer:
             for idx, job in enumerate(final_jobs):
 
-                # Create new batch id
-                if idx > 0 and idx % batch_size == 0:
+                # Write the current batch id item to dynamo; Create new batch id
+                if idx > 0 and idx % BATCH_SIZE == 0:
+                    try:
+                        batches_table.put_item(
+                            Item={
+                                'internal_group_batch_id': internal_group_batch_id,
+                                'created_at': now,
+                                'status': 'init',
+                            }
+                        )
+                        logger.info(f"jobspy_scraper: stored batch {internal_group_batch_id} in DynamoDB")
+                    except Exception as e:
+                        logger.error(f"jobspy_scraper: Failed to store batch info in DynamoDB: {e}")
+                        return
+
+
+                    # create new batch
                     unique_id = str(uuid.uuid4())
                     internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
                     batch_ids.append(internal_group_batch_id)
@@ -151,7 +187,7 @@ def handler(event, context):
                             job[field] = str(job[field])
                         to_write[field] = job[field]
                 to_write['internal_group_batch_id'] = internal_group_batch_id
-                to_write['created_at'] = now.isoformat()
+                to_write['created_at'] = now
 
                 # Skip if no fields to write
                 if not to_write:
@@ -163,7 +199,6 @@ def handler(event, context):
     except Exception as err:
         logger.error(
             f"Couldn't load data into jobs table. {err}",
-            
         )
         return {
             'statusCode': 500,
@@ -174,32 +209,21 @@ def handler(event, context):
     # Invoke the batch dispatcher, passing the interal group batch id
     try:
         # wait for writes to sync
-        time.sleep(5)
-        logger.info(f"Invoking batch dispatcher for batches: {batch_ids}")
-        for batch_id in batch_ids:
-            payload = {
-                "internal_group_batch_id": batch_id,
-            }
+        time.sleep(10)
+        logger.info(f"Waited 10s... Invoking batch dispatcher for batches: {batch_ids}")
             # Using asynchronous invocation ("Event") so the call is fire-and-forget.
-            response = lambda_client.invoke(
-                FunctionName=os.environ["BATCH_DISPATCHER_LAMBDA"],
-                InvocationType="Event",  
-                Payload=json.dumps(payload)
-            )
-            logger.info(f"Batch dispatcher invoked. Response: {response}")
+        response = lambda_client.invoke(
+            FunctionName=os.environ["BATCH_DISPATCHER_LAMBDA"],
+            InvocationType="Event",  
+
+        )
+        logger.info(f"Batch dispatcher invoked. Response: {response}")
     except Exception as err:
         logger.error(f"Error invoking batch dispatcher lambda: {err}")
-        # Optionally, you can updat
     
 
-    if err_count > 0:
-       return {
-            'statusCode': 500,
-            'body': f"{err_count} errors found."
-        }
 
-    else:
-        return {
+    return {
             'statusCode': 200,
             'body': f"{len(final_jobs)} jobs written."
         }
