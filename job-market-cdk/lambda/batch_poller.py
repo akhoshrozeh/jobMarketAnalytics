@@ -96,7 +96,9 @@ def process_batch(batch, batches_table):
         output_file = openai_client.files.content(openai_batch.output_file_id)
         results = [json.loads(line) for line in output_file.text.splitlines()]
 
-        # logger.info(f"batch_poller: Batch results: {results}")
+
+
+        logger.info(f"{len(results)} jobs in the batch from openai")
         
         # # Process each result
         jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
@@ -131,6 +133,10 @@ def process_batch(batch, batches_table):
                     }
                 )
 
+
+
+
+
         max_retries = 3
         base_delay = 0.5  # seconds
         jobs = []
@@ -139,27 +145,41 @@ def process_batch(batch, batches_table):
         for attempt in range(max_retries):
             # Read in all the jobs for this batch, including newly written extracted keywords
             try:
-                response = jobs_table.query(
-                    IndexName='InternalGroupBatchIndex',
-                    KeyConditionExpression='internal_group_batch_id = :id',
-                    ProjectionExpression='site, id, company, company_addresses, company_revenue, created_at, date_posted, is_remote, #loc, job_url, job_url_direct, max_amount, min_amount, title, extracted_keywords, internal_group_batch_id',
-                    ExpressionAttributeNames={
-                        '#loc': 'location'
-                    },
-                    ExpressionAttributeValues={':id': batch['internal_group_batch_id']},
-                )
+                last_evaluated_key = None
                 
-                current_jobs = response.get('Items', [])
+                while True:
+                    query_args = {
+                        'IndexName':'InternalGroupBatchIndex',
+                        'KeyConditionExpression':'internal_group_batch_id = :id',
+                        'ProjectionExpression':'site, id, company, company_addresses, company_revenue, created_at, date_posted, is_remote, #loc, job_url, job_url_direct, max_amount, min_amount, title, extracted_keywords, internal_group_batch_id',
+                        'ExpressionAttributeNames':{
+                            '#loc': 'location'
+                        },
+                        'ExpressionAttributeValues':{':id': batch['internal_group_batch_id']},
+                    }
+
+                    if last_evaluated_key:
+                        query_args['ExclusiveStartKey'] = last_evaluated_key
+
+                    response = jobs_table.query(**query_args)
+                    jobs.extend(response.get('Items', []))
+                    last_evaluated_key = response.get('LastEvaluatedKey')  
+
+                    if not last_evaluated_key:
+                        break
+
+                logger.info(f"{len(jobs)} jobs pulled from dynamodb.")
+                
         
                 # Verify all jobs have keywords
-                missing_keywords = [j['id'] for j in current_jobs if 'extracted_keywords' not in j]
+                missing_keywords = [j['id'] for j in jobs if 'extracted_keywords' not in j]
                 
                 # none missing
-                if len(missing_keywords) == 0:
-                    jobs = current_jobs
+                if len(missing_keywords) == 0 and len(jobs) == len(results):
                     break
                     
                 logger.warning(f"Attempt {attempt+1}: {len(missing_keywords)} jobs missing keywords")
+                
                 
                 # Exponential backoff with jitter
                 sleep_time = base_delay * (2 ** attempt) + random.uniform(0, 0.1)
@@ -170,12 +190,17 @@ def process_batch(batch, batches_table):
                 if attempt == max_retries - 1:
                     raise
 
-        if not jobs:
+        if not jobs or len(results) != len(jobs):
             logger.error("Failed to retrieve jobs with keywords after retries")
             return
         elif len(missing_keywords) > 0:
             logger.error(f"Permanent missing keywords in jobs: {missing_keywords[:3]}...")
+            return
             
+
+
+
+
 
          # Store keywords in MongoDB
         try:
