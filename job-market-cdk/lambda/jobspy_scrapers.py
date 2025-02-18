@@ -10,83 +10,71 @@ import os
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
 def get_scrape_params():
-    return [
-        {
+
+    titles = [
+        'software engineer',
+        'front end developer', 
+        'backend developer', 
+        'full stack developer',
+        'devops engineer',
+        'security engineer',
+        'cloud engineer',
+        'UI/UX engineer',
+        'web developer',
+        'network engineer',
+        'mobile developer',
+        'mobile engineer',
+        'ios developer',
+        'android developer',
+        'data scientist',
+        'data engineer',
+        'AI engineer',
+        'machine learning engineer',
+        'embedded software engineer',
+        'cybersecurity analyst',
+        'systems engineer',
+        'cloud security engineer',
+        'database administrator',
+        'QA engineer',
+        'firmware engineer',
+        'systems administrator',
+        'IT engineer',
+        'MLOps engineer',
+        'SOC Analyst',
+        'game developer'
+        ]
+        
+    locations = ["San Francisco, CA", "New York, NY", "Los Angeles, CA", "Austin, TX", "Seattle, WA"]
+    queries = []
+    for location in locations:
+        for title in titles:
+            queries.append(
+                {
                 "site_name": ["indeed"],
-                "search_term": "software engineer",
-                "location": "San Francisco, CA",
-                "results_wanted": 10,
+                "search_term": title,
+                "location": location,
+                "results_wanted": 100,
                 "hours_old": 72,
                 "country_indeed": "USA"
-        },
-        # {
-        #         "site_name": ["indeed"],
-        #         "search_term": "software engineer",
-        #         "location": "Los Angeles, CA",
-        #         "results_wanted": 100,
-        #         "hours_old": 72,
-        #         "country_indeed": "USA"
-        # },
-        # {
-        #         "site_name": ["indeed"],
-        #         "search_term": "software engineer",
-        #         "location": "New York City, NY",
-        #         "results_wanted": 100,
-        #         "hours_old": 72,
-        #         "country_indeed": "USA"
-        # },
-        # {
-        #         "site_name": ["indeed"],
-        #         "search_term": "software engineer",
-        #         "location": "Seattle, WA",
-        #         "results_wanted": 100,
-        #         "hours_old": 72,
-        #         "country_indeed": "USA"
-        # },
-        # {
-        #         "site_name": ["indeed"],
-        #         "search_term": "software engineer",
-        #         "location": "Boston, MA",
-        #         "results_wanted": 100,
-        #         "hours_old": 72,
-        #         "country_indeed": "USA"
-        # },
-        # {
-        #         "site_name": ["indeed"],
-        #         "search_term": "software engineer",
-        #         "location": "San Diego, CA",
-        #         "results_wanted": 100,
-        #         "hours_old": 72,
-        #         "country_indeed": "USA"
+                 }
+            )
 
-        # },
-        # {
-        #         "site_name": ["indeed"],
-        #         "search_term": "software engineer",
-        #         "location": "Chicago, IL",
-        #         "results_wanted": 100,
-        #         "hours_old": 72,
-        #         "country_indeed": "USA"
-        # }
-    ]
+    return queries
     
 def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
     lambda_client = boto3.client('lambda')
     jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
-    s3 = boto3.client('s3')
 
     scrape_params = get_scrape_params()
     total_jobs = 0
     err_count = 0
     # Jobs with no duplicates.
     final_jobs = []
+    seen_job_ids = set()
 
-    now = datetime.datetime.utcnow()
-    unique_id = str(uuid.uuid4())
-    internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
+    
 
     # Scrape jobs and check for duplicates
     for params in scrape_params:
@@ -118,7 +106,9 @@ def handler(event, context):
             # Dedup
             for job in jobs_dict:
                 response = jobs_table.get_item(Key={'site': job['site'], 'id': job['id']})
-                if 'Item' not in response:
+                job_key = (job['site'], job['id'])
+                if 'Item' not in response and job_key not in seen_job_ids:
+                    seen_job_ids.add(job_key)
                     final_jobs.append(job)
                 
 
@@ -127,14 +117,33 @@ def handler(event, context):
             err_count += 1
             continue
 
-    logger.info(f"{len(final_jobs)} jobs for {internal_group_batch_id}")
+    logger.info(f"{len(final_jobs)} jobs ready for processing.")
 
+
+
+
+    
+
+    # Create batches of size 500. OpenAI has batch limit of 2mil tokens for gpt-4o-mini
     # Write final_jobs to DynamoDB, attaching an internal batch group id
     try:
-        logger.info(f"Writing {len(final_jobs)} jobs to DynamoDB...")
-        
+        logger.info(f"Splitting {len(final_jobs)} jobs into batches in DynamoDB.")
+    
+        batch_size = 500    
+        now = datetime.datetime.utcnow()
+        unique_id = str(uuid.uuid4())
+        internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
+        batch_ids = [internal_group_batch_id]
+
         with jobs_table.batch_writer() as writer:
-            for job in final_jobs:
+            for idx, job in enumerate(final_jobs):
+
+                # Create new batch id
+                if idx > 0 and idx % batch_size == 0:
+                    unique_id = str(uuid.uuid4())
+                    internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
+                    batch_ids.append(internal_group_batch_id)
+
                 to_write = {}
                 for field in job:
                     if field in job and job[field] is not None:
@@ -164,16 +173,20 @@ def handler(event, context):
 
     # Invoke the batch dispatcher, passing the interal group batch id
     try:
-        payload = {
-            "internal_group_batch_id": internal_group_batch_id,
-        }
-        # Using asynchronous invocation ("Event") so the call is fire-and-forget.
-        response = lambda_client.invoke(
-            FunctionName=os.environ["BATCH_DISPATCHER_LAMBDA"],
-            InvocationType="Event",  
-            Payload=json.dumps(payload)
-        )
-        logger.info(f"Batch dispatcher invoked. Response: {response}")
+        # wait for writes to sync
+        time.sleep(5)
+        logger.info(f"Invoking batch dispatcher for batches: {batch_ids}")
+        for batch_id in batch_ids:
+            payload = {
+                "internal_group_batch_id": batch_id,
+            }
+            # Using asynchronous invocation ("Event") so the call is fire-and-forget.
+            response = lambda_client.invoke(
+                FunctionName=os.environ["BATCH_DISPATCHER_LAMBDA"],
+                InvocationType="Event",  
+                Payload=json.dumps(payload)
+            )
+            logger.info(f"Batch dispatcher invoked. Response: {response}")
     except Exception as err:
         logger.error(f"Error invoking batch dispatcher lambda: {err}")
         # Optionally, you can updat
