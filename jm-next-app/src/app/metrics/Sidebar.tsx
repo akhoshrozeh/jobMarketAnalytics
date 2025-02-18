@@ -96,13 +96,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-2 border-r-2 border-b-2  rounded-tr-xl rounded-br-xl border-emerald-500 mt-16">
                 <div className="flex h-16 shrink-0 items-center">
-                  <Image
-                    height={32}
-                    width={32}
-                    alt="Your Company"
-                    src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
-                    className="h-8 w-auto"
-                  />
+                    Analytics Menu
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">

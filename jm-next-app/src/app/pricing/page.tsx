@@ -14,11 +14,11 @@ const premiumPriceId = Resource.PremiumMembershipPriceId.value;
 
 const tiers = [
   {
-    name: 'Standard Lifetime Membership',
-    id: 'tier-standard',
+    name: 'basic Lifetime Membership',
+    id: 'tier-basic',
     href: '',
-    originalPrice: "$79.99",
-    price: "$39.99",
+    originalPrice: "$14.99",
+    price: "$8.99",
     description: 'This plan will provide a strong insight into your journey.',
     features: [
       '25 products',
@@ -33,8 +33,8 @@ const tiers = [
     name: 'Premium Lifetime Membership',
     id: 'tier-premium',
     href: '',
-    originalPrice: "$139.99",
-    price: "$69.99",
+    originalPrice: "$29.99",
+    price: "$14.99",
     description: 'Unlimited and full access to analytics and support for journey.',
     features: [
       'Unlimited access to all features',
@@ -69,6 +69,7 @@ async function createBasicCheckout(idToken: CognitoIdTokenPayload | null) {
       metadata_email: String(idToken.email),
       metadata_username: String(idToken.sub)
     },
+
     success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation"),
     mode: "payment"
   });
@@ -93,6 +94,7 @@ async function createPremiumCheckout(idToken: CognitoIdTokenPayload | null) {
       metadata_email: String(idToken.email),
       metadata_username: String(idToken.sub)
     },
+
     success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation"),
     mode: "payment"        
   })
@@ -123,12 +125,12 @@ export default async function Pricing() {
       const basicPaymentLink = await createBasicCheckout(idToken)
       const premiumPaymentLink = await createPremiumCheckout(idToken)
       console.log("basicPaymentLink: ", basicPaymentLink)
-      tiers[0].href = basicPaymentLink?.url + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
-      tiers[1].href = premiumPaymentLink?.url + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
+      tiers[0].href = basicPaymentLink?.url || ""
+      tiers[1].href = premiumPaymentLink?.url || ""
     }
     else if (userTier == "basic") {
       const premiumPaymentLink = await createPremiumCheckout(idToken)
-      tiers[1].href = premiumPaymentLink?.url || "" // + `?prefilled_email=${encodeURIComponent(String(idToken?.email))}`;
+      tiers[1].href = premiumPaymentLink?.url || ""
       tiers[0].href = ""; // Disable basic tier
     } else { // premium user
       tiers[0].href = "";
@@ -183,7 +185,7 @@ export default async function Pricing() {
               </p>
 
               <p className="mt-2 flex items-baseline gap-x-1">
-                <span className="text-4xl font-semibold tracking-tight text-white">{tier.price}</span>
+                <span className="text-4xl font-semibold tracking-tight text-black">{tier.price}</span>
                 {/* <span className="text-sm/6 font-semibold text-gray-300"></span> */}
               </p>
               
