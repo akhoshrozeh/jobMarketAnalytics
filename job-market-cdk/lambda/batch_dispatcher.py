@@ -47,12 +47,26 @@ def handler(event, context):
 
     try:
         # Query jobs from DynamoDB using GSI
-        response = jobs_table.query(
-            IndexName='InternalGroupBatchIndex',
-            KeyConditionExpression='internal_group_batch_id = :id',
-            ExpressionAttributeValues={':id': internal_group_batch_id}
-        )
-        jobs = response.get('Items', [])
+        jobs = []
+        last_evaluated_key = None
+        
+        # Dynamo reads have max size of 1 mb; need to read
+        while True:
+            query_args = {
+                'IndexName': 'InternalGroupBatchIndex',
+                'KeyConditionExpression': 'internal_group_batch_id = :id',
+                'ExpressionAttributeValues': {':id': internal_group_batch_id}
+            }
+            
+            if last_evaluated_key:
+                query_args['ExclusiveStartKey'] = last_evaluated_key
+
+            response = jobs_table.query(**query_args)
+            jobs.extend(response.get('Items', []))
+            
+            last_evaluated_key = response.get('LastEvaluatedKey')  # Safe get
+            if not last_evaluated_key:
+                break
 
         if not jobs:
             logger.info(f"batch_dispatcher: no jobs found for {internal_group_batch_id}")
