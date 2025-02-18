@@ -15,19 +15,8 @@ def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
     jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
     batches_table = dynamodb.Table(os.environ['BATCHES_TABLE'])
-
     openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
-    system_prompt = f"""Extract specific technical skills and tools mentioned in the following job description.
-
-        - Output only a list of technical skills or tools explicitly mentioned, such as programming languages, frameworks, libraries, software tools, protocols, platforms, etc.
-        - Do not include benefits, compensation details, years of experience, or general phrases unrelated to specific technologies or tools.
-        - Only output the keywords as a single string separated by commas. Do not include context, explanations, intros, or outros.
-        - If the job description is not clear or you cannot extract any keywords, output an empty string.
-        Remember: Your output should be a single string of comma-separated technical skills and tools, or an empty string if you cannot extract any keywords. Nothing else.
-    """
-
-    logger.info(f"batch_processor: received event: {event}")
 
 
     # read the data from DDB using internal_batch_group_id_xxx.. as the key
@@ -38,15 +27,67 @@ def handler(event, context):
     # save the batch id (from openai)
     # store [internal batch group id, open batch id, file id] in the batches table
 
-    if event['internal_group_batch_id'] is None or event['internal_group_batch_id'] == "":
-        logger.error(f"batch_dispatcher: internal_group_batch_id required in as params in 'event' ")
-        return 
 
-    # Get internal_group_batch_id from event
-    internal_group_batch_id = event['internal_group_batch_id']
+    # init: jobs are stored waiting to upload to openai (handled by batch_dispatcher)
+    # processing: the batch has been uploaded to openai and is currently being processed (handled by batch_poller)
+    # completed: the batch has been downloaded from openai, and stored both in dynamo and mongo (done; can be deleted after a certain amount of time?)
+    # retry: the batch upload to openai failed. needs to be attempted again (handled by batch_dispatcher)
+    # failure: something went wrong; manual debugging (handled by ??? - create error handling lambda? - write errors to the table)
+   
+    statuses = ["init", "retry", "cancelled"]
+    _status = 'init'
 
     try:
-        # Query jobs from DynamoDB using GSI
+        for _status in statuses:
+            response = batches_table.query(
+                IndexName="StatusIndex",
+                KeyConditionExpression='#status = :status',
+                ExpressionAttributeNames={'#status': 'status'},
+                ExpressionAttributeValues={':status': _status}
+            )
+
+            batches = response.get('Items', [])
+            
+            if not batches:
+                logger.info(f"batch_poller: No {_status} batches found")
+                continue
+
+            logger.info(f"batch_poller: {len(batches)} batches with status {_status}: {batches}")
+            
+            # Process processing batches
+            if _status == 'init':
+                for batch in batches:
+                    handle_init_batch(batch, batches_table, jobs_table, openai_client)
+            
+            elif _status == 'retry' or _status == 'cancelled':
+                for batch in batches:
+                    handle_retry_batch(batch, batches_table, openai_client)
+        
+    except Exception as e:
+        logger.error(f"batch_dispatcher: Failed to query {_status} batches {e}")
+
+
+
+
+# Creates a batch job in OpenAI; init batches only have the jobs in the Jobs Table and an internal_group_batch_id assigned
+def handle_init_batch(batch, batches_table, jobs_table, openai_client):
+
+    system_prompt = f"""Extract specific technical skills and tools mentioned in the following job description.
+
+        - Output only a list of technical skills or tools explicitly mentioned, such as programming languages, frameworks, libraries, software tools, protocols, platforms, etc.
+        - Do not include benefits, compensation details, years of experience, or general phrases unrelated to specific technologies or tools.
+        - Only output the keywords as a single string separated by commas. Do not include context, explanations, intros, or outros.
+        - If the job description is not clear or you cannot extract any keywords, output an empty string.
+        Remember: Your output should be a single string of comma-separated technical skills and tools, or an empty string if you cannot extract any keywords. Nothing else.
+    """
+
+    logger.info(f"handle_init_batch: {batch}")
+
+    # extract internal_batch_group_id
+    internal_group_batch_id = batch['internal_group_batch_id']
+
+    # Query jobs from DynamoDB using GSI
+    try:
         jobs = []
         last_evaluated_key = None
         
@@ -160,34 +201,81 @@ def handler(event, context):
     
     # Store batch info in DynamoDB
     try:
-        now = datetime.utcnow().isoformat()
-        batches_table.put_item(
-            Item={
-                'internal_group_batch_id': internal_group_batch_id,
-                'input_file_id': input_file_id,
-                'input_filename': input_filename,
-                'input_file_bytes': input_file_bytes,
-                'openai_batch_id': openai_batch_id,
-                'created_at': now,
-                'status': 'pending',
-                'total_jobs': len(jobs)
+        batches_table.update_item(
+            Key={
+                'internal_group_batch_id': batch['internal_group_batch_id'],
+                'created_at': batch['created_at']
+                },
+            UpdateExpression='SET input_file_id = :fid, input_filename = :fname, input_file_bytes = :fbytes, ' 
+                           'openai_batch_id = :bid, #status = :st, total_jobs = :tj',
+            ExpressionAttributeNames={
+                '#status': 'status'
+            },
+            ExpressionAttributeValues={
+                ':fid': input_file_id,
+                ':fname': input_filename,
+                ':fbytes': input_file_bytes,
+                ':bid': openai_batch_id,
+                ':st': 'processing',
+                ':tj': len(jobs)
             }
         )
-        logger.info(f"batch_dispatcher: stored batch info in DynamoDB")
+        logger.info(f"batch_dispatcher: Updated batch info in DynamoDB")
+
     except Exception as e:
-        logger.error(f"batch_dispatcher: Failed to store batch info in DynamoDB: {e}")
+        logger.error(f"batch_dispatcher: Failed to update batch info in DynamoDB: {e}")
         return
         
 
     logger.info(f"batch_dispatcher: Success. Batch job created for {internal_group_batch_id}")
 
 
+def handle_retry_batch(batch, batches_table, openai_client):
+    logging.info(f"Retry batch {batch}")
 
+    if not batch['input_file_id']:
+        logger.error(f"batch_dispatcher: Rety batch had no input file id. Exiting..")
+        return 
+     # Create batch job using file
+    try: 
+        batch_response = openai_client.batches.create(
+            input_file_id=batch['input_file_id'],
+            endpoint="/v1/chat/completions",
+            completion_window="24h"
+        )
+        logger.info(f"batch_dispatcher: OpenAI batch job response: {batch_response}")
+        openai_batch_id = batch_response.id
 
+    except Exception as e:
+        logger.error(f"batch_dispatcher: Failed to create batch job: {e}")
+        return
 
+    
+    
+    
+    # Store batch info in DynamoDB
+    try:
+        batches_table.update_item(
+            Key={
+                'internal_group_batch_id': batch['internal_group_batch_id'],
+                'created_at': batch['created_at']
+                },
+            UpdateExpression='SET openai_batch_id = :bid, #status = :st',
+            ExpressionAttributeNames={
+                '#status': 'status'
+            },
+            ExpressionAttributeValues={
+                ':bid': openai_batch_id,
+                ':st': 'processing',
+            }
+        )
+        logger.info(f"batch_dispatcher: Updated batch info in DynamoDB")
 
+    except Exception as e:
+        logger.error(f"batch_dispatcher: Failed to update batch info in DynamoDB: {e}")
+        return
+        
 
-   
-
+    logger.info(f"batch_dispatcher: Success. Retry Batch job created for {batch['internal_group_batch_id']}")
 
     
