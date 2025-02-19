@@ -37,12 +37,6 @@ export default async function Navbar() {
                   Analytics
                 </Link>
                 <Link
-                  href="/jobs"
-                  className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
-                >
-                  Jobs
-                </Link>
-                <Link
                   href="/pricing"
                   className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
                 >
@@ -88,13 +82,7 @@ export default async function Navbar() {
           >
             Analytics
           </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="/jobs"
-            className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-          >
-            Jobs
-          </DisclosureButton>
+
           <DisclosureButton
             as="a"
             href="/pricing"
