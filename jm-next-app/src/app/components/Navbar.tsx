@@ -3,7 +3,6 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import NavbarAuthLarge from './NavbarAuthLarge'
 import NavBarAuthSmall from './NavBarAuthSmall'
-// import { existsIdToken } from '@/utils/existsToken'
 import { verifyIdToken } from '../../utils/verifyToken'
 
 
@@ -15,37 +14,37 @@ export default async function Navbar() {
   const isLoggedIn = tokenPayload ? true : false;
 
   return (
-    <Disclosure as="nav" className="bg-black border-b-2 border-gray-500">
+    <Disclosure as="nav" className="border-b-2 border-m-dark-green">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-20">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <div className="shrink-0 text-emerald-500 font-bold text-2xl">
-              Job<span className="text-emc">Trendr</span>
+          <div className="flex items-center justify-between flex-1">
+            <div className="shrink-0 text-m-light-green font-bold text-2xl bg-black p-2 rounded-xl">
+              Job<span className="text-m-dark-green">Trendr</span>
             </div>
-            <div className="hidden sm:ml-6 sm:block">
-              <div className="flex space-x-4">
+            <div className="hidden md:block text-black flex-1">
+              <div className="flex space-x-8 justify-center">
                 {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
                 <Link 
                   href="/" 
-                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
+                  className="rounded-xl px-2 py-2  text-md font-medium text-black hover:bg-m-light-green hover:text-black"
                 >
                   Home
                 </Link>
                 <Link
-                  href="/metrics/top-skills"
-                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
+                  href="/analytics/top-skills"
+                  className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
                 >
-                  Metrics
+                  Analytics
                 </Link>
                 <Link
                   href="/jobs"
-                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
+                  className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
                 >
                   Jobs
                 </Link>
                 <Link
                   href="/pricing"
-                  className="rounded-md px-3 py-2 text-md font-bold text-white hover:bg-gray-700 hover:text-white"
+                  className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
                 >
                   Pricing
                 </Link>
@@ -84,10 +83,10 @@ export default async function Navbar() {
           </DisclosureButton>
           <DisclosureButton
             as="a"
-            href="/metrics/top-skills"
+            href="/analytics/top-skills"
             className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
-            Metrics
+            Analytics
           </DisclosureButton>
           <DisclosureButton
             as="a"
