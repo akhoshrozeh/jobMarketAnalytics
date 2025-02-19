@@ -41,7 +41,6 @@ export async function verifyIdToken() {
     const cookieStore = await cookies();
     const allCookies = Array.from(cookieStore.getAll());
     const idTokenCookie = allCookies.find(cookie => cookie.name.includes('idToken'));
-    console.log("idTokenCookie", idTokenCookie?.value)
 
     if (!idTokenCookie) {
         console.log("No id token cookie found");
@@ -49,7 +48,6 @@ export async function verifyIdToken() {
     }
 
     try {
-        console.log(idTokenCookie)
         const payload = await verifierIdToken.verify(idTokenCookie.value);
         return payload;
     } catch (err) {
