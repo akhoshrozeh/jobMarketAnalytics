@@ -12,6 +12,10 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
         "emc": "#14E8A2",
+        "m-dark-green": "#3D8D7A",
+        "m-light-green": "#B3D8A8",
+        "m-light-yellow": "#FBFFE4",
+        "m-light-blue": "#A3D1C6",
       },
       animation: {
         'spin-slow': 'spin 40s linear infinite',
