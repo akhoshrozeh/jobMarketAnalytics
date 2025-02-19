@@ -41,12 +41,12 @@ export async function middleware(request: NextRequest) {
 
 
   // Must have premium
-  if (request.nextUrl.pathname.startsWith('/metrics/search') && tier != 'premium') {
+  if (request.nextUrl.pathname.startsWith('/analytics/search') && tier != 'premium') {
       return NextResponse.redirect(new URL('/pricing', request.url))
   }
 
   // Route needs basic or premium
-  if (request.nextUrl.pathname.startsWith('/metrics/skills-connectivity') && tier == 'free') {
+  if (request.nextUrl.pathname.startsWith('/analytics/skills-connectivity') && tier == 'free') {
     return NextResponse.redirect(new URL('/pricing', request.url))
 }
 
@@ -58,5 +58,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/profile', '/login', '/sign-up', '/metrics/:path*'],
+  matcher: ['/profile', '/login', '/sign-up', '/analytics/:path*'],
 }
