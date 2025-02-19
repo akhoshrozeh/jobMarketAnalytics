@@ -30,7 +30,7 @@ export default function RootLayout({
       <body className={plusJakartaSans.className}>
         <div>
           {/* Background layer */}
-          <div className="fixed inset-0 bg-gray-900/10 -z-20" />
+          <div className="fixed inset-0 bg-white -z-20" />
           
           {/* Blob layer */}
           <div className="fixed inset-0 -z-10">
@@ -38,7 +38,7 @@ export default function RootLayout({
           </div>
 
           {/* Content layer */}
-          <div className="relative z-0">
+          <div className="relative z-0 text-black">
             <Providers>
               <Navbar />
             </Providers>
