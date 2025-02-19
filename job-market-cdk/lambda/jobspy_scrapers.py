@@ -155,26 +155,13 @@ def handler(event, context):
         except Exception as e:
             logger.error(f"jobspy_scraper: Failed to store batch info in DynamoDB: {e}")
             return
-
+        
         with jobs_table.batch_writer() as writer:
             for idx, job in enumerate(final_jobs):
 
                 # Write the current batch id item to dynamo; Create new batch id
                 if idx > 0 and idx % BATCH_SIZE == 0:
-                    try:
-                        batches_table.put_item(
-                            Item={
-                                'internal_group_batch_id': internal_group_batch_id,
-                                'created_at': now,
-                                'status': 'init',
-                            }
-                        )
-                        logger.info(f"jobspy_scraper: stored batch {internal_group_batch_id} in DynamoDB")
-                    except Exception as e:
-                        logger.error(f"jobspy_scraper: Failed to store batch info in DynamoDB: {e}")
-                        return
-
-
+    
                     # create new batch
                     unique_id = str(uuid.uuid4())
                     internal_group_batch_id = f"internal_group_batch_id_{unique_id}"
@@ -204,6 +191,22 @@ def handler(event, context):
             'statusCode': 500,
             'body': f"Error writing to DynamoDB: {err}"
         }
+
+
+    # Create the Batch Items in Batches Table.
+    try:
+        for internal_group_batch_id in batch_ids:
+            batches_table.put_item(
+                Item={
+                    'internal_group_batch_id': internal_group_batch_id,
+                    'created_at': now,
+                    'status': 'init',
+                }
+            )
+            logger.info(f"jobspy_scraper: stored batch {internal_group_batch_id} in DynamoDB")
+    except Exception as e:
+        logger.error(f"jobspy_scraper: Failed to store batch info in DynamoDB: {e}")
+        return
 
 
     # Invoke the batch dispatcher, passing the interal group batch id
