@@ -89,12 +89,12 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                 <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0 mt-8">
                   <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
                     <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon aria-hidden="true" className="size-8 text-gray-400 bg-black rounded-3xl border-2 border-emerald-500 hover:text-white" />
+                    <XMarkIcon aria-hidden="true" className="size-8 text-gray-400 bg-black rounded-3xl border-2 border-m-dark-green hover:text-white" />
                   </button>
                 </div>
               </TransitionChild>
               {/* Sidebar component, swap this element with another sidebar if you like */}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black/95 px-6 pb-2 border-t-4 border-r-4 border-b-4  mb-4 rounded-tr-xl rounded-br-xl border-emerald-500 mt-16">
+              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-4 border-r-4 border-b-4  mb-4 rounded-tr-xl rounded-br-xl border-m-dark-green mt-16">
                 <div className="flex h-16 shrink-0 items-center">
                     Analytics Menu
                 </div>
@@ -147,7 +147,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
 
        
 
-        <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-inherit  px-4 py-4 sm:px-6 bg-m-light-green/40">
+        <div className="sticky top-0 z-10 flex items-center gap-x-6 bg-inherit  px-4 py-4 sm:px-6 bg-m-light-green/40">
           <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400">
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-full p-1" />

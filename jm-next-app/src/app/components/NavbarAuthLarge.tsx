@@ -27,7 +27,7 @@ export default async function NavbarAuthLarge({isLoggedIn, tier}: {isLoggedIn: b
               <div>
                 {tier}
               </div>
-              <Menu as="div" className="relative ml-3">
+              <Menu as="div" className="relative ml-3 z-20">
                 <div>
                   <MenuButton className="relative flex ">
                     <span className="absolute -inset-1.5" />
@@ -72,7 +72,7 @@ export default async function NavbarAuthLarge({isLoggedIn, tier}: {isLoggedIn: b
 
         ) : (
           <div className="hidden sm:block">
-          <Link href="/login" className="rounded-md px-3 py-2 text-md font-bold text-white/90 bg-emerald-500/80 hover:bg-emerald-500">
+          <Link href="/login" className="rounded-md px-3 py-2 text-md font-medium text-black bg-emerald-500 hover:bg-emerald-500/70 hover:text-gray-800">
               Login
           </Link>
           </div>

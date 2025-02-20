@@ -160,11 +160,11 @@ export default async function Pricing() {
             <div
               key={tier.id}
               className={classNames(
-                tier.mostPopular ? 'bg-emerald-300/10 ring-2 ring-emerald-500' : 'ring-1 ring-black/50',
-                'relative rounded-3xl p-8 xl:p-10',
+                tier.mostPopular ? 'bg-emerald-300/10 ring-2 ring-emerald-500 ' : 'ring-1 ring-black/50 ',
+                'relative rounded-3xl p-8 xl:p-10 backdrop-blur-3xl',
               )}
             >
-              <div className="absolute -top-3 -right-3 flex h-16 w-16 items-center justify-center rounded-full bg-rose-300 text-black text-xl font-bold">
+              <div className="absolute -top-3 -right-3 flex h-16 w-16 items-center justify-center rounded-full bg-rose-300 text-black text-xl font-bold ">
                 50%
               </div>
               <div className="flex items-center justify-center gap-x-4">
