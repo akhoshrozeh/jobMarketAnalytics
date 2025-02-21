@@ -7,6 +7,7 @@ import time
 import uuid
 import datetime
 import os
+import concurrent.futures
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -14,6 +15,9 @@ def get_scrape_params():
 
     titles = [
         'software engineer',
+        'junior software engineer',
+        'mid level software engineer',
+        'senior software engineer',
         'front end developer', 
         'backend developer', 
         'full stack developer',
@@ -30,7 +34,9 @@ def get_scrape_params():
         'data scientist',
         'data engineer',
         'AI engineer',
+        'AI developer',
         'machine learning engineer',
+        'ML engineer',
         'embedded software engineer',
         'cybersecurity analyst',
         'systems engineer',
@@ -43,25 +49,93 @@ def get_scrape_params():
         'MLOps engineer',
         'SOC Analyst',
         'game developer'
-        ]
+    ]
         
-    locations = ["San Francisco, CA", "New York, NY", "Los Angeles, CA", "Austin, TX", "Seattle, WA"]
+    locations = ["San Francisco, CA", "New York, NY", "Los Angeles, CA", "Austin, TX", "Seattle, WA", "United States"]
     queries = []
     for location in locations:
         for title in titles:
             queries.append(
                 {
-                "site_name": ["indeed"],
+                "site_name": ["linkedin"],
                 "search_term": title,
+                "google_search_term": f"{title} jobs near {location} since 3 days ago",
                 "location": location,
-                "results_wanted": 100,
+                "results_wanted": 300,
+                "hours_old": 72,
+                "country_indeed": "USA"
+                 }
+            )            
+            queries.append(
+                {
+                "site_name": ["glassdoor"],
+                "search_term": title,
+                "google_search_term": f"{title} jobs near {location} since 3 days ago",
+                "location": location,
+                "results_wanted": 300,
+                "hours_old": 72,
+                "country_indeed": "USA"
+                 }
+            )            
+            queries.append(
+                {
+                "site_name": ["google"],
+                "search_term": title,
+                "google_search_term": f"{title} jobs near {location} since 3 days ago",
+                "location": location,
+                "results_wanted": 300,
+                "hours_old": 72,
+                "country_indeed": "USA"
+                 }
+            )            
+            queries.append(
+                {
+                "site_name": ["indeed",],
+                "search_term": f"\"{title}\"",
+                "google_search_term": f"{title} jobs near {location} since 3 days ago",
+                "location": location,
+                "results_wanted": 300,
                 "hours_old": 72,
                 "country_indeed": "USA"
                  }
             )
 
     return queries
-    
+
+
+def process_params(params):
+    try:
+        jobs = scrape_jobs(
+            site_name=params['site_name'],
+            search_term=params['search_term'],
+            google_search_term=params['google_search_term'],
+            location=params['location'],
+            results_wanted=params['results_wanted'],
+            hours_old=params['hours_old'],
+            country_indeed=params['country_indeed']
+        )
+
+        jobs_dict = jobs.to_dict('records')
+        
+        # Convert datetime objects to ISO format strings
+        for job in jobs_dict:
+            for key, value in job.items():
+                if pd.isna(value):  # Handle NaN values
+                    job[key] = None
+                elif isinstance(value, pd.Timestamp) or hasattr(value, 'isoformat'):
+                    job[key] = value.isoformat()
+        
+
+        logger.info(f"Collected {len(jobs_dict)} jobs. Params: {params['site_name']} {params['search_term']} {params['location']} {params['results_wanted']}")
+
+        return jobs_dict
+    except Exception as e:
+        logger.error(f"ERROR: scraping jobs with params: {params} \n ERROR: {e}")
+        return []
+
+
+
+
 def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
     lambda_client = boto3.client('lambda')
@@ -69,54 +143,88 @@ def handler(event, context):
 
     scrape_params = get_scrape_params()
     total_jobs = 0
-    err_count = 0
+
     # Jobs with no duplicates.
-    final_jobs = []
+    mem_dedup_jobs = []
     seen_job_ids = set()
 
-    
+    try:
 
-    # Scrape jobs and check for duplicates
-    for params in scrape_params:
-        try:
-            jobs = scrape_jobs(
-                site_name=params['site_name'],
-                search_term=params['search_term'],
-                location=params['location'],
-                results_wanted=params['results_wanted'],
-                hours_old=params['hours_old'],
-                country_indeed=params['country_indeed']
+        # Parallel execution of scraping
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_params, params) for params in scrape_params]
+            all_jobs = []
+            for future in concurrent.futures.as_completed(futures):
+                jobs_dict = future.result()
+                if jobs_dict:
+                    all_jobs.extend(jobs_dict)
+                    total_jobs += len(jobs_dict)
+
+    except Exception as err:
+        err_msg = f"Failed to scrape jobs in parallel: {err}"
+        logger.error(err_msg)
+        return {
+            'statusCode': 500,
+            'body': f"{err_msg}"
+        }
+
+    logger.info(f"Found {len(all_jobs)} before deduping.")
+    
+    # Dedup in-memory
+    for job in all_jobs:
+        job_key = (job['site'], job['id'])
+        if job_key not in seen_job_ids:
+            seen_job_ids.add(job_key)
+            mem_dedup_jobs.append(job)
+
+    # Dedup in DynamoDb
+    existing_keys = set()
+    DDB_BATCH_LIMIT = 100 
+    jobs_client = jobs_table.meta.client  # Use the low-level client
+
+
+    try:
+        for i in range(0, len(mem_dedup_jobs), DDB_BATCH_LIMIT):
+            curr_batch = mem_dedup_jobs[i:i+DDB_BATCH_LIMIT]
+
+            keys = [{'site': job['site'], 'id': job['id']} for job in curr_batch]
+            response = jobs_client.batch_get_item(
+                RequestItems={jobs_table.name: {'Keys': keys}}
             )
 
-            # Convert DataFrame to dict for JSON serialization
-            jobs_dict = jobs.to_dict('records')
-            
-            # Convert datetime objects to ISO format strings
-            for job in jobs_dict:
-                for key, value in job.items():
-                    if pd.isna(value):  # Handle NaN values
-                        job[key] = None
-                    elif isinstance(value, pd.Timestamp) or hasattr(value, 'isoformat'):
-                        job[key] = value.isoformat()
-          
+            logger.info(f'batch get item res {response}')
 
-            logger.info(f"Collected {len(jobs_dict)} jobs. Params: {params['site_name']} {params['search_term']} {params['location']} {params['results_wanted']}")
-            total_jobs += len(jobs_dict)
+            unprocessed_keys = response.get('UnprocessedKeys', None)
+            if unprocessed_keys:
+                logger.info(f"unprocessed keys: {unprocessed_keys}")
+                response = jobs_table.batch_get_item(RequestItems=unprocessed_keys)
+                for item in response.get('Responses', {}).get(jobs_table.name, []):
+                    existing_keys.add((item['site'], item['id']))
 
-            # Dedup
-            for job in jobs_dict:
-                response = jobs_table.get_item(Key={'site': job['site'], 'id': job['id']})
-                job_key = (job['site'], job['id'])
-                if 'Item' not in response and job_key not in seen_job_ids:
-                    seen_job_ids.add(job_key)
-                    final_jobs.append(job)
+
+            for item in response.get('Responses', {}).get(jobs_table.name, []):
+                existing_keys.add((item['site'], item['id']))
                 
 
-        except Exception as e:
-            logger.error(f"ERROR: scraping jobs with params: {params} \n ERROR: {e}")
-            continue
+        final_jobs = []
+        for job in mem_dedup_jobs:
+            if (job['site'], job['id']) not in existing_keys:
+                final_jobs.append(job)
+        
+        logger.info(f"Total jobs scraped after deduping: {len(final_jobs)}")
 
-    logger.info(f"{len(final_jobs)} jobs ready for processing.")
+    except Exception as err:
+        err_msg = f"Failed to get_batch_items : {err}"
+        logger.error(err_msg)
+        return {
+            'statusCode': 500,
+            'body': f"{err_msg}"
+        }
+
+
+    # response = jobs_table.get_item(Key={'site': job['site'], 'id': job['id']})
+    # if 'Item' not in response and 
+    # logger.info(f"{len(final_jobs)} jobs ready for processing.")
 
 
 
