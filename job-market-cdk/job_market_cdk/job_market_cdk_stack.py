@@ -215,7 +215,7 @@ class JobMarketCdkStack(Stack):
 
         # scraper can read/write to dedup table
         scrape_jobs_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:BatchWriteItem"],
+            actions=["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:BatchWriteItem", "dynamodb:BatchGetItem"],
             resources=[jobs_table.table_arn, batches_table.table_arn]
         ))
 
