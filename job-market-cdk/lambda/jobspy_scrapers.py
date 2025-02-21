@@ -151,7 +151,7 @@ def handler(event, context):
     try:
 
         # Parallel execution of scraping
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=60) as executor:
             futures = [executor.submit(process_params, params) for params in scrape_params]
             all_jobs = []
             for future in concurrent.futures.as_completed(futures):
