@@ -268,7 +268,7 @@ class JobMarketCdkStack(Stack):
                 minute='0',
                 hour='5',  # 9 PM LA time = 5 AM UTC next day (during PDT)
                 month='*',
-                week_day='*',
+                week_day='FRI',
                 year='*'
             ),
             targets=[targets.LambdaFunction(scrape_jobs_lambda)]
