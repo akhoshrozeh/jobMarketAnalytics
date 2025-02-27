@@ -1,14 +1,9 @@
 import { verifyIdToken } from '../../utils/verifyToken'
-import Sidebar from "./Sidebar"
+import ClientLayout from './clientLayout'
 
 export default async function AnalyticsLayout({children}: {children: React.ReactNode}) {
   const tokenPayload = await verifyIdToken();
   const tier = tokenPayload?.["custom:tier"] as string || "free";
-  return (
-    <div>
-      <Sidebar tier={tier as 'free' | 'basic' | 'premium'}>
-        {children}
-      </Sidebar>
-    </div>
-  )
+
+  return <ClientLayout tier={tier as 'free' | 'basic' | 'premium'}>{children}</ClientLayout>
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { useSearch } from './context/SearchContext'
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
 import {
   Bars3Icon,
@@ -10,28 +11,92 @@ import {
   XMarkIcon,
   ChartBarIcon,
   LockClosedIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import Image from 'next/image'
 
 
 const navigation = [
   { name: 'Top Skills', href: '/analytics/top-skills', icon: ChartBarIcon, current: true, tier: 'free' },
   { name: 'Skill Relationships', href: '/analytics/skills-connectivity', icon: ShareIcon, current: false, tier: 'basic' },
-  { name: 'Search', href: '/analytics/search', icon: MagnifyingGlassIcon, current: false, tier: 'premium' },
 ]
+
+const requestsNav = { 
+  name: 'Requests', 
+  href: 'https://insigh.to/b/jobtrendr', 
+  icon: ChatBubbleOvalLeftEllipsisIcon, 
+  current: false, 
+  tier: 'free' 
+}
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
+
+
+
+function SearchBar() {
+  const { setQuery } = useSearch();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  return (
+    <div className="max-w-xl w-full">
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search keyword or job title"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-full bg-white/90 px-4 py-2 text-sm text-black outline outline-1 -outline-offset-1 outline-black placeholder:text-gray-600 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-600"
+        />
+        <button 
+          onClick={() => setQuery(searchQuery)} 
+          className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-emc text-black rounded-full text-sm hover:bg-emerald-400"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// displayed to basic and free users
+function DisplayOnlySearchBar() {
+
+  return (
+    <div className="max-w-xl w-full">
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search keyword or job title"
+          className="w-full rounded-full bg-white/90 px-4 py-2 text-sm text-black outline outline-1 -outline-offset-1 outline-black placeholder:text-gray-600 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-600"
+        />
+        <button 
+          onClick={() => {window.location.href = `/pricing`}}
+          className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-emc text-black rounded-full text-sm hover:bg-emerald-400"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
 
 export default function Sidebar({children, tier}: {children: React.ReactNode, tier: 'free' | 'basic' | 'premium'}) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [upgradeRequiredTier, setUpgradeRequiredTier] = useState<null | 'free' | 'basic' | 'premium'>(null)
   const pathname = usePathname()
-
+  const { query } = useSearch();
 
   useEffect(() => {
     console.log(pathname)
@@ -95,11 +160,11 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
               </TransitionChild>
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-4 border-r-4 border-b-4  mb-4 rounded-tr-xl rounded-br-xl border-m-dark-green mt-16">
-                <div className="flex h-16 shrink-0 items-center">
-                    Analytics Menu
+                <div className="flex h-16 shrink-0 items-center justify-center text-white font-semibold text-lg ">
+                    Analytics Dashboard
                 </div>
                 <nav className="flex flex-1 flex-col">
-                  <ul role="list" className="flex flex-1 flex-col gap-y-7">
+                  <ul role="list" className="flex flex-1 flex-col gap-y-4">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
                         {navigation.map((item) => (
@@ -111,7 +176,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                                   setShowUpgradeModal(true)
                                 }}
                                 className={classNames(
-                                  'text-gray-600 hover:text-gray-400 group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold w-full'
+                                  'text-gray-400 hover:text-gray-300 group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold w-full'
                                 )}
                               >
                                 <item.icon aria-hidden="true" className="size-6 shrink-0" />
@@ -120,12 +185,12 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                               </button>
                             ) : (
                               <Link
-                                href={item.href}
+                                href={`${item.href}?query=${query}`}
                                 onClick={() => setSidebarOpen(false)}
                                 className={classNames(
                                   pathname === item.href
                                     ? 'bg-emc/50 hover:bg-emc/70 text-white'
-                                    : 'text-gray-400 hover:bg-emc/70 hover:text-white',
+                                    : 'text-gray-200 hover:bg-emc/70 hover:text-white',
                                   'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                                 )}
                               >
@@ -137,7 +202,41 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                         ))}
                       </ul>
                     </li>
-                
+                    
+                    {/* Separator and requests item */}
+                    <li className="border-t border-m-dark-green pt-4">
+                      <ul role="list" className="-mx-2">
+                        {!hasAccess(requestsNav.tier) ? (
+                          <button
+                            onClick={() => {
+                              setUpgradeRequiredTier(requestsNav.tier as 'free' | 'basic' | 'premium')
+                              setShowUpgradeModal(true)
+                            }}
+                            className={classNames(
+                              'text-gray-400 hover:text-gray-300 group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold w-full'
+                            )}
+                          >
+                            <requestsNav.icon aria-hidden="true" className="size-6 shrink-0" />
+                            {requestsNav.name}
+                            <SparklesIcon className="size-4 ml-auto mt-0.5 text-gray-400" />
+                          </button>
+                        ) : (
+                          <Link
+                            href={requestsNav.href}
+                            onClick={() => setSidebarOpen(false)}
+                            className={classNames(
+                              pathname === requestsNav.href
+                                ? 'bg-emc/50 hover:bg-emc/70 text-white'
+                                : 'text-gray-200 hover:bg-emc/70 hover:text-white',
+                              'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
+                            )}
+                          >
+                            <requestsNav.icon aria-hidden="true" className="size-6 shrink-0" />
+                            {requestsNav.name}
+                          </Link>
+                        )}
+                      </ul>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -147,13 +246,18 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
 
        
 
-        <div className="sticky top-0 z-10 flex items-center gap-x-6 bg-inherit  px-4 py-4 sm:px-6 bg-m-light-green/40">
-          <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400">
-            <span className="sr-only">Open sidebar</span>
-            <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-full p-1" />
-          </button>
-          <div className="flex-1 text-lg font-semibold text-black">Analytics Dashboard</div>
-          
+        <div className="top-0 z-10 flex items-center px-4 py-4 sm:px-6 bg-m-light-green/40">
+          <div className="flex items-center gap-x-4 min-w-fit">
+            <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400">
+              <span className="sr-only">Open sidebar</span>
+              <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-full p-1" />
+            </button>
+            <div className="hidden xl:block text-lg font-semibold text-black">Analytics Dashboard</div>
+          </div>
+          <div className="flex-1 flex justify-center sm:px-16 px-8">
+            {tier === 'premium' ? <SearchBar /> : <DisplayOnlySearchBar />}
+
+          </div>
         </div>
 
         {/* <main className="py-10 lg:pl-72"> */}

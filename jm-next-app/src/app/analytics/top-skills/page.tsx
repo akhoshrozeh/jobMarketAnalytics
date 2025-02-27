@@ -1,46 +1,25 @@
-import { Resource } from "sst";
+import "server-only"
 import { KeywordsCounted } from "../Graphs";
+import { getKeywordsCounted } from "@/lib/dataAcessLayer";
 
+export default async function TopSkillsPage({
+  searchParams,
+}: {
+  searchParams: { query?: string }
+}) {
+  const sliceLen: number = 50;
+  const query = searchParams.query || ""; // Get query from URL params
 
-const APIEndpoint = Resource.APIEndpoint.value;
+  // Pass query to data access layer
+  const topSkills = await getKeywordsCounted(query);
 
-
-async function getKeywordsCounted() {
-  try {
-    const response = await fetch(`${APIEndpoint}/get-keywords-counted`, {
-      headers: {
-        'Accept': 'application/json',
-      },
-
-    });
-
-    if (!response.ok) {
-      console.log(response)
-      throw new Error(`Failed to fetch: ${response}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error("Error:", error);
-    return [];
-  }
-}
-
-export default async function TopSkillsPage() {
-
-    const sliceLen: number = 50;
-
-    // Execute both fetch calls in parallel
-    const topSkills = await getKeywordsCounted();
-
-
-    return (
-        <div className="flex justify-center items-center flex-col p-8 text-black">
-            <h1 className="text-2xl font-bold mb-4">Top {sliceLen} Skills</h1>
-            <div className="border rounded-lg pt-4 px-4 pb-2 border-m-dark-green border-2"> 
-                {topSkills && <KeywordsCounted data={topSkills.slice(0, sliceLen)}/>}
-            </div>
-            
-        </div>
-    );
+  return (
+    <div className="flex justify-center items-center flex-col p-8 text-black">
+      <h1 className="text-2xl font-bold mb-4">Top {sliceLen} Skills</h1>
+      <h2>{query}</h2>
+      <div className="border rounded-lg pt-4 px-4 pb-2 border-m-dark-green border-2 bg-white shadow shadow-7xl shadow-m-dark-green"> 
+        {topSkills && <KeywordsCounted data={topSkills.slice(0, sliceLen)}/>}
+      </div>
+    </div>
+  );
 }
