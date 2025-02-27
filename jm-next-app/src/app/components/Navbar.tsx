@@ -4,14 +4,26 @@ import Link from 'next/link'
 import NavbarAuthLarge from './NavbarAuthLarge'
 import NavBarAuthSmall from './NavBarAuthSmall'
 import { verifyIdToken } from '../../utils/verifyToken'
-
+import CheckExpiredToken from './CheckExpiredToken'
 
 export default async function Navbar() {
 
-  const tokenPayload = await verifyIdToken();
-  const tier = tokenPayload?.["custom:tier"] as string || "free";
-  console.log(tier);
-  const isLoggedIn = tokenPayload ? true : false;
+  const verificationResult = await verifyIdToken();
+  let tier = "free";
+  let isLoggedIn = false;
+  
+  if (verificationResult.expired) {
+    // Token is expired - we'll handle this with CheckExpiredToken component
+    tier = "expired";
+  } else if (verificationResult.payload) {
+    // Valid token with payload
+    isLoggedIn = true;
+    tier = verificationResult.payload?.["custom:tier"] as string || "free";
+  }
+
+
+
+  
 
   return (
     <Disclosure as="nav" className="border-b-2 border-m-dark-green">
@@ -45,6 +57,8 @@ export default async function Navbar() {
               </div>
             </div>
           </div>
+
+          <CheckExpiredToken isExpired={verificationResult.expired} />
 
 
 

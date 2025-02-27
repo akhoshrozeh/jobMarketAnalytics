@@ -1,5 +1,12 @@
+"use server";
 import { CognitoJwtVerifier } from 'aws-jwt-verify'
 import { cookies } from 'next/headers'
+
+export type TokenVerificationResult = {
+    valid: boolean;
+    expired: boolean;
+    payload?: any;
+  }
 
 // Create verifier once, outside the middleware function
 const verifierAccessToken = CognitoJwtVerifier.create({
@@ -14,6 +21,7 @@ const verifierIdToken = CognitoJwtVerifier.create({
     clientId: String(process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID),
 });
 
+
 export async function verifyAccessToken() {
 
     const cookieStore = await cookies();
@@ -22,16 +30,23 @@ export async function verifyAccessToken() {
 
     if (!accessTokenCookie) {
         console.log("No access token cookie found");
-        return false;
+        return { valid: false, expired: false };
     }
 
 
     try {
         const payload = await verifierAccessToken.verify(accessTokenCookie.value);
-        return payload;
+        return { valid: true, expired: false, payload };
+
     } catch (err) {
-        console.log("Token not valid!", err);
-        return false;
+        if (err instanceof Error && err.message.includes("Token expired")) {
+            console.log("Token expired");
+            return { valid: false, expired: true };
+
+        } else {
+            console.log("Token not valid!", err);
+            return { valid: false, expired: false };
+        }
     }
 
   }
@@ -44,15 +59,24 @@ export async function verifyIdToken() {
 
     if (!idTokenCookie) {
         console.log("No id token cookie found");
-        return null;
+        return { valid: false, expired: false };
     }
 
     try {
         const payload = await verifierIdToken.verify(idTokenCookie.value);
-        return payload;
+        return { valid: true, expired: false, payload };
     } catch (err) {
-        console.log("Token not valid!", err);
-        return null;
+
+        if (err instanceof Error && err.message.includes("Token expired")) {
+            console.log("Token expired");
+            return { valid: false, expired: true };
+
+        } else {
+            console.log("Token not valid!", err);
+            return { valid: false, expired: false };
+        }
+
+
     }
 
 }
