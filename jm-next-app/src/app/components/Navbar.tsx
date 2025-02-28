@@ -43,7 +43,7 @@ export default async function Navbar() {
                   Home
                 </Link>
                 <Link
-                  href="/analytics/top-skills"
+                  href="/analytics/overview"
                   className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
                 >
                   Analytics
@@ -91,7 +91,7 @@ export default async function Navbar() {
           </DisclosureButton>
           <DisclosureButton
             as="a"
-            href="/analytics/top-skills"
+            href="/analytics/overview"
             className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
             Analytics
