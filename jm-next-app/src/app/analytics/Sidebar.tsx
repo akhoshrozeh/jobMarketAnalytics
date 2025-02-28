@@ -7,18 +7,24 @@ import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessu
 import {
   Bars3Icon,
   ShareIcon,
-  MagnifyingGlassIcon,
   XMarkIcon,
   ChartBarIcon,
-  LockClosedIcon,
+  GlobeAmericasIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   SparklesIcon,
+  BriefcaseIcon,
+  WrenchScrewdriverIcon,
+  Square2StackIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 
 
 const navigation = [
-  { name: 'Top Skills', href: '/analytics/top-skills', icon: ChartBarIcon, current: true, tier: 'free' },
+  { name: 'Market Overview', href: '/analytics/overview', icon: GlobeAmericasIcon, current: true, tier: 'free' },
+  { name: 'Skills', href: '/analytics/skills', icon: WrenchScrewdriverIcon, current: false, tier: 'free' },
+  { name: 'Roles', href: '/analytics/roles', icon: BriefcaseIcon, current: false, tier: 'free' },
+  { name: 'Compare', href: '/analytics/compare', icon: Square2StackIcon, current: false, tier: 'free' },
+  { name: 'Top Skills', href: '/analytics/top-skills', icon: ChartBarIcon, current: false, tier: 'free' },
   { name: 'Skill Relationships', href: '/analytics/skills-connectivity', icon: ShareIcon, current: false, tier: 'basic' },
 ]
 
@@ -254,10 +260,10 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
             </button>
             <div className="hidden xl:block text-lg font-semibold text-black">Analytics Dashboard</div>
           </div>
-          <div className="flex-1 flex justify-center sm:px-16 px-8">
+          {/* <div className="flex-1 flex justify-center sm:px-16 px-8">
             {tier === 'premium' ? <SearchBar /> : <DisplayOnlySearchBar />}
 
-          </div>
+          </div> */}
         </div>
 
         {/* <main className="py-10 lg:pl-72"> */}
