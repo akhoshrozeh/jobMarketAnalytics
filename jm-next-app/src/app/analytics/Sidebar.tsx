@@ -8,7 +8,6 @@ import {
   Bars3Icon,
   ShareIcon,
   XMarkIcon,
-  ChartBarIcon,
   GlobeAmericasIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   SparklesIcon,
@@ -24,7 +23,6 @@ const navigation = [
   { name: 'Skills', href: '/analytics/skills', icon: WrenchScrewdriverIcon, current: false, tier: 'free' },
   { name: 'Roles', href: '/analytics/roles', icon: BriefcaseIcon, current: false, tier: 'free' },
   { name: 'Compare', href: '/analytics/compare', icon: Square2StackIcon, current: false, tier: 'free' },
-  { name: 'Top Skills', href: '/analytics/top-skills', icon: ChartBarIcon, current: false, tier: 'free' },
   { name: 'Skill Relationships', href: '/analytics/skills-connectivity', icon: ShareIcon, current: false, tier: 'basic' },
 ]
 
@@ -156,18 +154,15 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
               transition
               className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-[closed]:-translate-x-full"
             >
-              <TransitionChild>
-                <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0 mt-8">
-                  <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
-                    <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon aria-hidden="true" className="size-8 text-gray-400 bg-black rounded-3xl border-2 border-m-dark-green hover:text-white" />
-                  </button>
-                </div>
-              </TransitionChild>
+              
               {/* Sidebar component, swap this element with another sidebar if you like */}
-              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-4 border-r-4 border-b-4  mb-4 rounded-tr-xl rounded-br-xl border-m-dark-green mt-16">
-                <div className="flex h-16 shrink-0 items-center justify-center text-white font-semibold text-lg ">
-                    Analytics Dashboard
+              <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black px-6 pb-2 border-t-4 border-r-4 border-b-4  mb-4 rounded-tr-lg rounded-br-lg border-m-dark-green mt-16">
+                <div className="flex h-16 shrink-0 items-center text-white font-semibold text-lg relative">
+                    <button type="button" onClick={() => setSidebarOpen(false)} className="absolute left-0 -m-2.5 p-2.5">
+                      <span className="sr-only">Close sidebar</span>
+                      <XMarkIcon aria-hidden="true" className="size-6 text-gray-400 bg-black rounded-3xl hover:text-white" />
+                    </button>
+                    <div className="w-full text-center">Analytics Dashboard</div>
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-4">
@@ -254,7 +249,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
 
         <div className="top-0 z-10 flex items-center px-4 py-4 sm:px-6 bg-m-light-green/40">
           <div className="flex items-center gap-x-4 min-w-fit">
-            <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-400">
+            <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="-m-2.5 p-2.5 text-gray-400">
               <span className="sr-only">Open sidebar</span>
               <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-full p-1" />
             </button>
