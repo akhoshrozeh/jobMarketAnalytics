@@ -1,40 +1,94 @@
 import 'server-only'
 
 import { verifyIdToken } from '@/utils/verifyToken'
-import { Resource } from "sst";
+import { connectToDatabase } from './mongoClient';
+import { cache } from 'react';
 
-const APIEndpoint = Resource.APIEndpoint.value;
-
-async function getTier() {
+const getTier = cache(async () => {
     const tokenPayload = await verifyIdToken();
     const tier = tokenPayload.payload?.["custom:tier"] as string || "free";
     return tier;
-}
+});
 
 
+export const getTopSkills = cache(async () => {
+    console.log("top-skills route handler called..");
 
-export async function getKeywordsCounted(query: string) {
 
+    try {
+        const tier = await getTier();
+        console.log("DAL tier:", tier);
+        const tiersMapParams = {
+            "free": 5,
+            "basic": 15,
+            "premium": 100
+        }
+    
+        
+        // Connect to MongoDB
+        const db = await connectToDatabase();
+    
+        const pipeline = [
+            {
+                $match: {
+                extracted_keywords: { $exists: true, $ne: [] }
+                }
+            },
+            {
+                $unwind: "$extracted_keywords"
+            },
+            {
+                $group: {
+                _id: "$extracted_keywords",
+                totalOccurrences: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { totalOccurrences: -1 }
+            },
+            {
+                $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
+            }
+        ];
+        
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result;
+        
+    } catch (error) {
+    console.error('Error: getTopSkills() failed:', error);
+    return []
+    }
+})
+
+export const getAverageSalary = cache(async () => {
     const tier = await getTier();
-
     
     try {
-        const response = await fetch(`${APIEndpoint}/get-keywords-counted?tier=${tier}`, {
-        headers: {
-            'Accept': 'application/json',
-        },
+        const db = await connectToDatabase();
 
-        });
+        const pipeline = [
+            {
+                $group: {
+                    _id: null,
+                    avgMinSalary: { $avg: "$min_amount" },
+                    avgMaxSalary: { $avg: "$max_amount" },
+                }
+                },
+                {
+                $project: {
+                    _id: 0,
+                    avgMinSalary: 1,
+                    avgMaxSalary: 1,
+                    overallAvgSalary: { $avg: ["$avgMinSalary", "$avgMaxSalary"] }
+                }
+            }
+        ]
 
-        if (!response.ok) {
-        console.log(response)
-        throw new Error(`Failed to fetch: ${response}`);
-        }
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result;
 
-        return response.json();
     } catch (error) {
-        console.error("Error:", error);
-        return [];
+        console.error('Error: getAverageSalary() failed:', error);
+        return []
     }
-}
-
+})
