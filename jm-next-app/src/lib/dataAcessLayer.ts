@@ -61,7 +61,6 @@ export const getTopSkills = cache(async () => {
 })
 
 export const getAverageSalary = cache(async () => {
-    const tier = await getTier();
     
     try {
         const db = await connectToDatabase();
@@ -90,5 +89,20 @@ export const getAverageSalary = cache(async () => {
     } catch (error) {
         console.error('Error: getAverageSalary() failed:', error);
         return []
+    }
+})
+
+
+export const getTotalJobs = cache(async () => {
+    
+    try {
+        const db = await connectToDatabase();
+
+        const result = await db.collection('JobPostings').countDocuments();
+        return result;
+
+    } catch (error) {
+        console.error('Error: getTotalJobs() failed:', error);
+        return -1;
     }
 })
