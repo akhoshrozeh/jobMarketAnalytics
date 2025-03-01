@@ -1,6 +1,6 @@
 import TopSkills from "./TopSkills"
 import AverageSalary from "./AverageSalary"
-
+import TotalJobs from "./TotalJobs"
 export default function Overview() {
     return (
         <div className="container mx-auto p-4 ">
@@ -15,9 +15,8 @@ export default function Overview() {
                 </div>
                 
                 <div className=" rounded-lg shadow p-4 border border-black">
-                    <h2 className="text-lg font-semibold mb-2">Top Skills</h2>
-                    <p className="text-gray-600">Most in-demand skills</p>
-                    {/* Add skills list component here */}
+                    <h2 className="text-xl font-semibold mb-2">Total Jobs Analyzed</h2>
+                    <TotalJobs/>
                 </div>
                 
                 {/* Middle row */}
