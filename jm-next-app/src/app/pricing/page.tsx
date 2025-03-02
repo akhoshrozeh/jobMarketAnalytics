@@ -99,8 +99,6 @@ async function createPremiumCheckout(idToken: CognitoIdTokenPayload | null) {
     mode: "payment"        
   })
 
-  console.log("premiumPaymentLink: ", premiumPaymentLink)
-
   return premiumPaymentLink
 
 }
@@ -116,7 +114,8 @@ export default async function Pricing() {
     userTier = String(idToken.payload["custom:tier"])
   }
 
-  if (!idToken) {
+  // sign in/up before purchasing
+  if (!idToken.valid) {
     tiers[0].href = "/sign-up";
     tiers[1].href = "/sign-up";
   }
@@ -125,7 +124,6 @@ export default async function Pricing() {
     if (userTier == "free") {
       const basicPaymentLink = await createBasicCheckout(idToken.payload || null)
       const premiumPaymentLink = await createPremiumCheckout(idToken.payload || null)
-      console.log("basicPaymentLink: ", basicPaymentLink)
       tiers[0].href = basicPaymentLink?.url || ""
       tiers[1].href = premiumPaymentLink?.url || ""
     }
