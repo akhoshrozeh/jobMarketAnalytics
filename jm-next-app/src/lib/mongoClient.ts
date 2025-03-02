@@ -9,9 +9,11 @@ let cachedDb: mongodb.Db | null = null;
 
 export async function connectToDatabase() {
   if (cachedDb) {
+    console.log("Returning cached database connection...");
     return cachedDb;
   }
 
+  console.log("Creating new database connection...");
   // Connect to our MongoDB database hosted on MongoDB Atlas
   const client = await MongoClient.connect(mongoURI);
 
