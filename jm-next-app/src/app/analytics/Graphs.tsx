@@ -309,4 +309,88 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
     );
   }
   
+interface RemoteVsNonRemotePieProps {
+  data: {
+    remote: number;
+    nonRemote: number;
+  };
+}
+
+export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (!data || !svgRef.current) return;
+
+    // Clear anything previously drawn
+    d3.select(svgRef.current).selectAll("*").remove();
+
+    // Convert the object { remote: number; nonRemote: number } into an array
+    const pieData = [
+      { label: "Remote", value: data.remote },
+      { label: "Non-Remote", value: data.nonRemote },
+    ];
+
+    // Basic chart dimensions
+    const width = 300;
+    const height = 300;
+    const margin = 40;
+    const radius = Math.min(width, height) / 2 - margin;
+
+    // Create SVG container
+    const svg = d3
+      .select(svgRef.current)
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("style", "max-width: 100%; height: auto;")
+      .append("g")
+      .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+    // Make a color scale
+    const color = d3.scaleOrdinal(["#3D8D7A", "#B35C1E"]);
+
+    // Create the pie generator
+    const pieGenerator = d3
+      .pie<{ label: string; value: number }>()
+      .value((d) => d.value);
+
+    // Create the arc generator
+    const arc = d3
+      .arc<d3.PieArcDatum<{ label: string; value: number }>>()
+      .innerRadius(0)
+      .outerRadius(radius);
+
+    // Build the pie chart with arcs
+    const arcs = svg
+      .selectAll("arc")
+      .data(pieGenerator(pieData))
+      .enter()
+      .append("g");
+
+    arcs
+      .append("path")
+      .attr("d", arc)
+      .attr("fill", (d, i) => color(i.toString()))
+      .attr("stroke", "#fff")
+      .style("stroke-width", "2px");
+
+    // Add labels on the pieces
+    arcs
+      .append("text")
+      .text((d) => `${d.data.label} (${d.data.value})`)
+      .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+      .style("text-anchor", "middle")
+      .style("font-size", "1.2em")
+      .style("pointer-events", "none"); // so text doesn't interfere with hover
+
+  }, [data]);
+
+  return (
+    <div>
+      <svg ref={svgRef}></svg>
+    </div>
+  );
+}
+  
   
