@@ -1,50 +1,6 @@
-import { Resource } from "sst";
 import { KeywordsConnectedByJob } from "../Graphs";
+import { getKeywordsConnectedByJob, getTopSkills } from "@/lib/dataAcessLayer";
 
-const APIEndpoint = Resource.APIEndpoint.value;
-
-
-async function getKeywordsCounted() {
-    try {
-      const response = await fetch(`${APIEndpoint}/get-keywords-counted`, {
-        headers: {
-          'Accept': 'application/json',
-        },
-  
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response}`);
-      }
-  
-      return response.json();
-    } catch (error) {
-      console.error("Error:", error);
-      return null;
-    }
-  }
-  
-
-async function getKeywordsConnectedByJob() {
-    try {
-        const response = await fetch(`${APIEndpoint}/get-keywords-connected-by-job`, {
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            const text = await response.text();
-            console.log('Response body:', text);
-            throw new Error(`Failed to fetch: ${response.status} ${text}`);
-        }
-        return response.json();
-
-    } catch (error) {
-        console.error("Error:", error);
-        return null;
-    }
-}
 
 export default async function SkillsConnectivity() {
 
@@ -52,7 +8,7 @@ export default async function SkillsConnectivity() {
 
     // Execute both fetch calls in parallel
     const [aggGroup, keywordsConnectedByJob] = await Promise.all([
-        getKeywordsCounted(),
+        getTopSkills(),
         getKeywordsConnectedByJob()
     ]);
 
