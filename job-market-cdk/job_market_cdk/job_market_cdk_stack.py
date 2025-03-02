@@ -260,59 +260,59 @@ class JobMarketCdkStack(Stack):
         # *                                                          *
         # ************************************************************
 
-        # Scheduled rule for scraping
-        scrape_schedule = events.Rule(
-            self,
-            "ScrapeScheduleRule",
-            schedule=events.Schedule.cron(
-                minute='0',
-                hour='5',  # 9 PM LA time = 5 AM UTC next day (during PDT)
-                month='*',
-                week_day='FRI',
-                year='*'
-            ),
-            targets=[targets.LambdaFunction(scrape_jobs_lambda)]
-        )
+        # # Scheduled rule for scraping
+        # scrape_schedule = events.Rule(
+        #     self,
+        #     "ScrapeScheduleRule",
+        #     schedule=events.Schedule.cron(
+        #         minute='0',
+        #         hour='5',  # 9 PM LA time = 5 AM UTC next day (during PDT)
+        #         month='*',
+        #         week_day='FRI',
+        #         year='*'
+        #     ),
+        #     targets=[targets.LambdaFunction(scrape_jobs_lambda)]
+        # )
 
-        # Add permission for EventBridge to invoke the Lambda
-        scrape_jobs_lambda.add_permission(
-            "ScheduledEventPermission",
-            principal=iam.ServicePrincipal("events.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=scrape_schedule.rule_arn, 
-        )
+        # # Add permission for EventBridge to invoke the Lambda
+        # scrape_jobs_lambda.add_permission(
+        #     "ScheduledEventPermission",
+        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=scrape_schedule.rule_arn, 
+        # )
 
 
 
-        batch_dispatcher_schedule = events.Rule(
-            self, 
-            "BatchDispatcherSchedule",
-            schedule=events.Schedule.rate(Duration.hours(3)),
-            targets=[targets.LambdaFunction(batch_dispatcher)]
-        )
+        # batch_dispatcher_schedule = events.Rule(
+        #     self, 
+        #     "BatchDispatcherSchedule",
+        #     schedule=events.Schedule.rate(Duration.hours(3)),
+        #     targets=[targets.LambdaFunction(batch_dispatcher)]
+        # )
 
-        batch_dispatcher.add_permission(
-            "ScheduledEventPermission",
-            principal=iam.ServicePrincipal("events.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=batch_dispatcher_schedule.rule_arn, 
-        )
+        # batch_dispatcher.add_permission(
+        #     "ScheduledEventPermission",
+        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=batch_dispatcher_schedule.rule_arn, 
+        # )
         
 
-         # Scheduled rule for status checks
-        batch_poller_schedule = events.Rule(
-            self, 
-            "BatchPollerSchedule",
-            schedule=events.Schedule.rate(Duration.hours(1)),
-            targets=[targets.LambdaFunction(batch_poller)]
-        )
+        #  # Scheduled rule for status checks
+        # batch_poller_schedule = events.Rule(
+        #     self, 
+        #     "BatchPollerSchedule",
+        #     schedule=events.Schedule.rate(Duration.hours(1)),
+        #     targets=[targets.LambdaFunction(batch_poller)]
+        # )
 
-        batch_poller.add_permission(
-            "ScheduledEventPermission",
-            principal=iam.ServicePrincipal("events.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=batch_poller_schedule.rule_arn, 
-        )
+        # batch_poller.add_permission(
+        #     "ScheduledEventPermission",
+        #     principal=iam.ServicePrincipal("events.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=batch_poller_schedule.rule_arn, 
+        # )
         
 
 
