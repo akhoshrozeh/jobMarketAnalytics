@@ -15,12 +15,12 @@ export default async function AverageSalary() {
     const maxSalary = formatter.format(averageSalary[0].avgMaxSalary);
 
     return (
-        <div className="flex flex-col items-center justify-center gap-x-4">
-            <div className="flex flex-row items-center justify-center gap-x-4">
-                <p>Minimum:</p> <p>{minSalary}</p>
+        <div className="flex flex-col items-center justify-center gap-x-4 font-bold">
+            <div className="flex flex-row items-center justify-center gap-x-4 w-full">
+                <div>🔺{maxSalary}</div>
             </div>
-            <div className="flex flex-row items-center justify-center gap-x-4">
-                <p>Maximum:</p> <p>{maxSalary}</p>
+            <div className="flex flex-row items-center justify-center gap-x-4 w-full">
+                <div>🔻{minSalary}</div>
             </div>
         </div>
     )
