@@ -328,13 +328,16 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
     // Convert the object { remote: number; nonRemote: number } into an array
     const pieData = [
       { label: "Remote", value: data.remote },
-      { label: "Non-Remote", value: data.nonRemote },
+      { label: "Onsite", value: data.nonRemote },
     ];
+
+    // Calculate total for percentages
+    const total = pieData.reduce((sum, item) => sum + item.value, 0);
 
     // Basic chart dimensions
     const width = 300;
     const height = 300;
-    const margin = 40;
+    const margin = 10;
     const radius = Math.min(width, height) / 2 - margin;
 
     // Create SVG container
@@ -346,6 +349,24 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
       .attr("style", "max-width: 100%; height: auto;")
       .append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+    // Create tooltip div
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("padding", "12px")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "white")
+      .style("border-radius", "6px")
+      .style("font-size", "16px")
+      .style("font-weight", "500")
+      .style("min-width", "180px")
+      .style("text-align", "center")
+      .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
+      .style("pointer-events", "none")
+      .style("opacity", 0)
+      .style("z-index", "100");
 
     // Make a color scale
     const color = d3.scaleOrdinal(["#3D8D7A", "#B35C1E"]);
@@ -361,6 +382,12 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
       .innerRadius(0)
       .outerRadius(radius);
 
+    // Create a slightly larger arc for label positioning
+    const labelArc = d3
+      .arc<d3.PieArcDatum<{ label: string; value: number }>>()
+      .innerRadius(radius * 0.6)
+      .outerRadius(radius * 0.6);
+
     // Build the pie chart with arcs
     const arcs = svg
       .selectAll("arc")
@@ -373,17 +400,73 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
       .attr("d", arc)
       .attr("fill", (d, i) => color(i.toString()))
       .attr("stroke", "#fff")
-      .style("stroke-width", "2px");
+      .style("stroke-width", "2px")
+      .on("mouseover", function(event, d) {
+        // Calculate percentage
+        const percentage = ((d.data.value / total) * 100).toFixed(1);
+        
+        // Show tooltip with count and percentage
+        tooltip
+          .html(`<strong>${d.data.label}</strong><br>${d.data.value} jobs (${percentage}%)`)
+          .style("opacity", 1)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px");
+        
+        // Highlight the segment
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("opacity", 0.8)
+          .attr("d", d3.arc<d3.PieArcDatum<{ label: string; value: number }>>()
+            .innerRadius(0)
+            .outerRadius(radius + 10)(d));
+      })
+      .on("mousemove", function(event) {
+        // Move tooltip with mouse
+        tooltip
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseout", function(event, d) {
+        // Hide tooltip
+        tooltip
+          .style("opacity", 0);
+        
+        // Return segment to normal size
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("opacity", 1)
+          .attr("d", arc(d));
+      });
 
     // Add labels on the pieces
     arcs
       .append("text")
-      .text((d) => `${d.data.label} (${d.data.value})`)
-      .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+      .attr("transform", (d) => {
+        // Position labels closer to the center for smaller segments
+        const pos = labelArc.centroid(d);
+        
+        // Adjust position based on the label
+        if (d.data.label === "Onsite") {
+          // Move Non-Remote label up and to the left
+          return `translate(${pos[0] - 10}, ${pos[1] - 15})`;
+        } else {
+          // Keep Remote label just moved to the left
+          return `translate(${pos[0] - 10}, ${pos[1]})`;
+        }
+      })
+      .text((d) => d.data.label)
       .style("text-anchor", "middle")
-      .style("font-size", "1.2em")
+      .style("font-size", "1.0em")
+      .style("fill", "white")
+      .style("font-weight", "bold")
       .style("pointer-events", "none"); // so text doesn't interfere with hover
 
+    // Clean up tooltip when component unmounts
+    return () => {
+      d3.select("body").selectAll(".tooltip").remove();
+    };
   }, [data]);
 
   return (

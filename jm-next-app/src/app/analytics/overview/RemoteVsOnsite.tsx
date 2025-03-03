@@ -6,11 +6,13 @@ export default async function RemoteVsOnsite() {
     const totalJobs = remoteVsOnsiteJobs[0].total;
     const remote = remoteVsOnsiteJobs[0].remote;
     const onsite = remoteVsOnsiteJobs[0].nonRemote;
+    const remotePercentage = ((remote / (remote + onsite)) * 100).toFixed(1);
+    const onsitePercentage = ((onsite / (remote + onsite)) * 100).toFixed(1);
     return (
         <div className="flex flex-col items-center justify-center">
-            <p>Remote Jobs: {((remote / (remote + onsite)) * 100).toFixed(1)}%</p>
-            <p>Onsite Jobs: {((onsite / (remote + onsite)) * 100).toFixed(1)}%</p>
-            <RemoteVsNonRemotePie data={remoteVsOnsiteJobs[0] as { remote: number; nonRemote: number }} />
+            {/* <p>Remote Jobs: {remotePercentage}%</p> */}
+            {/* <p>Onsite Jobs: {onsitePercentage}%</p> */}
+            <RemoteVsNonRemotePie data={{ remote: remote, nonRemote: onsite }} />
         </div>
     )
 }
