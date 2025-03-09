@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import * as topojson from 'topojson-client';
 
 interface KeywordsConnectedByJobProps {
     links: Array<{
@@ -67,10 +68,10 @@ export function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobP
                 .id(d => (d as any).id)
                 .distance(d => 300 + 200 * (1 - (d as any).weight))
             )
-            .force("charge", d3.forceManyBody().strength(-2000))
+            .force("charge", d3.forceManyBody().strength(-20000))
             .force("collide", d3.forceCollide().radius(d => Math.sqrt((d as any).value) + 50))
-            .force("x", d3.forceX(width / 2).strength(0.05))
-            .force("y", d3.forceY(height / 2).strength(0.05))
+            .force("x", d3.forceX(width / 2).strength(0.00005))
+            .force("y", d3.forceY(height / 2).strength(0.00005))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .alphaDecay(0.1)
             .velocityDecay(0.8);
@@ -91,11 +92,19 @@ export function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobP
             .data(graphNodes)
             .join("g")
             .on("mouseover", (event, d) => {
+                // Find the maximum weight to normalize values
+                const maxWeight = d3.max(graphLinks, l => l.weight) || 1;
+                
+                // Create a color scale based on normalized weight
+                const colorScale = d3.scaleLinear<string>()
+                    .domain([0, maxWeight])  // use actual weight range instead of 0-1
+                    .range(["#cccccc", "#000000"]);  // light gray to black
+
                 // Show only connected links
                 link.style("stroke-opacity", 0);
                 link.filter(l => (l.source as any).id === d.id || (l.target as any).id === d.id)
                     .style("stroke-opacity", 1)
-                    .style("stroke", "#ff0");
+                    .style("stroke", l => colorScale(l.weight));
             })
             .on("mouseout", () => {
                 // Hide all links
@@ -122,7 +131,7 @@ export function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobP
         // Update the drag behavior to use nodeGroup instead of node
         nodeGroup.call(d3.drag<any, any>()
             .on("start", (event) => {
-                if (!event.active) simulation.alphaTarget(0.01).restart();
+                if (!event.active) simulation.alphaTarget(0.002).restart();
                 event.subject.fx = event.subject.x;
                 event.subject.fy = event.subject.y;
             })
@@ -476,4 +485,254 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
   );
 }
   
+
+interface TopJobTitlesGraphProps {
+  data: Array<{
+    title: string;
+    count: number;
+  }>;
+}
+
+export default function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (!data || !data.length || !svgRef.current) return;
+
+    // Clear previous chart
+    d3.select(svgRef.current).selectAll("*").remove();
+
+    // Set the dimensions and margins of the graph
+    const margin = { top: 20, right: 30, bottom: 70, left: 150 };
+    const width = 800 - margin.left - margin.right;
+    const height = 500 - margin.top - margin.bottom;
+
+    // Append the svg object to the div
+    const svg = d3.select(svgRef.current)
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .attr("viewBox", [0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom])
+      .attr("style", "max-width: 100%; height: auto;")
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Sort data
+    data.sort((a, b) => b.count - a.count);
+
+    // Add X axis
+    const x = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.count) || 0])
+      .range([0, width]);
+    
+    svg.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .attr("transform", "translate(-10,0)rotate(-45)")
+      .style("text-anchor", "end")
+      .style("font-size", "12px");
+
+    // Y axis
+    const y = d3.scaleBand()
+      .range([0, height])
+      .domain(data.map(d => d.title))
+      .padding(1);
+    
+    svg.append("g")
+      .call(d3.axisLeft(y))
+      .selectAll("text")
+      .style("font-size", "12px");
+
+    // Lines
+    svg.selectAll("myline")
+      .data(data)
+      .enter()
+      .append("line")
+      .attr("x1", d => x(d.count))
+      .attr("x2", x(0))
+      .attr("y1", d => y(d.title) as number)
+      .attr("y2", d => y(d.title) as number)
+      .attr("stroke", "grey")
+      .attr("stroke-width", 1.5);
+
+    // Circles
+    svg.selectAll("mycircle")
+      .data(data)
+      .enter()
+      .append("circle")
+      .attr("cx", d => x(d.count))
+      .attr("cy", d => y(d.title) as number)
+      .attr("r", 8)
+      .style("fill", "#3D8D7A")
+      .attr("stroke", "black")
+      .attr("stroke-width", 1.5)
+      .on("mouseover", function(event, d) {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("r", 12)
+          .style("fill", "#B35C1E");
+          
+        // Add tooltip with count
+        svg.append("text")
+          .attr("class", "tooltip")
+          .attr("x", x(d.count) + 15)
+          .attr("y", (y(d.title) as number) + 4)
+          .text(`${d.count} jobs`)
+          .style("font-size", "14px")
+          .style("font-weight", "bold");
+      })
+      .on("mouseout", function() {
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("r", 8)
+          .style("fill", "#3D8D7A");
+          
+        // Remove tooltip
+        svg.selectAll(".tooltip").remove();
+      });
+
+    // Add title
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", -margin.top / 2)
+      .attr("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("font-weight", "bold")
+  }, [data]);
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg ref={svgRef}></svg>
+    </div>
+  );
+}
+
+interface JobLocationMapProps {
+  locations: Array<{
+    location: string;
+    count: number;
+    latitude: number;
+    longitude: number;
+  }>;
+}
+
+export function JobLocationMap({ locations }: JobLocationMapProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
   
+  useEffect(() => {
+    if (!svgRef.current || !locations.length) return;
+
+    // Clear previous chart
+    d3.select(svgRef.current).selectAll("*").remove();
+
+    const width = 975;
+    const height = 610;
+
+    const svg = d3.select(svgRef.current)
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [0, 0, width, height])
+      .attr("style", "max-width: 100%; height: auto;");
+
+    const g = svg.append("g");
+
+    // Example snippet:
+    const maxCount = d3.max(locations, d => d.count) || 1;
+    const radius = d3.scaleSqrt([0, maxCount], [0, 40]);
+
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 8])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+        g.selectAll("circle")
+          .attr("r", function(d) { 
+            return radius((d as any).count) / event.transform.k;
+          });
+      });
+
+    svg.call(zoom);
+
+    // Create a projection for the US
+    const projection = d3.geoAlbersUsa()
+      .scale(1300)
+      .translate([width / 2, height / 2]);
+    const path = d3.geoPath().projection(projection);
+
+    // Load US map
+    d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then((us: any) => {
+      g.append("path")
+        .datum(topojson.feature(us, us.objects.nation))
+        .attr("fill", "#ddd")
+        .attr("d", path);
+      g.append("path")
+        .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+        .attr("fill", "none")
+        .attr("stroke", "white")
+        .attr("stroke-linejoin", "round")
+        .attr("d", path);
+
+      // Copy locations for simulation
+      const simPoints = locations.map(d => {
+        const [x, y] = projection([d.longitude, d.latitude]) || [width / 2, height / 2];
+        return { ...d, x, y };
+      });
+
+      // Force simulation to separate circles
+      const simulation = d3.forceSimulation(simPoints)
+        .force("x", d3.forceX(d => d.x))
+        .force("y", d3.forceY(d => d.y))
+        .force("collide", d3.forceCollide(d => radius(d.count) + 2))
+        .stop();
+
+      // Run simulation
+      for (let i = 0; i < 120; i++) simulation.tick();
+
+      // Draw circles at simulated positions
+      const format = d3.format(",.0f");
+      g.selectAll("circle")
+        .data(simPoints)
+        .join("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("r", d => radius(d.count))
+        .attr("fill", "#3D8D7A")
+        .attr("fill-opacity", 0.6)
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 0.5)
+        .on("mouseover", function (event, d) {
+          // Highlight
+          d3.select(this)
+            .attr("fill", "#B35C1E")
+            .attr("fill-opacity", 0.9);
+          g.append("text")
+            .attr("class", "tooltip")
+            .attr("x", d.x)
+            .attr("y", d.y - radius(d.count) - 10)
+            .attr("text-anchor", "middle")
+            .style("font-size", "14px")
+            .style("font-weight", "bold")
+            .style("fill", "black")
+            .text(`${d.location}: ${format(d.count)}`);
+        })
+        .on("mouseout", function () {
+          // Un-highlight
+          d3.select(this)
+            .attr("fill", "#3D8D7A")
+            .attr("fill-opacity", 0.6);
+          g.selectAll(".tooltip").remove();
+        })
+        .append("title")
+        .text(d => `${d.location}\n${format(d.count)} jobs`);
+    });
+  }, [locations]);
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg ref={svgRef}></svg>
+    </div>
+  );
+}
+
+
