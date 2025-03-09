@@ -16,6 +16,7 @@
     "@observablehq/plot": "^0.6.16",
     "@stripe/stripe-js": "^5.5.0",
     "@types/aws-lambda": "^8.10.146",
+    "@types/topojson-client": "^3.1.5",
     "aws-amplify": "^6.12.0",
     "aws-jwt-verify": "^5.0.0",
     "d3": "^7.9.0",
@@ -25,7 +26,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sst": "3.4.18",
-    "stripe": "^17.6.0"
+    "stripe": "^17.6.0",
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
