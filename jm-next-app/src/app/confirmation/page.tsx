@@ -32,7 +32,7 @@ export default function Confirmation() {
             </h1>
            
             <Link 
-              href="/analytics/top-skills" 
+              href="/analytics/overview" 
               className="flex flex-col justify-center text-center mt-16 
                 text-base   
                 md:text-lg  
