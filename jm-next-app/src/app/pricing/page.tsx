@@ -17,7 +17,7 @@ const tiers = [
     name: 'Basic Lifetime Membership',
     id: 'tier-basic',
     href: '',
-    originalPrice: "$14.99",
+    originalPrice: "$17.99",
     price: "$8.99",
     description: 'This plan will provide a strong insight into your journey.',
     features: [
@@ -70,7 +70,7 @@ async function createBasicCheckout(idToken: CognitoIdTokenPayload | null) {
       metadata_username: String(idToken.sub)
     },
 
-    success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation"),
+    success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrendr.com/confirmation"),
     mode: "payment"
   });
   
@@ -95,7 +95,7 @@ async function createPremiumCheckout(idToken: CognitoIdTokenPayload | null) {
       metadata_username: String(idToken.sub)
     },
 
-    success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrender.com/confirmation"),
+    success_url: (process.env.NODE_ENV === "development" ? "http://localhost:3000/confirmation" : "https://jobtrendr.com/confirmation"),
     mode: "payment"        
   })
 
