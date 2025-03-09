@@ -2,6 +2,9 @@ import TopSkills from "./TopSkills"
 import AverageSalary from "./AverageSalary"
 import TotalJobs from "./TotalJobs"
 import RemoteVsOnsite from "./RemoteVsOnsite"
+import TopJobTitles from "./TopJobTitles"
+import TopLocations from "./TopLocations"
+
 
 export default function Overview() {
     return (
@@ -39,17 +42,17 @@ export default function Overview() {
                     <RemoteVsOnsite/>
                 </div>
                 
-                <div className="rounded-lg shadow p-4 border border-black bg-white/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Job Locations</h2>
-                    {/* Add locations component here */}
+                <div className="rounded-lg shadow p-4 border border-black md:col-span-4 bg-white/50">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
+                    <TopJobTitles/>
+                </div>
+
+                <div className="rounded-lg shadow p-4 border border-black md:col-span-2 bg-white/50">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Locations</h2>
+                    <TopLocations/>
                 </div>
                 
-                {/* Job Trends - Takes full width on third row */}
-                <div className="rounded-lg shadow p-4 border border-black md:col-span-4 bg-white/50">
-                    <h2 className="text-lg font-semibold mb-2 text-center text-gray-700">Job Trends</h2>
-                    <p className="text-gray-600">Chart showing job posting trends over time</p>
-                    {/* Add chart component here */}
-                </div>
+                
             </div>
         </div>
     )
