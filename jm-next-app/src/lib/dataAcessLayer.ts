@@ -292,3 +292,229 @@ export const getRemoteVsOnsiteJobs = cache(async () => {
         return []   
     }
 })
+
+// export const getTopJobTitles = cache(async () => {
+//     try {
+//         const tier = await getTier();
+//         console.log("DAL tier for job titles:", tier);
+//         const tiersMapParams = {
+//             "free": 50,
+//             "basic": 15,
+//             "premium": 50
+//         }
+        
+//         const db = await getDbConnection();
+        
+//         // Define the job title categories we want to match
+//         const jobTitleCategories = [
+//             'software engineer',
+//             'junior software engineer',
+//             'mid level software engineer',
+//             'senior software engineer',
+//             'front end', 
+//             'backend developer', 
+//             'full stack developer',
+//             'devops engineer',
+//             'security engineer',
+//             'cloud engineer',
+//             'UI/UX engineer',
+//             'web developer',
+//             'network engineer',
+//             'mobile developer',
+//             'mobile engineer',
+//             'ios developer',
+//             'android developer',
+//             'data scientist',
+//             'data engineer',
+//             'AI engineer',
+//             'AI developer',
+//             'machine learning engineer',
+//             'ML engineer',
+//             'embedded software engineer',
+//             'cybersecurity analyst',
+//             'systems engineer',
+//             'cloud security engineer',
+//             'database administrator',
+//             'QA engineer',
+//             'firmware engineer',
+//             'systems administrator',
+//             'IT engineer',
+//             'MLOps engineer',
+//             'SOC Analyst',
+//             'game developer'
+//         ];
+        
+//         // Create regex patterns for each category (case insensitive)
+//         const regexPatterns = jobTitleCategories.map(category => ({
+//             category,
+//             regex: new RegExp(category, 'i')
+//         }));
+        
+//         // Calculate date from 2 weeks ago and format it as a string
+//         const twoWeeksAgo = new Date();
+//         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+//         const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        
+//         console.log(`Filtering for jobs posted since: ${twoWeeksAgoStr}`);
+        
+//         // First, get all job titles from the past 2 weeks
+//         // Since date_posted is a string, we'll use string comparison
+//         const allJobTitles = await db.collection('JobPostings')
+//             .find({ 
+//                 title: { $exists: true, $ne: "" },
+//                 date_posted: { $gte: twoWeeksAgoStr }  // String comparison
+//             })
+//             .project({ title: 1, _id: 0 })
+//             .toArray();
+        
+//         console.log(`Found ${allJobTitles.length} job postings from the past 2 weeks`);
+        
+//         // Count occurrences for each category
+//         const categoryCounts: Record<string, number> = {};
+        
+//         allJobTitles.forEach(job => {
+//             if (!job.title) return;
+            
+//             // Find matching category
+//             for (const pattern of regexPatterns) {
+//                 if (pattern.regex.test(job.title)) {
+//                     const category = pattern.category;
+//                     categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+//                     break; // Stop after first match to avoid double counting
+//                 }
+//             }
+//         });
+        
+//         // Convert to array and sort
+//         const result = Object.entries(categoryCounts)
+//             .map(([title, count]) => ({ title, count }))
+//             .sort((a, b) => b.count - a.count)
+//             .slice(0, tiersMapParams[tier as keyof typeof tiersMapParams]);
+        
+//         console.log("DAL result for job titles:", result);
+//         return result;
+        
+//     } catch (error) {
+//         console.error('Error: getTopJobTitles() failed:', error);
+//         return []
+//     }
+// })
+export const getTopJobTitles = cache(async () => {
+    try {
+        const tier = await getTier();
+        console.log("DAL tier for job titles:", tier);
+        const tiersMapParams = {
+            "free": 20,
+            "basic": 15,
+            "premium": 50
+        }
+        
+        const db = await getDbConnection();
+        
+        // Calculate date from 2 weeks ago and format it as a string
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        
+        console.log(`Filtering for jobs posted since: ${twoWeeksAgoStr}`);
+        
+        const pipeline = [
+            {
+                $match: {
+                    title: { $exists: true, $ne: "" }
+                }
+            },
+            {
+                $project: {
+                    // Keep both original and normalized title
+                    originalTitle: "$title",
+                    normalizedTitle: { $toLower: "$title" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$normalizedTitle",
+                    count: { $sum: 1 },
+                    // Store one example of the original title for display
+                    title: { $first: "$originalTitle" }
+                }
+            },
+            {
+                $sort: { count: -1 }
+            },
+            {
+                $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
+            },
+            {
+                $project: {
+                    _id: 0,
+                    title: 1,
+                    count: 1
+                }
+            }
+        ];
+        
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        console.log("DAL result for job titles:", result);
+        if (tier === "free") {
+            result.forEach(job => {
+                job.title = job.title.replace("placeholder", "");
+            })
+        }
+        return result;
+        
+    } catch (error) {
+        console.error('Error: getTopJobTitles() failed:', error);
+        return []
+    }
+})
+
+export const getTopLocations = cache(async () => {
+    try {
+        const tier = await getTier();
+        console.log("DAL tier for job titles:", tier);
+        const tiersMapParams = {
+            "free": 100,
+            "basic": 15,
+            "premium": 50
+        }
+        
+        const db = await getDbConnection();
+
+        const pipeline = [
+            {
+                $match: {
+                    location: { $exists: true, $ne: "" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$location",
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { count: -1 }
+            },
+            {
+                $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
+            },
+            {
+                $project: {
+                    _id: 0, 
+                    location: "$_id",
+                    count: 1
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result;
+        
+        
+        
+    } catch (error) {
+        console.error('Error: getTopJobTitles() failed:', error);
+        return []
+    }
+})
