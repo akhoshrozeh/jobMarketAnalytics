@@ -147,7 +147,7 @@ export const handler = async (event: any): Promise<any>  => {
         console.error("Error processing webhook:", err);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Internal server error" })
+            body: JSON.stringify({ error: "Internal server error " + err })
         }
 
     }
