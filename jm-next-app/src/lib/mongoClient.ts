@@ -18,7 +18,9 @@ export async function connectToDatabase() {
   const client = await MongoClient.connect(mongoURI);
 
   // Specify which database we want to use
-  cachedDb = await client.db(db);
+  cachedDb = client.db(db);
 
   return cachedDb;
 }
+
+export type MongoDBClient = mongodb.Db;

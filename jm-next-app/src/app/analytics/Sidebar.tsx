@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { useSearch } from './context/SearchContext'
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
 import {
   Bars3Icon,
@@ -40,57 +39,6 @@ function classNames(...classes: string[]) {
 
 
 
-function SearchBar() {
-  const { setQuery } = useSearch();
-  const [searchQuery, setSearchQuery] = useState('');
-
-  return (
-    <div className="max-w-xl w-full">
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search keyword or job title"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-full bg-white/90 px-4 py-2 text-sm text-black outline outline-1 -outline-offset-1 outline-black placeholder:text-gray-600 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-600"
-        />
-        <button 
-          onClick={() => setQuery(searchQuery)} 
-          className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-emc text-black rounded-full text-sm hover:bg-emerald-400"
-        >
-          Search
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// displayed to basic and free users
-function DisplayOnlySearchBar() {
-
-  return (
-    <div className="max-w-xl w-full">
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search keyword or job title"
-          className="w-full rounded-full bg-white/90 px-4 py-2 text-sm text-black outline outline-1 -outline-offset-1 outline-black placeholder:text-gray-600 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-600"
-        />
-        <button 
-          onClick={() => {window.location.href = `/pricing`}}
-          className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-emc text-black rounded-full text-sm hover:bg-emerald-400"
-        >
-          Search
-        </button>
-      </div>
-    </div>
-  );
-}
-
-
-
-
-
 
 
 
@@ -100,7 +48,6 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [upgradeRequiredTier, setUpgradeRequiredTier] = useState<null | 'free' | 'basic' | 'premium'>(null)
   const pathname = usePathname()
-  const { query } = useSearch();
 
   useEffect(() => {
     console.log(pathname)
@@ -186,7 +133,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                               </button>
                             ) : (
                               <Link
-                                href={`${item.href}?query=${query}`}
+                                href={`${item.href}`}
                                 onClick={() => setSidebarOpen(false)}
                                 className={classNames(
                                   pathname === item.href

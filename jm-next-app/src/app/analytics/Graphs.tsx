@@ -174,9 +174,10 @@ interface KeywordsCountedProps {
       _id: string;
       totalOccurrences: number;
     }>;
-  }
-  
-export function KeywordsCounted({ data }: KeywordsCountedProps) {
+    blurLabels?: boolean;
+}
+
+export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedProps) {
     const chartRef = useRef<SVGSVGElement>(null);
   
     useEffect(() => {
@@ -208,7 +209,8 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
         .attr("viewBox", [0, 0, width, height])
         .attr("width", width)
         .attr("height", height)
-        .attr("style", "max-width: 100%; height: auto;").call(d3.zoom)
+        .attr("style", "max-width: 100%; height: auto;")
+        .call(d3.zoom);
   
       // Add bars with labels
       const bars = svg.append("g")
@@ -241,6 +243,12 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
         .style("text-anchor", "end")
         .attr("class", "label-text")
         .style("font-size", "1.6em");
+
+      // Conditionally apply blur to x-axis labels
+      if (blurLabels) {
+        xAxis.selectAll("text")
+          .style("filter", "blur(4px)");
+      }
   
       // Add hover effects
       bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number }) {
@@ -309,7 +317,7 @@ export function KeywordsCounted({ data }: KeywordsCountedProps) {
         .style("font-size", "24px")
         .text("Occurrences");
   
-    }, [data]);
+    }, [data, blurLabels]);
   
     return (
       <div className="w-full overflow-x-auto">

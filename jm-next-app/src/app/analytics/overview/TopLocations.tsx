@@ -1,7 +1,7 @@
 import { getTopLocations } from "@/lib/dataAcessLayer";
 import { JobLocationMap } from "../Graphs";
 
-export default async function TopLocations() {
+export default async function TopLocations({topLocationsData}: {topLocationsData: {location: string, count: number}[]}) {
     // hard coding long lat
     const points = {
         "New York, NY, US": {"latitude": 40.7128, "longitude": -74.0060 },
@@ -59,10 +59,9 @@ export default async function TopLocations() {
     };
 
   
-    const topLocations = await getTopLocations();
 
     // Map the API data to include coordinates
-    const locationsWithCoordinates = topLocations.map(loc => ({
+    const locationsWithCoordinates = topLocationsData.map(loc => ({
         location: loc.location,
         count: loc.count,
         latitude: getCoordinates(loc.location)?.latitude || 0,
@@ -71,13 +70,6 @@ export default async function TopLocations() {
 
     return (
         <div>
-            {/* {topLocations.map((location) => (
-                <div key={location.location}>
-                    {location.location}
-                    {location.count}
-                    {getCoordinates(location.location)?.lateitude}
-                </div>
-            ))} */}
             <JobLocationMap locations={locationsWithCoordinates} />
         </div>
     )

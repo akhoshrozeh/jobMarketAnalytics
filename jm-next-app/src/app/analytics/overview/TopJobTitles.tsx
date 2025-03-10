@@ -1,10 +1,10 @@
 import "server-only"
-import { getTopJobTitles } from "@/lib/dataAcessLayer"
+
 import TopJobTitlesGraph from "../Graphs";
 
-export default async function TopJobTitles() {
-    const rawData = await getTopJobTitles();
-    const topJobTitles = rawData.map(item => ({
+export default async function TopJobTitles({topJobTitlesData}: {topJobTitlesData: {title: string, count: number}[]}) {
+
+    const topJobTitles = topJobTitlesData.map(item => ({
         title: item.title,
         count: item.count
     }));

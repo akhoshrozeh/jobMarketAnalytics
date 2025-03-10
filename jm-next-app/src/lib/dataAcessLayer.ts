@@ -1,13 +1,17 @@
 import 'server-only'
 
 import { verifyIdToken } from '@/utils/verifyToken'
-import { connectToDatabase } from './mongoClient';
+import { connectToDatabase, MongoDBClient } from './mongoClient';
 import { cache } from 'react';
 
-// Cache the database connection itself, not just the data access functions
-const getDbConnection = cache(async () => {
-  console.log("Creating new database connection...");
-  return await connectToDatabase();
+
+const getMongoDBClientConnection = cache(async () => {
+  const db = await connectToDatabase();
+  if (!db) {
+    console.log("Error: getMongoDBClientConnection() failed");
+    return null;
+  }
+  return db;
 });
 
 const getTier = cache(async () => {
@@ -16,28 +20,73 @@ const getTier = cache(async () => {
     return tier;
 });
 
-
-export const getTopSkills = cache(async () => {
-    console.log("top-skills route handler called..");
-
-
+export const getOverviewData = cache(async () => {
     try {
         const tier = await getTier();
-        console.log("DAL tier:", tier);
+        const db = await getMongoDBClientConnection();
+
+
+
+        if (!db?.collection) {
+            console.error("Error: getMongoDBClientConnection() failed");
+            return null;
+        }
+
+        // Get all data in parallel using a single db connection
+        const [
+            topSkills,
+            averageSalary,
+            totalJobs,
+
+            remoteVsOnsiteJobs,
+            topJobTitles,
+            topLocations
+        ] = await Promise.all([
+            getTopSkills(db, tier),
+            getAverageSalary(db),
+            getTotalJobs(db),
+            getRemoteVsOnsiteJobs(db),
+            getTopJobTitles(db, tier),
+            getTopLocations(db, tier)
+        ]);
+
+        return {
+            "topSkills": topSkills,
+            "averageSalary": averageSalary,
+            "totalJobs": totalJobs,
+            "remoteVsOnsiteJobs": remoteVsOnsiteJobs,
+            "topJobTitles": topJobTitles,
+            "topLocations": topLocations
+        };
+    } catch (error) {
+        console.error('Error: getOverviewData() failed:', error);
+        return null;
+    }
+});
+
+export const getTopSkills = cache(async (db: MongoDBClient, tier: string) => {
+
+    try {
+        if (tier === "free") {
+            const fakeRes = [] as any;
+            const fakeVals = [1732, 343, 869, 2345, 234, 602, 767, 345, 100, 1220, 120, 402, 230] as Array<number>;
+            fakeVals.sort((a,b) => b-a)
+            for (let i = 0; i < fakeVals.length; i++) {
+                fakeRes.push({ "_id": "Subscribe:)" + i, "totalOccurrences": fakeVals[i] });
+            }
+            return fakeRes;
+        }
+
         const tiersMapParams = {
             "free": 5,
             "basic": 15,
             "premium": 100
-        }
-    
-        
-        // Use the cached database connection
-        const db = await getDbConnection();
-    
+        };
+
         const pipeline = [
             {
                 $match: {
-                extracted_keywords: { $exists: true, $ne: [] }
+                    extracted_keywords: { $exists: true, $ne: [] }
                 }
             },
             {
@@ -45,8 +94,8 @@ export const getTopSkills = cache(async () => {
             },
             {
                 $group: {
-                _id: "$extracted_keywords",
-                totalOccurrences: { $sum: 1 }
+                    _id: "$extracted_keywords",
+                    totalOccurrences: { $sum: 1 }
                 }
             },
             {
@@ -56,22 +105,18 @@ export const getTopSkills = cache(async () => {
                 $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
             }
         ];
-        
+
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
         return result;
-        
+
     } catch (error) {
-    console.error('Error: getTopSkills() failed:', error);
-    return []
+        console.error('Error: getTopSkills() failed:', error);
+        return [];
     }
-})
+});
 
-export const getAverageSalary = cache(async () => {
-    
+export const getAverageSalary = cache(async (db: MongoDBClient) => {
     try {
-        // Use the cached database connection
-        const db = await getDbConnection();
-
         const pipeline = [
             {
                 $group: {
@@ -79,8 +124,8 @@ export const getAverageSalary = cache(async () => {
                     avgMinSalary: { $avg: "$min_amount" },
                     avgMaxSalary: { $avg: "$max_amount" },
                 }
-                },
-                {
+            },
+            {
                 $project: {
                     _id: 0,
                     avgMinSalary: 1,
@@ -88,24 +133,19 @@ export const getAverageSalary = cache(async () => {
                     overallAvgSalary: { $avg: ["$avgMinSalary", "$avgMaxSalary"] }
                 }
             }
-        ]
+        ];
 
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
         return result;
 
     } catch (error) {
         console.error('Error: getAverageSalary() failed:', error);
-        return []
+        return [];
     }
-})
+});
 
-
-export const getTotalJobs = cache(async () => {
-    
+export const getTotalJobs = cache(async (db: MongoDBClient) => {
     try {
-        // Use the cached database connection
-        const db = await getDbConnection();
-
         const result = await db.collection('JobPostings').countDocuments();
         return result;
 
@@ -113,13 +153,15 @@ export const getTotalJobs = cache(async () => {
         console.error('Error: getTotalJobs() failed:', error);
         return -1;
     }
-})
+});
 
-
-export const getKeywordsConnectedByJob = cache(async () => {
+export const getKeywordsConnectedByJob = cache(async (db: MongoDBClient, tier: string) => {
     try {
-        const db = await getDbConnection();
-
+        const tiersMapParams = {
+            "free": 10,
+            "basic": 15,
+            "premium": 100
+        };
 
         const pipeline = [
             {
@@ -140,7 +182,7 @@ export const getKeywordsConnectedByJob = cache(async () => {
                 $sort: { count: -1 }
             },
             {
-                $limit: 50
+                $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
             },
             {
                 $group: {
@@ -232,192 +274,79 @@ export const getKeywordsConnectedByJob = cache(async () => {
                 $sort: { weight: -1 }
             }
         ];
-               
-          
-        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();        return result;
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result;
 
     } catch (error) {
         console.error('Error: getKeywordsConnectedByJob() failed:', error);
-        return []
+        return [];
     }
-})
+});
 
-
-export const getRemoteVsOnsiteJobs = cache(async () => {
+export const getRemoteVsOnsiteJobs = cache(async (db: MongoDBClient) => {
     try {
-        const db = await getDbConnection();
         const pipeline = [
             {
                 $match: {
-                  is_remote: { $exists: true }  // Only include documents where is_remote exists
+                    is_remote: { $exists: true }  // Only include documents where is_remote exists
                 }
-              },
-            {
-              $group: {
-                _id: "$is_remote",
-                count: { $sum: 1 }
-              }
             },
             {
-              $group: {
-                _id: null,
-                total: { $sum: "$count" },
-                remote: {
-                  $sum: {
-                    $cond: [{ $eq: ["$_id", true] }, "$count", 0]
-                  }
-                },
-                nonRemote: {
-                  $sum: {
-                    $cond: [{ $eq: ["$_id", false] }, "$count", 0]
-                  }
+                $group: {
+                    _id: "$is_remote",
+                    count: { $sum: 1 }
                 }
-              }
             },
             {
-              $project: {
-                _id: 0,
-                total: 1,
-                remote: 1,
-                nonRemote: 1,
-                remotePercentage: { $multiply: [{ $divide: ["$remote", "$total"] }, 100] },
-                nonRemotePercentage: { $multiply: [{ $divide: ["$nonRemote", "$total"] }, 100] }
-              }
+                $group: {
+                    _id: null,
+                    total: { $sum: "$count" },
+                    remote: {
+                        $sum: {
+                            $cond: [{ $eq: ["$_id", true] }, "$count", 0]
+                        }
+                    },
+                    nonRemote: {
+                        $sum: {
+                            $cond: [{ $eq: ["$_id", false] }, "$count", 0]
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    total: 1,
+                    remote: 1,
+                    nonRemote: 1,
+                    remotePercentage: { $multiply: [{ $divide: ["$remote", "$total"] }, 100] },
+                    nonRemotePercentage: { $multiply: [{ $divide: ["$nonRemote", "$total"] }, 100] }
+                }
             }
-          ]
+        ];
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
         return result;
     } catch (error) {
         console.error('Error: getRemoteVsOnsiteJobs() failed:', error);
-        return []   
+        return [];
     }
-})
+});
 
-// export const getTopJobTitles = cache(async () => {
-//     try {
-//         const tier = await getTier();
-//         console.log("DAL tier for job titles:", tier);
-//         const tiersMapParams = {
-//             "free": 50,
-//             "basic": 15,
-//             "premium": 50
-//         }
-        
-//         const db = await getDbConnection();
-        
-//         // Define the job title categories we want to match
-//         const jobTitleCategories = [
-//             'software engineer',
-//             'junior software engineer',
-//             'mid level software engineer',
-//             'senior software engineer',
-//             'front end', 
-//             'backend developer', 
-//             'full stack developer',
-//             'devops engineer',
-//             'security engineer',
-//             'cloud engineer',
-//             'UI/UX engineer',
-//             'web developer',
-//             'network engineer',
-//             'mobile developer',
-//             'mobile engineer',
-//             'ios developer',
-//             'android developer',
-//             'data scientist',
-//             'data engineer',
-//             'AI engineer',
-//             'AI developer',
-//             'machine learning engineer',
-//             'ML engineer',
-//             'embedded software engineer',
-//             'cybersecurity analyst',
-//             'systems engineer',
-//             'cloud security engineer',
-//             'database administrator',
-//             'QA engineer',
-//             'firmware engineer',
-//             'systems administrator',
-//             'IT engineer',
-//             'MLOps engineer',
-//             'SOC Analyst',
-//             'game developer'
-//         ];
-        
-//         // Create regex patterns for each category (case insensitive)
-//         const regexPatterns = jobTitleCategories.map(category => ({
-//             category,
-//             regex: new RegExp(category, 'i')
-//         }));
-        
-//         // Calculate date from 2 weeks ago and format it as a string
-//         const twoWeeksAgo = new Date();
-//         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-//         const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-        
-//         console.log(`Filtering for jobs posted since: ${twoWeeksAgoStr}`);
-        
-//         // First, get all job titles from the past 2 weeks
-//         // Since date_posted is a string, we'll use string comparison
-//         const allJobTitles = await db.collection('JobPostings')
-//             .find({ 
-//                 title: { $exists: true, $ne: "" },
-//                 date_posted: { $gte: twoWeeksAgoStr }  // String comparison
-//             })
-//             .project({ title: 1, _id: 0 })
-//             .toArray();
-        
-//         console.log(`Found ${allJobTitles.length} job postings from the past 2 weeks`);
-        
-//         // Count occurrences for each category
-//         const categoryCounts: Record<string, number> = {};
-        
-//         allJobTitles.forEach(job => {
-//             if (!job.title) return;
-            
-//             // Find matching category
-//             for (const pattern of regexPatterns) {
-//                 if (pattern.regex.test(job.title)) {
-//                     const category = pattern.category;
-//                     categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-//                     break; // Stop after first match to avoid double counting
-//                 }
-//             }
-//         });
-        
-//         // Convert to array and sort
-//         const result = Object.entries(categoryCounts)
-//             .map(([title, count]) => ({ title, count }))
-//             .sort((a, b) => b.count - a.count)
-//             .slice(0, tiersMapParams[tier as keyof typeof tiersMapParams]);
-        
-//         console.log("DAL result for job titles:", result);
-//         return result;
-        
-//     } catch (error) {
-//         console.error('Error: getTopJobTitles() failed:', error);
-//         return []
-//     }
-// })
-export const getTopJobTitles = cache(async () => {
+export const getTopJobTitles = cache(async (db: MongoDBClient, tier: string) => {
     try {
-        const tier = await getTier();
-        console.log("DAL tier for job titles:", tier);
         const tiersMapParams = {
             "free": 20,
             "basic": 15,
             "premium": 50
-        }
-        
-        const db = await getDbConnection();
-        
+        };
+
         // Calculate date from 2 weeks ago and format it as a string
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
         const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-        
-        console.log(`Filtering for jobs posted since: ${twoWeeksAgoStr}`);
-        
+
+
         const pipeline = [
             {
                 $match: {
@@ -453,33 +382,28 @@ export const getTopJobTitles = cache(async () => {
                 }
             }
         ];
-        
+
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        console.log("DAL result for job titles:", result);
         if (tier === "free") {
             result.forEach(job => {
                 job.title = job.title.replace("placeholder", "");
-            })
+            });
         }
         return result;
-        
+
     } catch (error) {
         console.error('Error: getTopJobTitles() failed:', error);
-        return []
+        return [];
     }
-})
+});
 
-export const getTopLocations = cache(async () => {
+export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => {
     try {
-        const tier = await getTier();
-        console.log("DAL tier for job titles:", tier);
         const tiersMapParams = {
             "free": 100,
             "basic": 15,
             "premium": 50
-        }
-        
-        const db = await getDbConnection();
+        };
 
         const pipeline = [
             {
@@ -510,11 +434,9 @@ export const getTopLocations = cache(async () => {
 
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
         return result;
-        
-        
-        
+
     } catch (error) {
         console.error('Error: getTopJobTitles() failed:', error);
-        return []
+        return [];
     }
-})
+});
