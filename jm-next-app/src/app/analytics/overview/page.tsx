@@ -6,7 +6,8 @@ import TopJobTitles from "./TopJobTitles"
 import TopLocations from "./TopLocations"
 
 
-export default function Overview() {
+export default function Overview({tier}: {tier: 'free' | 'basic' | 'premium'}) {
+    console.log("overview tier",  tier)
     return (
         <div className="container md:mx-auto p-4">
             <div className="flex justify-center items-center">

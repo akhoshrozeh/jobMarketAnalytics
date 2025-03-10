@@ -247,7 +247,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
 
        
 
-        <div className="top-0 z-10 flex items-center px-4 py-4 sm:px-6 bg-m-light-green/40">
+        <div className="top-0 z-10 flex items-center px-4 py-4 sm:px-6">
           <div className="flex items-center gap-x-4 min-w-fit">
             <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="-m-2.5 p-2.5 text-gray-400">
               <span className="sr-only">Open sidebar</span>
@@ -262,7 +262,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
         </div>
 
         {/* <main className="py-10 lg:pl-72"> */}
-        <main className="py-10">
+        <main>
           <div className="px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
