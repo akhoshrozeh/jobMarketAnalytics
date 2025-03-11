@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 
@@ -179,23 +179,47 @@ interface TopSkillsProps {
 }
 
 export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkillsProps) {
-  // We use two refs: one for the scrollable layer and one for the fixed overlay.
   const scrollableRef = useRef<SVGSVGElement>(null);
   const fixedRef = useRef<SVGSVGElement>(null);
+  const [isLargeScreen, setIsLargeScreen] = useState(false); // Start with a default value
+
+  // Set initial value and add resize listener
+  useEffect(() => {
+    // Set initial value after component mounts
+    setIsLargeScreen(window.innerWidth >= 1024);
+
+    function handleResize() {
+      const wasLargeScreen = isLargeScreen;
+      const isNowLargeScreen = window.innerWidth >= 1024;
+      
+      // Only update state if we've crossed the threshold
+      if (wasLargeScreen !== isNowLargeScreen) {
+        setIsLargeScreen(isNowLargeScreen);
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isLargeScreen]);
 
   useEffect(() => {
     if (!data || !scrollableRef.current || !fixedRef.current) return;
 
+    // Clear previous content
+    d3.select(scrollableRef.current).selectAll("*").remove();
+    d3.select(fixedRef.current).selectAll("*").remove();
+
     // Chart dimensions and margins
-    const chartWidth = 2000;  // Base width for the scrollable area
+    const chartWidth = 600;
     const height = 600;
     const marginTop = 20;
     const marginRight = 20;
     const marginBottom = 100;
     const marginLeft = 60;
 
-    // Ensure a minimum bar width so that we might need to scroll horizontally
-    const minBarWidth = 50;
+    // Use isLargeScreen to determine minBarWidth
+    const minBarWidth = isLargeScreen ? 60 : 30;
+
     const totalBarsWidth = data.length * minBarWidth;
     const actualWidth = Math.max(chartWidth, totalBarsWidth + marginLeft + marginRight);
 
@@ -431,7 +455,7 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
         .style("user-select", "none");
     }
 
-  }, [data, blurLabels, totalJobs]);
+  }, [data, blurLabels, totalJobs, isLargeScreen]);
 
   return (
     <div style={{ position: "relative", height: "600px" }}>
@@ -766,12 +790,11 @@ export default function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
     // Clear previous chart
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Set the dimensions and margins of the graph
+    // Set the dimensions and margins
     const margin = { top: 20, right: 30, bottom: 70, left: 150 };
     const width = 800 - margin.left - margin.right;
-    const height = 500 - margin.top - margin.bottom;
+    const height = Math.max(500, data.length * 50) - margin.top - margin.bottom; // Ensure minimum height per item
 
-    // Append the svg object to the div
     const svg = d3.select(svgRef.current)
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
@@ -780,94 +803,147 @@ export default function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // Add gradient definitions for spheres
+    const defs = svg.append("defs");
+    const gradient = defs.append("radialGradient")
+      .attr("id", "sphereGradient")
+      .attr("cx", "30%")
+      .attr("cy", "30%");
+
+    gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#7EEADB");
+
+    gradient.append("stop")
+      .attr("offset", "50%")
+      .attr("stop-color", "#4FB3A3");
+
+    gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#3D8D7A");
+
     // Sort data
     data.sort((a, b) => b.count - a.count);
 
-    // Add X axis
+    // Create scales
     const x = d3.scaleLinear()
       .domain([0, d3.max(data, d => d.count) || 0])
       .range([0, width]);
-    
-    svg.append("g")
+
+    const y = d3.scaleBand()
+      .range([0, height])
+      .domain(data.map(d => d.title))
+      .padding(0.3); // Increased padding for better spacing
+
+    // Add X axis with animation
+    const xAxis = svg.append("g")
       .attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(x))
-      .selectAll("text")
+      .style("opacity", 0);
+
+    xAxis.transition()
+      .duration(1000)
+      .style("opacity", 1);
+
+    xAxis.selectAll("text")
       .attr("transform", "translate(-10,0)rotate(-45)")
       .style("text-anchor", "end")
       .style("font-size", "12px");
 
-    // Y axis
-    const y = d3.scaleBand()
-      .range([0, height])
-      .domain(data.map(d => d.title))
-      .padding(1);
-    
-    svg.append("g")
+    // Add Y axis with animation
+    const yAxis = svg.append("g")
       .call(d3.axisLeft(y))
-      .selectAll("text")
+      .style("opacity", 0);
+
+    yAxis.transition()
+      .duration(1000)
+      .style("opacity", 1);
+
+    yAxis.selectAll("text")
       .style("font-size", "12px");
 
-    // Lines
-    svg.selectAll("myline")
+    // Add lines with animation
+    const lines = svg.selectAll("myline")
       .data(data)
       .enter()
       .append("line")
-      .attr("x1", d => x(d.count))
+      .attr("x1", x(0))
       .attr("x2", x(0))
-      .attr("y1", d => y(d.title) as number)
-      .attr("y2", d => y(d.title) as number)
-      .attr("stroke", "grey")
-      .attr("stroke-width", 1.5);
+      .attr("y1", d => (y(d.title) || 0) + y.bandwidth() / 2)
+      .attr("y2", d => (y(d.title) || 0) + y.bandwidth() / 2)
+      .attr("stroke", "#ddd")
+      .attr("stroke-width", 2);
 
-    // Circles
-    svg.selectAll("mycircle")
+    lines.transition()
+      .duration(1000)
+      .delay((d, i) => i * 100)
+      .attr("x2", d => x(d.count));
+
+    // Add spheres with animation and shadow
+    const spheres = svg.selectAll("g.sphere")
       .data(data)
       .enter()
-      .append("circle")
+      .append("g")
+      .attr("class", "sphere");
+
+    // Add shadow
+    spheres.append("circle")
       .attr("cx", d => x(d.count))
-      .attr("cy", d => y(d.title) as number)
-      .attr("r", 8)
-      .style("fill", "#3D8D7A")
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
+      .attr("cy", d => (y(d.title) || 0) + y.bandwidth() / 2)
+      .attr("r", 12)
+      .style("fill", "rgba(0,0,0,0.2)")
+      .style("filter", "blur(3px)")
+      .style("opacity", 0)
+      .attr("transform", "translate(2,2)");
+
+    // Add main sphere
+    spheres.append("circle")
+      .attr("cx", x(0))
+      .attr("cy", d => (y(d.title) || 0) + y.bandwidth() / 2)
+      .attr("r", 12)
+      .style("fill", "url(#sphereGradient)")
+      .style("stroke", "white")
+      .style("stroke-width", 1.5)
+      .style("opacity", 0)
       .on("mouseover", function(event, d) {
         d3.select(this)
           .transition()
           .duration(200)
-          .attr("r", 12)
-          .style("fill", "#B35C1E");
+          .attr("r", 15)
+          .style("filter", "brightness(1.2)");
           
-        // Add tooltip with count
+        // Add tooltip
         svg.append("text")
           .attr("class", "tooltip")
-          .attr("x", x(d.count) + 15)
-          .attr("y", (y(d.title) as number) + 4)
+          .attr("x", x(d.count) + 20)
+          .attr("y", (y(d.title) || 0) + y.bandwidth() / 2)
           .text(`${d.count} jobs`)
           .style("font-size", "14px")
-          .style("font-weight", "bold");
+          .style("font-weight", "bold")
+          .style("fill", "#333");
       })
       .on("mouseout", function() {
         d3.select(this)
           .transition()
           .duration(200)
-          .attr("r", 8)
-          .style("fill", "#3D8D7A");
+          .attr("r", 12)
+          .style("filter", "none");
           
-        // Remove tooltip
         svg.selectAll(".tooltip").remove();
       });
 
-    // Add title
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", -margin.top / 2)
-      .attr("text-anchor", "middle")
-      .style("font-size", "16px")
-      .style("font-weight", "bold")
+    // Animate spheres
+    spheres.selectAll("circle")
+      .transition()
+      .duration(1000)
+      .delay((d, i) => i * 100)
+      .style("opacity", 1)
+      .attr("cx", d => x(d.count));
+
   }, [data]);
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto" style={{ minHeight: "500px" }}>
       <svg ref={svgRef}></svg>
     </div>
   );
