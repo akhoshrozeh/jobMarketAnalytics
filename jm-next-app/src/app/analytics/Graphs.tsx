@@ -169,7 +169,7 @@ export function KeywordsConnectedByJob({ links, nodes }: KeywordsConnectedByJobP
     );
 }
 
-interface KeywordsCountedProps {
+interface TopSkillsProps {
     data: Array<{
       _id: string;
       totalOccurrences: number;
@@ -178,249 +178,272 @@ interface KeywordsCountedProps {
     totalJobs: number;
 }
 
-export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: KeywordsCountedProps) {
-    const chartRef = useRef<SVGSVGElement>(null);
-  
-    useEffect(() => {
-      if (!data || !chartRef.current) return;
-  
-      // Clear previous chart
-      d3.select(chartRef.current).selectAll("*").remove();
-  
-      // Chart dimensions
-      const width = 2000;
-      const height = 600;
-      const marginTop = 20;
-      const marginRight = 20;
-      const marginBottom = 100;
-      const marginLeft = 60;
-      
-      // Set minimum bar width
-      const minBarWidth = 70; // We can adjust this value
-      const totalBarsWidth = data.length * minBarWidth;
-      const actualWidth = Math.max(width, totalBarsWidth + marginLeft + marginRight);
-  
-      // Calculate percentages
-      const dataWithPercentages = data.map(d => ({
-        ...d,
-        percentage: (d.totalOccurrences / totalJobs) * 100
-      }));
-  
-      // Create scales
-      const x = d3.scaleBand()
-        .domain(dataWithPercentages.map(d => d._id))
-        .range([marginLeft, actualWidth - marginRight])
-        .padding(0.1);
-  
-      const y = d3.scaleLinear()
-        .domain([0, d3.max(dataWithPercentages, d => d.percentage) || 0]).nice()
-        .range([height - marginBottom, marginTop]);
-  
-      // Create a container div for the chart with relative positioning
-      const container = d3.select(chartRef.current.parentNode)
-        .style("position", "relative")
-        .style("height", `${height}px`);
+export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkillsProps) {
+  // We use two refs: one for the scrollable layer and one for the fixed overlay.
+  const scrollableRef = useRef<SVGSVGElement>(null);
+  const fixedRef = useRef<SVGSVGElement>(null);
 
-      // Create SVG container with a background group and a foreground group
-      const svg = d3.select(chartRef.current)
-        .attr("viewBox", [0, 0, actualWidth, height])
-        .attr("width", actualWidth)
-        .attr("height", height)
-        .attr("style", "max-width: none; height: auto;");
+  useEffect(() => {
+    if (!data || !scrollableRef.current || !fixedRef.current) return;
 
-      // Create a group for the scrollable content
-      const scrollableGroup = svg.append("g")
-        .attr("class", "scrollable");
+    // Chart dimensions and margins
+    const chartWidth = 2000;  // Base width for the scrollable area
+    const height = 600;
+    const marginTop = 20;
+    const marginRight = 20;
+    const marginBottom = 100;
+    const marginLeft = 60;
 
-      // Create a fixed group for axes and labels that won't scroll
-      const fixedGroup = svg.append("g")
-        .attr("class", "fixed")
-        .style("pointer-events", "none"); // Prevent interference with bar interactions
+    // Ensure a minimum bar width so that we might need to scroll horizontally
+    const minBarWidth = 50;
+    const totalBarsWidth = data.length * minBarWidth;
+    const actualWidth = Math.max(chartWidth, totalBarsWidth + marginLeft + marginRight);
 
-      // Add horizontal gridlines
-      fixedGroup.append("g")
-        .attr("class", "grid")
-        .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y)
-          .tickSize(-actualWidth)
-          .tickFormat(() => "")
-        )
-        .style("stroke-dasharray", "2,2") // Make gridlines dashed
-        .style("stroke-opacity", 0.2)
-        .call(g => g.select(".domain").remove()); // Remove the axis line
+    // Compute percentages for each bar
+    const dataWithPercentages = data.map(d => ({
+      ...d,
+      percentage: (d.totalOccurrences / totalJobs) * 100
+    }));
 
-      // Create gradient definition - move this after creating scrollableGroup
-      const gradient = scrollableGroup.append("defs")  // Changed from svg.append to scrollableGroup.append
-          .append("linearGradient")
-          .attr("id", "barGradient")
-          .attr("gradientTransform", "rotate(90)");
+    // Create scales
+    const x = d3.scaleBand()
+      .domain(dataWithPercentages.map(d => d._id))
+      .range([marginLeft, actualWidth - marginRight])
+      .padding(0.1);
 
-      gradient.append("stop")
-          .attr("offset", "0%")
-          .attr("stop-color", "#4FB3A3")
-          .attr("stop-opacity", 1);
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(dataWithPercentages, d => d.percentage) || 0]).nice()
+      .range([height - marginBottom, marginTop]);
 
-      gradient.append("stop")
-          .attr("offset", "100%")
-          .attr("stop-color", "#3D8D7A")
-          .attr("stop-opacity", 1);
+    // Get the visible container width from the parent element.
+    const container = d3.select(scrollableRef.current?.parentNode as HTMLElement)
+      .style("position", "relative")
+      .style("height", `${height}px`);
+    const containerWidth = (container.node() as HTMLElement).clientWidth;
 
-      // Move the bars to the scrollable group
-      const bars = scrollableGroup.append("g")
-          .selectAll("g")
-          .data(dataWithPercentages)
-          .join("g");
+    // ----- SCROLLABLE LAYER (bars and x-axis) -----
+    const scrollableSvg = d3.select(scrollableRef.current)
+      .attr("viewBox", [0, 0, actualWidth, height])
+      .attr("width", actualWidth)
+      .attr("height", height)
+      .attr("style", "max-width: none; height: auto;");
 
-      // Add the rectangles with rounded corners and gradient
-      bars.append("rect")
-          .attr("x", d => x(d._id) || 0)
-          .attr("y", y(0))
-          .attr("height", 0)
-          .attr("width", x.bandwidth())
-          .attr("opacity", 0.9)
-          .attr("rx", 6)
-          .attr("ry", 6)
-          .style("fill", "url(#barGradient)")  // This should now work correctly
-          .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))")
-          .style("pointer-events", "none")  // Disable interactions during animation
-          .transition()
-          .duration(1000)
-          .ease(d3.easePoly)
-          .attr("y", d => y(d.percentage))
-          .attr("height", d => y(0) - y(d.percentage))
-          .on("end", function() {
-            // Enable interactions after animation
+    // Append a gradient definition (within the scrollable layer)
+    const gradient = scrollableSvg.append("defs")
+      .append("linearGradient")
+      .attr("id", "barGradient")
+      .attr("gradientTransform", "rotate(90)");
+
+    gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#4FB3A3")
+      .attr("stop-opacity", 1);
+
+    gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#3D8D7A")
+      .attr("stop-opacity", 1);
+
+    // Draw the bars
+    const barsGroup = scrollableSvg.append("g").attr("class", "bars");
+    const bars = barsGroup.selectAll("g")
+      .data(dataWithPercentages)
+      .join("g");
+
+    // Create tooltip div with enhanced styling (matching the pie chart)
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("padding", "12px")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "white")
+      .style("border-radius", "6px")
+      .style("font-size", "16px")
+      .style("font-weight", "500")
+      .style("min-width", "180px")
+      .style("text-align", "center")
+      .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
+      .style("pointer-events", "none")
+      .style("opacity", 0)
+      .style("z-index", "100")
+      .style("backdrop-filter", "blur(4px)");
+
+    // Add the rectangles with hover animations
+    bars.append("rect")
+      .attr("x", d => x(d._id) || 0)
+      .attr("y", y(0))
+      .attr("height", 0)
+      .attr("width", x.bandwidth())
+      .attr("opacity", 0.9)
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .style("fill", "url(#barGradient)")
+      .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))")
+      .style("pointer-events", "none") // disable interactions during animation
+      .transition()
+      .duration(1000)
+      .ease(d3.easePoly)
+      .attr("y", d => y(d.percentage))
+      .attr("height", d => y(0) - y(d.percentage))
+      .on("end", function() {
+        // Enable interactions after animation ends
+        d3.select(this)
+          .style("pointer-events", "all")
+          .on("mouseenter", function(event, d) {
+            // Apply enhanced shadow immediately
             d3.select(this)
-              .style("pointer-events", "all");
+              .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.3))")
+              .style("cursor", "pointer")
+              .transition()
+              .duration(200)
+              .attr("y", d => y(d.percentage) - 5)
+              .attr("height", d => y(0) - y(d.percentage) + 5);
+            
+            // Show tooltip with conditional blur
+            const skillName = blurLabels ? 
+              `<span style="filter: blur(8px); user-select: none;">${d._id}</span>` : 
+              `<span>${d._id}</span>`;
+            
+            tooltip
+              .html(`${skillName}<br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)`)
+              .style("opacity", 1)
+              .style("left", (event.pageX + 15) + "px")
+              .style("top", (event.pageY - 20) + "px");
+
+            // Animate the corresponding x-axis label
+            barsGroup.select(".x-axis")
+              .selectAll("text")
+              .filter(text => text === d._id)
+              .transition()
+              .duration(200)
+              .style("font-size", "20px")
+              .style("font-weight", "bold");
           })
-          .selection();
+          .on("mousemove", function(event) {
+            // Update tooltip position as mouse moves
+            tooltip
+              .style("left", (event.pageX + 15) + "px")
+              .style("top", (event.pageY - 20) + "px");
+          })
+          .on("mouseleave", function(event, d) {
+            // Hide tooltip
+            tooltip.style("opacity", 0);
 
-      // Add x-axis to the scrollable group
-      const xAxis = scrollableGroup.append("g")
-        .attr("transform", `translate(0,${height - marginBottom})`)
-        .call(d3.axisBottom(x));
+            // Reset bar animation
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("y", d => y(d.percentage))  // Reset to original position
+              .attr("height", d => y(0) - y(d.percentage))  // Reset to original height
+              .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))");
 
-      // Add y-axis to the fixed group
-      fixedGroup.append("g")
-        .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y).tickFormat(d => `${d}%`))
-        .call(g => g.select(".domain").remove())
-        .selectAll("text")
-        .style("fill", "black");
-
-      // Add labels to fixed group
-      fixedGroup.append("text")
-        .attr("class", "x-label")
-        .attr("text-anchor", "middle")
-        .attr("x", width / 2)
-        .attr("y", height - 10)
-        .style("fill", "black")
-        .style("font-size", "24px")
-        .text("Keywords");
-
-      fixedGroup.append("text")
-        .attr("class", "y-label")
-        .attr("text-anchor", "middle")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height / 2)
-        .attr("y", 20)
-        .style("fill", "black")
-        .style("font-size", "24px")
-        .text("Occurrence Percentage");
-
-      // Update title blur if enabled
-      if (blurLabels) {
-        fixedGroup.select(".x-label")
-          .style("filter", "blur(8px)")
-          .style("user-select", "none");
-      }
-
-      // Create tooltip div with enhanced styling
-      const tooltip = d3.select("body")
-        .append("div")
-        .attr("class", "tooltip")
-        .style("position", "absolute")
-        .style("padding", "12px")
-        .style("background", "rgba(0, 0, 0, 0.8)")
-        .style("color", "white")
-        .style("border-radius", "6px")
-        .style("font-size", "16px")
-        .style("font-weight", "500")
-        .style("min-width", "180px")
-        .style("text-align", "center")
-        .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
-        .style("pointer-events", "none")
-        .style("opacity", 0)
-        .style("z-index", "100")
-        .style("backdrop-filter", "blur(4px)");
-
-      // Update hover effects
-      bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number; percentage: number }) {
-        const group = d3.select(this);
-        
-        // Levitate the bar with enhanced shine
-        group.select("rect")
-          .transition()
-          .duration(200)
-          .attr("y", y(d.percentage) - 10)
-          .attr("opacity", 1)
-          .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.3)) brightness(1.1)");
-  
-        // Show tooltip with conditional blur
-        tooltip
-          .html(`<strong>${blurLabels ? '<span style="filter: blur(8px);">' + d._id + '</span>' : d._id}</strong><br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)`)
-          .style("opacity", 1)
-          .style("left", (event.pageX + 15) + "px")
-          .style("top", (event.pageY - 20) + "px");
-  
-        // Enlarge the corresponding label
-        xAxis.selectAll(".label-text")
-          .filter(text => text === d._id)
-          .transition()
-          .duration(200)
-          .style("font-size", "3.2em")
-          .style("font-weight", "bold");
-      })
-      .on("mousemove", function(event) {
-        tooltip
-          .style("left", (event.pageX + 15) + "px")
-          .style("top", (event.pageY - 20) + "px");
-      })
-      .on("mouseleave", function(event, d: { _id: string; totalOccurrences: number; percentage: number }) {
-        const group = d3.select(this);
-        
-        // Return bar to original position and style
-        group.select("rect")
-          .transition()
-          .duration(200)
-          .attr("y", y(d.percentage))
-          .attr("opacity", 0.9)
-          .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))");
-  
-        // Hide tooltip
-        tooltip.style("opacity", 0);
-  
-        // Return label to original size
-        xAxis.selectAll(".label-text")
-          .filter(text => text === d._id)
-          .transition()
-          .duration(200)
-          .style("font-size", "1.6em")
-          .style("font-weight", "normal");
+            // Reset x-axis label
+            barsGroup.select(".x-axis")
+              .selectAll("text")
+              .filter(text => text === d._id)
+              .transition()
+              .duration(200)
+              .style("font-size", "12px")
+              .style("font-weight", "normal")
+              .style("fill", "black");
+          });
       });
-  
-      // Clean up tooltip when component unmounts
-      return () => {
-        d3.select("body").selectAll(".tooltip").remove();
-      };
-    }, [data, blurLabels]);
-  
-    return (
-      <div className="w-full overflow-x-auto" style={{ scrollBehavior: 'smooth' }}>
-        <svg ref={chartRef}></svg>
+
+    // Append the x-axis to the scrollable layer with a class for selection
+    barsGroup.append("g")
+      .attr("class", "x-axis")
+      .attr("transform", `translate(0,${height - marginBottom})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("font-size", "12px")
+      .style("transition", "all 0.2s ease")
+      .attr("transform", "translate(-15,10)rotate(-45)")  // Adjusted translation values
+      .style("text-anchor", "end")
+      .style("dominant-baseline", "central");
+      
+    // ----- FIXED OVERLAY LAYER (y-axis, gridlines, and axis labels) -----
+    // Use the container's visible width (containerWidth) rather than chartWidth
+    const fixedSvg = d3.select(fixedRef.current)
+      .attr("viewBox", [0, 0, containerWidth, height])
+      .attr("width", containerWidth)
+      .attr("height", height)
+      .attr("style",  "pointer-events: none; position: absolute; top: 0; left: 0;");
+
+    const fixedGroup = fixedSvg.append("g");
+
+    // Add horizontal gridlines (use containerWidth for tickSize)
+    fixedGroup.append("g")
+      .attr("class", "grid")
+      .attr("transform", `translate(${marginLeft},0)`)
+      .call(d3.axisLeft(y)
+              .tickSize(-containerWidth)
+              .tickFormat(() => "")
+      )
+      .style("stroke-dasharray", "2,2")
+      .style("stroke-opacity", 0.2)
+      .call(g => g.select(".domain").remove());
+
+    // Add the y-axis (tick values) so that percentages remain fixed
+    fixedGroup.append("g")
+      .attr("transform", `translate(${marginLeft},0)`)
+      .call(d3.axisLeft(y).tickFormat(d => `${d}%`))
+      .call(g => g.select(".domain").remove())
+      .selectAll("text")
+      .style("fill", "black")
+      .style("font-size", "12px");
+
+    // Add fixed x-axis label ("Keywords")
+    fixedGroup.append("text")
+      .attr("class", "x-label")
+      .attr("text-anchor", "middle")
+      // Center the label between the left and right margins of the visible area
+      .attr("x", marginLeft + (containerWidth - marginLeft - marginRight) / 2)
+      .attr("y", height - 10)
+      .style("fill", "black")
+      .style("font-size", "24px")
+      .text("Keywords");
+
+    // Add fixed y-axis label ("Occurrence Percentage")
+    fixedGroup.append("text")
+      .attr("class", "y-label")
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", 20)
+      .style("fill", "black")
+      .style("font-size", "24px")
+      .style("margin-bottom", "10px")
+      .text("Occurrence Percentage");
+
+    barsGroup.select(".x-axis")
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+
+
+    // Apply blur to the x-axis skill labels instead of the "Keywords" label
+    if (blurLabels) {
+
+      //  Blur the individual skill labels on the x-axis
+      barsGroup.select(".x-axis")
+        .selectAll("text")
+        .style("filter", "blur(4px)")
+        .style("user-select", "none");
+    }
+
+  }, [data, blurLabels, totalJobs]);
+
+  return (
+    <div style={{ position: "relative", height: "600px" }}>
+      <div className="w-full overflow-x-auto overflow-y-hidden" style={{ scrollBehavior: 'smooth' }}>
+        {/* Scrollable layer (bars & x-axis) */}
+        <svg ref={scrollableRef}></svg>
       </div>
-    );
-  }
+      {/* Fixed overlay layer (y-axis, gridlines, and axis labels) */}
+      <svg ref={fixedRef} style={{ position: "absolute", top: 0, left: 0 }}></svg>
+    </div>
+  );
+}
   
 interface RemoteVsNonRemotePieProps {
   data: {
