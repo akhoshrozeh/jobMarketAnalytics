@@ -290,15 +290,15 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
         // Enable interactions after animation ends
         d3.select(this)
           .style("pointer-events", "all")
-          .on("mouseenter", function(event, d) {
+          .on("mouseenter", function(event, d: any) {
             // Apply enhanced shadow immediately
             d3.select(this)
               .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.3))")
               .style("cursor", "pointer")
               .transition()
               .duration(200)
-              .attr("y", d => y(d.percentage) - 5)
-              .attr("height", d => y(0) - y(d.percentage) + 5);
+              .attr("y", (d: any) => y(d.percentage) - 5)
+              .attr("height", (d: any) => y(0) - y(d.percentage) + 5);
             
             // Show tooltip with conditional blur
             const skillName = blurLabels ? 
@@ -326,7 +326,7 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
               .style("left", (event.pageX + 15) + "px")
               .style("top", (event.pageY - 20) + "px");
           })
-          .on("mouseleave", function(event, d) {
+          .on("mouseleave", function(event, d: any) {
             // Hide tooltip
             tooltip.style("opacity", 0);
 
@@ -334,8 +334,8 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
             d3.select(this)
               .transition()
               .duration(200)
-              .attr("y", d => y(d.percentage))  // Reset to original position
-              .attr("height", d => y(0) - y(d.percentage))  // Reset to original height
+              .attr("y", (d: any) => y(d.percentage))
+              .attr("height", (d: any) => y(0) - y(d.percentage))
               .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))");
 
             // Reset x-axis label
@@ -656,10 +656,11 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
         // After animation completes, add the hover events
         d3.select(this)
           .on("mouseover", function(event, d) {
-            const percentage = ((d.data.value / total) * 100).toFixed(1);
+            const data = d as d3.PieArcDatum<{ label: string; value: number }>;
+            const percentage = ((data.data.value / total) * 100).toFixed(1);
             
             tooltip
-              .html(`<strong>${d.data.label}</strong><br>${d.data.value} jobs (${percentage}%)`)
+              .html(`<strong>${data.data.label}</strong><br>${data.data.value} jobs (${percentage}%)`)
               .style("opacity", 1)
               .style("left", (event.pageX + 15) + "px")
               .style("top", (event.pageY - 20) + "px");
@@ -667,7 +668,7 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
             d3.select(this)
               .transition()
               .duration(200)
-              .attr("d", hoverArc(d))
+              .attr("d", hoverArc(d as d3.PieArcDatum<{ label: string; value: number }>))
               .style("filter", "url(#glow)");
           })
           .on("mousemove", function(event) {
@@ -682,7 +683,7 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
             d3.select(this)
               .transition()
               .duration(200)
-              .attr("d", arc(d))
+              .attr("d", arc(d as d3.PieArcDatum<{ label: string; value: number }>))
               .style("filter", "url(#innerShadow)");
           });
       });
