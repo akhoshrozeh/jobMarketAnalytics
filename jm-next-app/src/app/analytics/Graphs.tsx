@@ -284,7 +284,7 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
           .style("user-select", "none");       // Prevent text selection
       }
   
-      // Create tooltip div
+      // Create tooltip div with enhanced styling
       const tooltip = d3.select("body")
         .append("div")
         .attr("class", "tooltip")
@@ -300,7 +300,8 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
         .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
         .style("pointer-events", "none")
         .style("opacity", 0)
-        .style("z-index", "100");
+        .style("z-index", "100")
+        .style("backdrop-filter", "blur(4px)");
 
       // Update hover effects
       bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number; percentage: number }) {
@@ -313,14 +314,10 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
           .attr("y", y(d.percentage) - 10)
           .attr("opacity", 1)
           .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.3)) brightness(1.1)");
-
-        // Show tooltip with title and percentage
-        const tooltipText = blurLabels ? 
-          `<span style="filter: blur(8px)">${d._id}</span><br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)` :
-          `<strong>${d._id}</strong><br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)`;
-        
+  
+        // Show tooltip with conditional blur
         tooltip
-          .html(tooltipText)
+          .html(`<strong>${blurLabels ? '<span style="filter: blur(8px);">' + d._id + '</span>' : d._id}</strong><br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)`)
           .style("opacity", 1)
           .style("left", (event.pageX + 15) + "px")
           .style("top", (event.pageY - 20) + "px");
@@ -334,7 +331,6 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
           .style("font-weight", "bold");
       })
       .on("mousemove", function(event) {
-        // Move tooltip with mouse
         tooltip
           .style("left", (event.pageX + 15) + "px")
           .style("top", (event.pageY - 20) + "px");
@@ -391,6 +387,17 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
         .style("font-size", "24px")
         .text("Occurrence Percentage");
   
+      // Update title blur if enabled
+      if (blurLabels) {
+        svg.select(".x-label")
+          .style("filter", "blur(8px)")
+          .style("user-select", "none");
+      }
+
+      // Clean up tooltip when component unmounts
+      return () => {
+        d3.select("body").selectAll(".tooltip").remove();
+      };
     }, [data, blurLabels]);
   
     return (
@@ -425,23 +432,34 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
     // Calculate total for percentages
     const total = pieData.reduce((sum, item) => sum + item.value, 0);
 
-    // Basic chart dimensions
-    const width = 300;
-    const height = 300;
-    const margin = 10;
+    // Enhanced chart dimensions - make them responsive
+    const width = 400;
+    const height = 400;
+    const margin = 60; // Even larger margin
     const radius = Math.min(width, height) / 2 - margin;
 
-    // Create SVG container
+    // Create SVG container with a background for better contrast
     const svg = d3
       .select(svgRef.current)
-      .attr("width", width)
-      .attr("height", height)
+      .attr("width", "100%")
+      .attr("height", "100%")
       .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("style", "max-width: 100%; height: auto;")
-      .append("g")
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .style("overflow", "visible") // This is key - allow content to overflow the SVG
+      .style("z-index", "10"); // Higher z-index to ensure visibility
+    
+    // Add a subtle background circle
+    // svg.append("circle")
+    //   .attr("cx", width / 2)
+    //   .attr("cy", height / 2)
+    //   .attr("r", radius + 20)
+    //   .attr("fill", "#f8f9fa")
+    //   .attr("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.1))");
+    
+    const pieGroup = svg.append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-    // Create tooltip div
+    // Create tooltip div with enhanced styling
     const tooltip = d3.select("body")
       .append("div")
       .attr("class", "tooltip")
@@ -457,102 +475,227 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
       .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
       .style("pointer-events", "none")
       .style("opacity", 0)
-      .style("z-index", "100");
+      .style("z-index", "100")
+      .style("backdrop-filter", "blur(4px)");
 
-    // Make a color scale
-    const color = d3.scaleOrdinal(["#3D8D7A", "#B35C1E"]);
+    // Create gradient definitions for each slice
+    const defs = svg.append("defs");
+    
+    // Remote gradient (teal)
+    const remoteGradient = defs.append("linearGradient")
+      .attr("id", "remoteGradient")
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "100%");
+    
+    remoteGradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#7EEADB");  // Light teal
+      
+    remoteGradient.append("stop")
+      .attr("offset", "50%")
+      .attr("stop-color", "#4FB3A3");  // Medium teal
+      
+    remoteGradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#3D8D7A");  // Dark teal
+    
+    // Onsite gradient (orange)
+    const onsiteGradient = defs.append("linearGradient")
+      .attr("id", "onsiteGradient")
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "100%");
+    
+    onsiteGradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "#FFB78E");  // Light orange
+      
+    onsiteGradient.append("stop")
+      .attr("offset", "50%")
+      .attr("stop-color", "#FF9B5E");  // Medium orange
+      
+    onsiteGradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#E07C3E");  // Dark orange
+    
+    // Add inner shadow filter
+    defs.append("filter")
+      .attr("id", "innerShadow")
+      .append("feDropShadow")
+      .attr("dx", "0")
+      .attr("dy", "0")
+      .attr("stdDeviation", "3")
+      .attr("flood-color", "rgba(0,0,0,0.3)");
+
+    // Add outer glow filter
+    const glowFilter = defs.append("filter")
+      .attr("id", "glow")
+      .attr("x", "-50%")
+      .attr("y", "-50%")
+      .attr("width", "200%")
+      .attr("height", "200%");
+    
+    glowFilter.append("feGaussianBlur")
+      .attr("stdDeviation", "3")
+      .attr("result", "blur");
+    
+    glowFilter.append("feComposite")
+      .attr("in", "blur")
+      .attr("in2", "SourceGraphic")
+      .attr("operator", "out")
+      .attr("result", "glow");
+    
+    glowFilter.append("feBlend")
+      .attr("in", "SourceGraphic")
+      .attr("in2", "glow")
+      .attr("mode", "normal");
+
+    // Make a color scale with gradients
+    const colorMap = {
+      "Remote": "url(#remoteGradient)",
+      "Onsite": "url(#onsiteGradient)"
+    };
 
     // Create the pie generator
     const pieGenerator = d3
       .pie<{ label: string; value: number }>()
-      .value((d) => d.value);
+      .value((d) => d.value)
+      .padAngle(0.02);
 
-    // Create the arc generator
+    // Create the arc generator with rounded corners
     const arc = d3
       .arc<d3.PieArcDatum<{ label: string; value: number }>>()
-      .innerRadius(0)
-      .outerRadius(radius);
+      .innerRadius(radius * 0.5)
+      .outerRadius(radius)
+      .cornerRadius(8);
 
-    // Create a slightly larger arc for label positioning
+    // Create an arc for the animation starting point (0 degrees)
+    const arcTween = (d: d3.PieArcDatum<{ label: string; value: number }>) => {
+      const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+      return (t: number) => arc(interpolate(t))!;
+    };
+
+    // Create a slightly larger arc for hover effect
+    const hoverArc = d3
+      .arc<d3.PieArcDatum<{ label: string; value: number }>>()
+      .innerRadius(radius * 0.48)
+      .outerRadius(radius * 1.05)
+      .cornerRadius(10);
+
+    // Create a label arc
     const labelArc = d3
       .arc<d3.PieArcDatum<{ label: string; value: number }>>()
-      .innerRadius(radius * 0.6)
-      .outerRadius(radius * 0.6);
+      .innerRadius(radius * 0.75)
+      .outerRadius(radius * 0.75);
 
     // Build the pie chart with arcs
-    const arcs = svg
+    const arcs = pieGroup
       .selectAll("arc")
       .data(pieGenerator(pieData))
       .enter()
-      .append("g");
+      .append("g")
+      .attr("class", "slice");
 
+    // Add the slices with gradients and effects
     arcs
       .append("path")
       .attr("d", arc)
-      .attr("fill", (d, i) => color(i.toString()))
+      .attr("fill", (d) => colorMap[d.data.label as keyof typeof colorMap])
       .attr("stroke", "#fff")
       .style("stroke-width", "2px")
-      .on("mouseover", function(event, d) {
-        // Calculate percentage
-        const percentage = ((d.data.value / total) * 100).toFixed(1);
-        
-        // Show tooltip with count and percentage
-        tooltip
-          .html(`<strong>${d.data.label}</strong><br>${d.data.value} jobs (${percentage}%)`)
-          .style("opacity", 1)
-          .style("left", (event.pageX + 15) + "px")
-          .style("top", (event.pageY - 20) + "px");
-        
-        // Highlight the segment
+      .style("filter", "url(#innerShadow)")
+      .style("opacity", 0) // Start with opacity 0
+      .attr("d", d => arc({ ...d, startAngle: 0, endAngle: 0 })) // Start from 0 angle
+      .transition() // Begin transition
+      .duration(1000) // Animation duration in milliseconds
+      .ease(d3.easeCircleOut) // Use circular easing for smooth animation
+      .style("opacity", 1) // Fade in
+      .attrTween("d", arcTween) // Animate the arc path
+      .on("end", function() {
+        // After animation completes, add the hover events
         d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("opacity", 0.8)
-          .attr("d", d3.arc<d3.PieArcDatum<{ label: string; value: number }>>()
-            .innerRadius(0)
-            .outerRadius(radius + 10)(d));
-      })
-      .on("mousemove", function(event) {
-        // Move tooltip with mouse
-        tooltip
-          .style("left", (event.pageX + 15) + "px")
-          .style("top", (event.pageY - 20) + "px");
-      })
-      .on("mouseout", function(event, d) {
-        // Hide tooltip
-        tooltip
-          .style("opacity", 0);
-        
-        // Return segment to normal size
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("opacity", 1)
-          .attr("d", arc(d));
+          .on("mouseover", function(event, d) {
+            const percentage = ((d.data.value / total) * 100).toFixed(1);
+            
+            tooltip
+              .html(`<strong>${d.data.label}</strong><br>${d.data.value} jobs (${percentage}%)`)
+              .style("opacity", 1)
+              .style("left", (event.pageX + 15) + "px")
+              .style("top", (event.pageY - 20) + "px");
+            
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("d", hoverArc(d))
+              .style("filter", "url(#glow)");
+          })
+          .on("mousemove", function(event) {
+            tooltip
+              .style("left", (event.pageX + 15) + "px")
+              .style("top", (event.pageY - 20) + "px");
+          })
+          .on("mouseout", function(event, d) {
+            tooltip
+              .style("opacity", 0);
+            
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("d", arc(d))
+              .style("filter", "url(#innerShadow)");
+          });
       });
 
-    // Add labels on the pieces
+    // Animate the percentage labels
     arcs
       .append("text")
-      .attr("transform", (d) => {
-        // Position labels closer to the center for smaller segments
-        const pos = labelArc.centroid(d);
-        
-        // Adjust position based on the label
-        if (d.data.label === "Onsite") {
-          // Move Non-Remote label up and to the left
-          return `translate(${pos[0] - 10}, ${pos[1] - 15})`;
-        } else {
-          // Keep Remote label just moved to the left
-          return `translate(${pos[0] - 10}, ${pos[1]})`;
-        }
-      })
-      .text((d) => d.data.label)
-      .style("text-anchor", "middle")
-      .style("font-size", "1.0em")
-      .style("fill", "white")
+      .attr("transform", (d) => `translate(${labelArc.centroid(d)})`)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", "middle")
+      .style("font-size", "16px")
       .style("font-weight", "bold")
-      .style("pointer-events", "none"); // so text doesn't interfere with hover
+      .style("fill", "white")
+      .style("text-shadow", "0 1px 2px rgba(0,0,0,0.5)")
+      .style("pointer-events", "none")
+      .style("opacity", 0) // Start with opacity 0
+      .text((d) => {
+        const percentage = ((d.data.value / total) * 100).toFixed(0);
+        return `${percentage}%`;
+      })
+      .transition() // Begin transition
+      .delay(1000) // Wait for pie animation to complete
+      .duration(500) // Fade in duration
+      .style("opacity", 1); // Fade in the text
+
+    // Add labels with connecting lines
+    const labelOffset = 30;
+    
+    // Add a center circle with a subtle shadow
+    pieGroup.append("circle")
+      .attr("cx", 0)
+      .attr("cy", 0)
+      .attr("r", radius * 0.48)
+      .attr("fill", "white")
+      .attr("filter", "drop-shadow(0 0 4px rgba(0,0,0,0.2))");
+
+    // Add title in the center
+    pieGroup.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "-0.2em")
+      .style("font-size", "18px")
+      .style("font-weight", "bold")
+      .style("fill", "#333")
+      .text("Job Location");
+
+    pieGroup.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "1.2em")
+      .style("font-size", "16px")
+      .style("fill", "#666")
+      .text("Distribution");
 
     // Clean up tooltip when component unmounts
     return () => {
@@ -561,8 +704,8 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
   }, [data]);
 
   return (
-    <div>
-      <svg ref={svgRef}></svg>
+    <div className="flex justify-center items-center w-full h-full relative" style={{ minHeight: "400px" }}>
+      <svg ref={svgRef} className="absolute inset-0"></svg>
     </div>
   );
 }
