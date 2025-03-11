@@ -216,78 +216,125 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
         .domain([0, d3.max(dataWithPercentages, d => d.percentage) || 0]).nice()
         .range([height - marginBottom, marginTop]);
   
-      // Create SVG container
+      // Create a container div for the chart with relative positioning
+      const container = d3.select(chartRef.current.parentNode)
+        .style("position", "relative")
+        .style("height", `${height}px`);
+
+      // Create SVG container with a background group and a foreground group
       const svg = d3.select(chartRef.current)
         .attr("viewBox", [0, 0, actualWidth, height])
         .attr("width", actualWidth)
         .attr("height", height)
-        .attr("style", "max-width: none; height: auto;") // Remove max-width constraint
+        .attr("style", "max-width: none; height: auto;");
 
-      // Create gradient definition
-      const gradient = svg.append("defs")
-        .append("linearGradient")
-        .attr("id", "barGradient")
-        .attr("gradientTransform", "rotate(90)");
+      // Create a group for the scrollable content
+      const scrollableGroup = svg.append("g")
+        .attr("class", "scrollable");
+
+      // Create a fixed group for axes and labels that won't scroll
+      const fixedGroup = svg.append("g")
+        .attr("class", "fixed")
+        .style("pointer-events", "none"); // Prevent interference with bar interactions
+
+      // Add horizontal gridlines
+      fixedGroup.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3.axisLeft(y)
+          .tickSize(-actualWidth)
+          .tickFormat(() => "")
+        )
+        .style("stroke-dasharray", "2,2") // Make gridlines dashed
+        .style("stroke-opacity", 0.2)
+        .call(g => g.select(".domain").remove()); // Remove the axis line
+
+      // Create gradient definition - move this after creating scrollableGroup
+      const gradient = scrollableGroup.append("defs")  // Changed from svg.append to scrollableGroup.append
+          .append("linearGradient")
+          .attr("id", "barGradient")
+          .attr("gradientTransform", "rotate(90)");
 
       gradient.append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", "#4FB3A3")  // Lighter version of #3D8D7A
-        .attr("stop-opacity", 1);
+          .attr("offset", "0%")
+          .attr("stop-color", "#4FB3A3")
+          .attr("stop-opacity", 1);
 
       gradient.append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", "#3D8D7A")
-        .attr("stop-opacity", 1);
+          .attr("offset", "100%")
+          .attr("stop-color", "#3D8D7A")
+          .attr("stop-opacity", 1);
 
-      // Add bars with labels
-      const bars = svg.append("g")
-        .selectAll("g")
-        .data(dataWithPercentages)
-        .join("g");
-  
+      // Move the bars to the scrollable group
+      const bars = scrollableGroup.append("g")
+          .selectAll("g")
+          .data(dataWithPercentages)
+          .join("g");
+
       // Add the rectangles with rounded corners and gradient
       bars.append("rect")
-        .attr("x", d => x(d._id) || 0)
-        .attr("y", y(0))
-        .attr("height", 0)
-        .attr("width", x.bandwidth())
-        .attr("opacity", 0.9)
-        .attr("rx", 6)
-        .attr("ry", 6)
-        .style("fill", "url(#barGradient)")
-        .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))")
-        .style("pointer-events", "none")  // Disable interactions during animation
-        .transition()
-        .duration(1000)
-        .ease(d3.easePoly)
-        .attr("y", d => y(d.percentage))
-        .attr("height", d => y(0) - y(d.percentage))
-        .on("end", function() {
-          // Enable interactions after animation
-          d3.select(this)
-            .style("pointer-events", "all");
-        })
-        .selection();
-  
-      // Add x-axis with labels
-      const xAxis = svg.append("g")
+          .attr("x", d => x(d._id) || 0)
+          .attr("y", y(0))
+          .attr("height", 0)
+          .attr("width", x.bandwidth())
+          .attr("opacity", 0.9)
+          .attr("rx", 6)
+          .attr("ry", 6)
+          .style("fill", "url(#barGradient)")  // This should now work correctly
+          .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))")
+          .style("pointer-events", "none")  // Disable interactions during animation
+          .transition()
+          .duration(1000)
+          .ease(d3.easePoly)
+          .attr("y", d => y(d.percentage))
+          .attr("height", d => y(0) - y(d.percentage))
+          .on("end", function() {
+            // Enable interactions after animation
+            d3.select(this)
+              .style("pointer-events", "all");
+          })
+          .selection();
+
+      // Add x-axis to the scrollable group
+      const xAxis = scrollableGroup.append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
         .call(d3.axisBottom(x));
-  
-      xAxis.selectAll("text")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "end")
-        .attr("class", "label-text")
-        .style("font-size", "1.6em")
+
+      // Add y-axis to the fixed group
+      fixedGroup.append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3.axisLeft(y).tickFormat(d => `${d}%`))
+        .call(g => g.select(".domain").remove())
+        .selectAll("text")
         .style("fill", "black");
 
-      // Conditionally apply blur to x-axis labels
+      // Add labels to fixed group
+      fixedGroup.append("text")
+        .attr("class", "x-label")
+        .attr("text-anchor", "middle")
+        .attr("x", width / 2)
+        .attr("y", height - 10)
+        .style("fill", "black")
+        .style("font-size", "24px")
+        .text("Keywords");
+
+      fixedGroup.append("text")
+        .attr("class", "y-label")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", 20)
+        .style("fill", "black")
+        .style("font-size", "24px")
+        .text("Occurrence Percentage");
+
+      // Update title blur if enabled
       if (blurLabels) {
-        xAxis.selectAll("text")
+        fixedGroup.select(".x-label")
           .style("filter", "blur(8px)")
-          .style("user-select", "none");       // Prevent text selection
+          .style("user-select", "none");
       }
-  
+
       // Create tooltip div with enhanced styling
       const tooltip = d3.select("body")
         .append("div")
@@ -362,42 +409,6 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
           .style("font-weight", "normal");
       });
   
-      // Add y-axis with percentage format
-      svg.append("g")
-        .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y).tickFormat(d => `${d}%`))
-        .call(g => g.select(".domain").remove())
-        .selectAll("text")
-        .style("fill", "black");
-  
-      // Add labels
-      svg.append("text")
-        .attr("class", "x-label")
-        .attr("text-anchor", "middle")
-        .attr("x", width / 2)
-        .attr("y", height - 10)
-        .style("fill", "black")
-        .style("font-size", "24px")
-        .text("Keywords");
-        
-  
-      svg.append("text")
-        .attr("class", "y-label")
-        .attr("text-anchor", "middle")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height / 2)
-        .attr("y", 20)
-        .style("fill", "black")
-        .style("font-size", "24px")
-        .text("Occurrence Percentage");
-  
-      // Update title blur if enabled
-      if (blurLabels) {
-        svg.select(".x-label")
-          .style("filter", "blur(8px)")
-          .style("user-select", "none");
-      }
-
       // Clean up tooltip when component unmounts
       return () => {
         d3.select("body").selectAll(".tooltip").remove();
