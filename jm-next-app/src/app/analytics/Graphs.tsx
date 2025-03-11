@@ -189,11 +189,16 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
   
       // Chart dimensions
       const width = 2000;
-      const height = 1000;
+      const height = 600;
       const marginTop = 20;
       const marginRight = 20;
-      const marginBottom = 200;
+      const marginBottom = 100;
       const marginLeft = 60;
+      
+      // Set minimum bar width
+      const minBarWidth = 70; // We can adjust this value
+      const totalBarsWidth = data.length * minBarWidth;
+      const actualWidth = Math.max(width, totalBarsWidth + marginLeft + marginRight);
   
       // Calculate percentages
       const dataWithPercentages = data.map(d => ({
@@ -204,7 +209,7 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
       // Create scales
       const x = d3.scaleBand()
         .domain(dataWithPercentages.map(d => d._id))
-        .range([marginLeft, width - marginRight])
+        .range([marginLeft, actualWidth - marginRight])
         .padding(0.1);
   
       const y = d3.scaleLinear()
@@ -213,12 +218,11 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
   
       // Create SVG container
       const svg = d3.select(chartRef.current)
-        .attr("viewBox", [0, 0, width, height])
-        .attr("width", width)
+        .attr("viewBox", [0, 0, actualWidth, height])
+        .attr("width", actualWidth)
         .attr("height", height)
-        .attr("style", "max-width: 100%; height: auto;")
-        .call(d3.zoom);
-  
+        .attr("style", "max-width: none; height: auto;") // Remove max-width constraint
+
       // Create gradient definition
       const gradient = svg.append("defs")
         .append("linearGradient")
@@ -401,7 +405,7 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: Keywords
     }, [data, blurLabels]);
   
     return (
-      <div className="w-full overflow-x-auto">
+      <div className="w-full overflow-x-auto" style={{ scrollBehavior: 'smooth' }}>
         <svg ref={chartRef}></svg>
       </div>
     );
