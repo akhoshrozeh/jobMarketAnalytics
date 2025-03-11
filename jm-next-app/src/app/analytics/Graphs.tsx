@@ -175,9 +175,10 @@ interface KeywordsCountedProps {
       totalOccurrences: number;
     }>;
     blurLabels?: boolean;
+    totalJobs: number;
 }
 
-export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedProps) {
+export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: KeywordsCountedProps) {
     const chartRef = useRef<SVGSVGElement>(null);
   
     useEffect(() => {
@@ -194,14 +195,20 @@ export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedPro
       const marginBottom = 200;
       const marginLeft = 60;
   
+      // Calculate percentages
+      const dataWithPercentages = data.map(d => ({
+        ...d,
+        percentage: (d.totalOccurrences / totalJobs) * 100
+      }));
+  
       // Create scales
       const x = d3.scaleBand()
-        .domain(data.map(d => d._id))
+        .domain(dataWithPercentages.map(d => d._id))
         .range([marginLeft, width - marginRight])
         .padding(0.1);
   
       const y = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.totalOccurrences) || 0]).nice()
+        .domain([0, d3.max(dataWithPercentages, d => d.percentage) || 0]).nice()
         .range([height - marginBottom, marginTop]);
   
       // Create SVG container
@@ -212,25 +219,50 @@ export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedPro
         .attr("style", "max-width: 100%; height: auto;")
         .call(d3.zoom);
   
+      // Create gradient definition
+      const gradient = svg.append("defs")
+        .append("linearGradient")
+        .attr("id", "barGradient")
+        .attr("gradientTransform", "rotate(90)");
+
+      gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#4FB3A3")  // Lighter version of #3D8D7A
+        .attr("stop-opacity", 1);
+
+      gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#3D8D7A")
+        .attr("stop-opacity", 1);
+
       // Add bars with labels
       const bars = svg.append("g")
-        .attr("fill", "#3D8D7A")
         .selectAll("g")
-        .data(data)
+        .data(dataWithPercentages)
         .join("g");
   
-      // Add the rectangles
+      // Add the rectangles with rounded corners and gradient
       bars.append("rect")
         .attr("x", d => x(d._id) || 0)
         .attr("y", y(0))
         .attr("height", 0)
         .attr("width", x.bandwidth())
-        .attr("opacity", 0.8)
+        .attr("opacity", 0.9)
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .style("fill", "url(#barGradient)")
+        .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))")
+        .style("pointer-events", "none")  // Disable interactions during animation
         .transition()
         .duration(1000)
         .ease(d3.easePoly)
-        .attr("y", d => y(d.totalOccurrences))
-        .attr("height", d => y(0) - y(d.totalOccurrences))
+        .attr("y", d => y(d.percentage))
+        .attr("height", d => y(0) - y(d.percentage))
+        .on("end", function() {
+          // Enable interactions after animation
+          d3.select(this)
+            .style("pointer-events", "all");
+        })
         .selection();
   
       // Add x-axis with labels
@@ -242,44 +274,84 @@ export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedPro
         .attr("transform", "rotate(-45)")
         .style("text-anchor", "end")
         .attr("class", "label-text")
-        .style("font-size", "1.6em");
+        .style("font-size", "1.6em")
+        .style("fill", "black");
 
       // Conditionally apply blur to x-axis labels
       if (blurLabels) {
         xAxis.selectAll("text")
-          .style("filter", "blur(4px)");
+          .style("filter", "blur(8px)")
+          .style("user-select", "none");       // Prevent text selection
       }
   
-      // Add hover effects
-      bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number }) {
+      // Create tooltip div
+      const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("padding", "12px")
+        .style("background", "rgba(0, 0, 0, 0.8)")
+        .style("color", "white")
+        .style("border-radius", "6px")
+        .style("font-size", "16px")
+        .style("font-weight", "500")
+        .style("min-width", "180px")
+        .style("text-align", "center")
+        .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
+        .style("pointer-events", "none")
+        .style("opacity", 0)
+        .style("z-index", "100");
+
+      // Update hover effects
+      bars.on("mouseenter", function(event, d: { _id: string; totalOccurrences: number; percentage: number }) {
         const group = d3.select(this);
         
-        // Levitate the bar
+        // Levitate the bar with enhanced shine
         group.select("rect")
           .transition()
           .duration(200)
-          .attr("y", y(d.totalOccurrences) - 10)
+          .attr("y", y(d.percentage) - 10)
           .attr("opacity", 1)
-          .attr("fill", "#3D8D7A");
+          .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.3)) brightness(1.1)");
+
+        // Show tooltip with title and percentage
+        const tooltipText = blurLabels ? 
+          `<span style="filter: blur(8px)">${d._id}</span><br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)` :
+          `<strong>${d._id}</strong><br>${d.totalOccurrences} jobs (${d.percentage.toFixed(1)}%)`;
+        
+        tooltip
+          .html(tooltipText)
+          .style("opacity", 1)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px");
   
         // Enlarge the corresponding label
         xAxis.selectAll(".label-text")
           .filter(text => text === d._id)
           .transition()
           .duration(200)
-          .style("font-size", "2.2em")
+          .style("font-size", "3.2em")
           .style("font-weight", "bold");
       })
-      .on("mouseleave", function(event, d: { _id: string; totalOccurrences: number }) {
+      .on("mousemove", function(event) {
+        // Move tooltip with mouse
+        tooltip
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px");
+      })
+      .on("mouseleave", function(event, d: { _id: string; totalOccurrences: number; percentage: number }) {
         const group = d3.select(this);
         
-        // Return bar to original position
+        // Return bar to original position and style
         group.select("rect")
           .transition()
           .duration(200)
-          .attr("y", y(d.totalOccurrences))
-          .attr("opacity", 0.8)
-          .attr("fill", "#3D8D7A");
+          .attr("y", y(d.percentage))
+          .attr("opacity", 0.9)
+          .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))");
+  
+        // Hide tooltip
+        tooltip.style("opacity", 0);
   
         // Return label to original size
         xAxis.selectAll(".label-text")
@@ -290,11 +362,13 @@ export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedPro
           .style("font-weight", "normal");
       });
   
-      // Add y-axis
+      // Add y-axis with percentage format
       svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
-        .call(d3.axisLeft(y))
-        .call(g => g.select(".domain").remove());
+        .call(d3.axisLeft(y).tickFormat(d => `${d}%`))
+        .call(g => g.select(".domain").remove())
+        .selectAll("text")
+        .style("fill", "black");
   
       // Add labels
       svg.append("text")
@@ -302,7 +376,7 @@ export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedPro
         .attr("text-anchor", "middle")
         .attr("x", width / 2)
         .attr("y", height - 10)
-        .style("fill", "white")
+        .style("fill", "black")
         .style("font-size", "24px")
         .text("Keywords");
         
@@ -313,9 +387,9 @@ export function KeywordsCounted({ data, blurLabels = false }: KeywordsCountedPro
         .attr("transform", "rotate(-90)")
         .attr("x", -height / 2)
         .attr("y", 20)
-        .style("fill", "white")
+        .style("fill", "black")
         .style("font-size", "24px")
-        .text("Occurrences");
+        .text("Occurrence Percentage");
   
     }, [data, blurLabels]);
   

@@ -21,7 +21,7 @@ export default async function Overview() {
                 {/* Top Skills - Takes full width on first row */}
                 
                 {/* Second row - smaller components side by side */}
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 h-full flex flex-col bg-white/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 h-full flex flex-col bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700">📊 Total Jobs Analyzed</h2>
                     <div className="flex-1 flex items-center justify-center">
                         <div className="md:text-2xl lg:text-4xl font-bold">
@@ -30,28 +30,28 @@ export default async function Overview() {
                     </div>
                 </div>
                 
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:row-span-1 bg-white/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:row-span-1 bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700 ">💰 Average Salaries</h2>
                     <div className="text-md lg:text-xl xl:text-2xl">
                         <AverageSalary avgMinSalary={overviewData?.averageSalary[0]?.avgMinSalary || 0} avgMaxSalary={overviewData?.averageSalary[0]?.avgMaxSalary || 0}/>
                     </div>
                 </div>
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-4 md:row-span-2 bg-white/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-4 md:row-span-2 bg-slate-100/50">
                     <h2 className="text-xl font-semibold mb-2">🛠️✨ Top Skills</h2>
-                    <TopSkills blurLabels={!tier.valid} topSkills={overviewData?.topSkills}/>
+                    <TopSkills blurLabels={!tier.valid} topSkills={overviewData?.topSkills} totalJobs={overviewData?.totalJobs || 0}/>
                 </div>
                 
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-2 bg-white/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-2 bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700">🌍 Remote 📍Onsite</h2>
                     <RemoteVsOnsite remoteVsOnsiteJobs={overviewData?.remoteVsOnsiteJobs as { total: number; remote: number; nonRemote: number; }[]}/>
                 </div>
                 
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-4 bg-white/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-4 bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
                     <TopJobTitles topJobTitlesData={overviewData?.topJobTitles as {title: string, count: number}[]}/>
                 </div>
 
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-2 bg-white/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 md:col-span-2 bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Locations</h2>
                     <TopLocations topLocationsData={overviewData?.topLocations as {location: string, count: number}[]}/>
                 </div>
