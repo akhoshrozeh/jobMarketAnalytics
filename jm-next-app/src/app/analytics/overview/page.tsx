@@ -46,15 +46,16 @@ export default async function Overview() {
                     <RemoteVsOnsite remoteVsOnsiteJobs={overviewData?.remoteVsOnsiteJobs as { total: number; remote: number; nonRemote: number; }[]}/>
                 </div>
                 
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-4 bg-slate-100/50">
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Locations</h2>
+                    <TopLocations topLocationsData={overviewData?.topLocations as {location: string, count: number}[]}/>
+                </div>
+                
+                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
                     <TopJobTitles topJobTitlesData={overviewData?.topJobTitles as {title: string, count: number}[]}/>
                 </div>
 
-                <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 bg-slate-100/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Locations</h2>
-                    <TopLocations topLocationsData={overviewData?.topLocations as {location: string, count: number}[]}/>
-                </div>
                 
                 
             </div>

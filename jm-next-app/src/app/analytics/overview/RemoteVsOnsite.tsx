@@ -8,8 +8,6 @@ export default async function RemoteVsOnsite({remoteVsOnsiteJobs}: {remoteVsOnsi
 
     return (
         <div className="flex flex-col items-center justify-center">
-            {/* <p>Remote Jobs: {remotePercentage}%</p> */}
-            {/* <p>Onsite Jobs: {onsitePercentage}%</p> */}
             <RemoteVsNonRemotePie data={{ remote: remote, nonRemote: onsite }} />
         </div>
     )

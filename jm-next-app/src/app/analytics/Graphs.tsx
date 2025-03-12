@@ -497,7 +497,7 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
     // Enhanced chart dimensions - make them responsive
     const width = 400;
     const height = 400;
-    const margin = 60; // Even larger margin
+    const margin = 12; // Even larger margin
     const radius = Math.min(width, height) / 2 - margin;
 
     // Create SVG container with a background for better contrast
@@ -774,177 +774,155 @@ export function RemoteVsNonRemotePie({ data }: RemoteVsNonRemotePieProps) {
 }
   
 
-interface TopJobTitlesGraphProps {
-  data: Array<{
-    title: string;
-    count: number;
-  }>;
+interface TreeNode {
+  name: string;
+  value?: number;
+  children?: TreeNode[];
 }
 
-export default function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
+interface TopJobTitlesGraphProps {
+  data: TreeNode;
+}
+
+
+
+type HierarchyNode = d3.HierarchyRectangularNode<TreeNode>;
+
+export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
+
   const svgRef = useRef<SVGSVGElement>(null);
 
+
   useEffect(() => {
-    if (!data || !data.length || !svgRef.current) return;
+    if (!data || !svgRef.current) return;
 
     // Clear previous chart
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Set the dimensions and margins
-    const margin = { top: 20, right: 30, bottom: 70, left: 150 };
-    const width = 800 - margin.left - margin.right;
-    const height = Math.max(500, data.length * 50) - margin.top - margin.bottom; // Ensure minimum height per item
+    // Set up dimensions
+    const width = 928;
+    const height = 928;
+    const radius = width / 2;
 
+    // Create color scale for the outer ring
+    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1));
+
+    // Create the partition layout
+    const partition = d3.partition<typeof data>()
+      .size([2 * Math.PI , radius]);
+
+    // Create the hierarchical structure
+    const root = d3.hierarchy(data)
+      .sum(d => d.children ? 0 : d.value || 0)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+
+
+    // Generate the partition layout
+    partition(root);
+
+    // Create the arc generator
+    const arc = d3.arc<d3.HierarchyRectangularNode<typeof data>>()
+      .startAngle(d => d.x0)
+      .endAngle(d => d.x1)
+      .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+      .padRadius(radius / 2)
+      .innerRadius(d => d.y0)
+      .outerRadius(d => d.y1 - 1);
+
+    // Create SVG container
     const svg = d3.select(svgRef.current)
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .attr("viewBox", [0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom])
-      .attr("style", "max-width: 100%; height: auto;")
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+      .attr("viewBox", [-width / 2, -height / 2, width, width])
+      .style("width", "100%")
+      .style("height", "auto")
+      .style("font", "10px sans-serif");
 
-    // Add gradient definitions for spheres
-    const defs = svg.append("defs");
-    const gradient = defs.append("radialGradient")
-      .attr("id", "sphereGradient")
-      .attr("cx", "30%")
-      .attr("cy", "30%");
-
-    gradient.append("stop")
-      .attr("offset", "0%")
-      .attr("stop-color", "#7EEADB");
-
-    gradient.append("stop")
-      .attr("offset", "50%")
-      .attr("stop-color", "#4FB3A3");
-
-    gradient.append("stop")
-      .attr("offset", "100%")
-      .attr("stop-color", "#3D8D7A");
-
-    // Sort data
-    data.sort((a, b) => b.count - a.count);
-
-    // Create scales
-    const x = d3.scaleLinear()
-      .domain([0, d3.max(data, d => d.count) || 0])
-      .range([0, width]);
-
-    const y = d3.scaleBand()
-      .range([0, height])
-      .domain(data.map(d => d.title))
-      .padding(0.3); // Increased padding for better spacing
-
-    // Add X axis with animation
-    const xAxis = svg.append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x))
-      .style("opacity", 0);
-
-    xAxis.transition()
-      .duration(1000)
-      .style("opacity", 1);
-
-    xAxis.selectAll("text")
-      .attr("transform", "translate(-10,0)rotate(-45)")
-      .style("text-anchor", "end")
-      .style("font-size", "12px");
-
-    // Add Y axis with animation
-    const yAxis = svg.append("g")
-      .call(d3.axisLeft(y))
-      .style("opacity", 0);
-
-    yAxis.transition()
-      .duration(1000)
-      .style("opacity", 1);
-
-    yAxis.selectAll("text")
-      .style("font-size", "12px");
-
-    // Add lines with animation
-    const lines = svg.selectAll("myline")
-      .data(data)
-      .enter()
-      .append("line")
-      .attr("x1", x(0))
-      .attr("x2", x(0))
-      .attr("y1", d => (y(d.title) || 0) + y.bandwidth() / 2)
-      .attr("y2", d => (y(d.title) || 0) + y.bandwidth() / 2)
-      .attr("stroke", "#ddd")
-      .attr("stroke-width", 2);
-
-    lines.transition()
-      .duration(1000)
-      .delay((d, i) => i * 100)
-      .attr("x2", d => x(d.count));
-
-    // Add spheres with animation and shadow
-    const spheres = svg.selectAll("g.sphere")
-      .data(data)
-      .enter()
-      .append("g")
-      .attr("class", "sphere");
-
-    // Add shadow
-    spheres.append("circle")
-      .attr("cx", d => x(d.count))
-      .attr("cy", d => (y(d.title) || 0) + y.bandwidth() / 2)
-      .attr("r", 12)
-      .style("fill", "rgba(0,0,0,0.2)")
-      .style("filter", "blur(3px)")
+    // Create tooltip
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("padding", "12px")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "white")
+      .style("border-radius", "6px")
+      .style("font-size", "14px")
+      .style("pointer-events", "none")
       .style("opacity", 0)
-      .attr("transform", "translate(2,2)");
+      .style("z-index", "100");
 
-    // Add main sphere
-    spheres.append("circle")
-      .attr("cx", x(0))
-      .attr("cy", d => (y(d.title) || 0) + y.bandwidth() / 2)
-      .attr("r", 12)
-      .style("fill", "url(#sphereGradient)")
-      .style("stroke", "white")
-      .style("stroke-width", 1.5)
-      .style("opacity", 0)
-      .on("mouseover", function(event, d) {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("r", 15)
-          .style("filter", "brightness(1.2)");
-          
-        // Add tooltip
-        svg.append("text")
-          .attr("class", "tooltip")
-          .attr("x", x(d.count) + 20)
-          .attr("y", (y(d.title) || 0) + y.bandwidth() / 2)
-          .text(`${d.count} jobs`)
-          .style("font-size", "14px")
-          .style("font-weight", "bold")
-          .style("fill", "#333");
+    // Add the arcs
+    const path = svg.append("g")
+      .selectAll("path")
+      .data(root.descendants().filter(d => d.depth))
+      .join("path")
+      .attr("fill", d => {
+        while (d.depth > 1) d = d.parent!;
+        return color(d.data.name);
       })
-      .on("mouseout", function() {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("r", 12)
-          .style("filter", "none");
-          
-        svg.selectAll(".tooltip").remove();
+      .attr("fill-opacity", 0.6)
+      .attr("d", arc as any);
+
+    // Add interactivity
+    path
+      .on("mouseover", (event, d) => {
+        const format = d3.format(",d");
+        const ancestors = d.ancestors().map(d => d.data.name).reverse().join(" → ");
+        const value = format(d.value || 0);
+
+        d3.select(event.currentTarget)
+          .attr("fill-opacity", 1);
+
+        tooltip
+          .style("opacity", 1)
+          .html(`${ancestors}<br>${value} jobs`)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mousemove", (event) => {
+        tooltip
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", (event) => {
+        d3.select(event.currentTarget)
+          .attr("fill-opacity", 0.6);
+        
+        tooltip.style("opacity", 0);
       });
 
-    // Animate spheres
-    spheres.selectAll("circle")
-      .transition()
-      .duration(1000)
-      .delay((d, i) => i * 100)
-      .style("opacity", 1)
-      .attr("cx", d => x(d.count));
+    // Add labels
+    const label = svg.append("g")
+      .attr("pointer-events", "none")
+      .attr("text-anchor", "middle")
+      .style("user-select", "none")
+      .selectAll("text")
+      .data(root.descendants().filter(d => {
+        const node = d as HierarchyNode;
+        return d.depth && (node.y0 + node.y1) / 2 * (node.x1 - node.x0) > 10;
+      }))
+      .join("text")
+      .attr("transform", d => {
+        const node = d as HierarchyNode;
+        const x = (node.x0 + node.x1) / 2 * 180 / Math.PI;
+        const y = (node.y0 + node.y1) / 2;
+        return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+      })
+      .attr("dy", "0.35em")
+      .text(d => d.data.name);
 
+    // Cleanup
+    return () => {
+      tooltip.remove();
+    };
   }, [data]);
 
   return (
-    <div className="w-full overflow-x-auto" style={{ minHeight: "500px" }}>
-      <svg ref={svgRef}></svg>
+    <div className="w-full">
+      <h2 className="text-xl font-semibold mb-4">Job Titles Distribution</h2>
+      <div className="w-full" style={{ maxWidth: "928px", margin: "0 auto" }}>
+        <svg ref={svgRef}></svg>
+      </div>
     </div>
   );
 }

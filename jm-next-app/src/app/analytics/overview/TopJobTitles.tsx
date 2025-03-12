@@ -1,17 +1,25 @@
 import "server-only"
 
-import TopJobTitlesGraph from "../Graphs";
+import { TopJobTitlesGraph } from "../Graphs";
+import { buildJobTitleTree } from "@/lib/buildJobTitleTree";
 
-export default async function TopJobTitles({topJobTitlesData}: {topJobTitlesData: {title: string, count: number}[]}) {
+export interface JobTitle {
+    title: string;
+    count: number;
+}
 
-    const topJobTitles = topJobTitlesData.map(item => ({
-        title: item.title,
-        count: item.count
-    }));
+export interface TreeNode {
+    name: string;
+    value?: number;
+    children?: TreeNode[];
+}
+
+export default async function TopJobTitles({topJobTitlesData}: {topJobTitlesData: JobTitle[]}) {
+    const treeData = buildJobTitleTree(topJobTitlesData);
     
     return (
         <div>
-            <TopJobTitlesGraph data={topJobTitles} />
+            <TopJobTitlesGraph data={treeData as TreeNode} />
         </div>
     );
 }

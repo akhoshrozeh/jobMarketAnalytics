@@ -3,7 +3,7 @@ import 'server-only'
 import { verifyIdToken } from '@/utils/verifyToken'
 import { connectToDatabase, MongoDBClient } from './mongoClient';
 import { cache } from 'react';
-
+import { buildJobTitleTree, JobTitle } from './buildJobTitleTree';
 
 const getMongoDBClientConnection = cache(async () => {
   const db = await connectToDatabase();
@@ -67,12 +67,27 @@ export const getOverviewData = cache(async () => {
 export const getTopSkills = cache(async (db: MongoDBClient, tier: string) => {
 
     try {
+
+        // dummy values for free tier; they're blurred out in the frontend
         if (tier === "free") {
             const fakeRes = [] as any;
-            const fakeVals = [1732, 343, 869, 2345, 234, 602, 767, 345, 100, 1220, 120, 402, 230] as Array<number>;
+            const fakeVals = [1732, 343, 869, 2345, 234, 602, 767, 345, 100, 1220, 4032, 120, 402, 230] as Array<number>;
+            const fakeTechnologies: string[] = [
+                "QuantumScript",
+                "NebulaJS",
+                "HyperWeave",
+                "SynthOS",
+                "ByteForge",
+                "MetaFrame",
+                "GrapheneDB",
+                "VoidStack",
+                "NanoFlow",
+                "CyberLisp"
+              ];
+              
             fakeVals.sort((a,b) => b-a)
             for (let i = 0; i < fakeVals.length; i++) {
-                fakeRes.push({ "_id": "Subscribe:)" + i, "totalOccurrences": fakeVals[i] });
+                fakeRes.push({ "_id": String(fakeTechnologies[i % fakeTechnologies.length]) + String(i), "totalOccurrences": fakeVals[i] });
             }
             return fakeRes;
         }
@@ -333,20 +348,76 @@ export const getRemoteVsOnsiteJobs = cache(async (db: MongoDBClient) => {
     }
 });
 
+
+
+
+
+
+
+
+
+
+
+
 export const getTopJobTitles = cache(async (db: MongoDBClient, tier: string) => {
+    // the queries used in scraping
+    const terms = [
+        "software engineer",
+        "back end developer",
+        "front end developer",
+        "devops",
+        "AI/ML",
+        "security",
+        "mobile",
+        "data engineer",
+    ]
+
+    const scrapedTitles = [
+        'software engineer',
+        'junior software engineer',
+        'mid level software engineer',
+        'senior software engineer',
+        'front end developer', 
+        'backend developer', 
+        'full stack developer',
+        'devops engineer',
+        'security engineer',
+        'cloud engineer',
+        'UI/UX engineer',
+        'web developer',
+        'network engineer',
+        'mobile developer',
+        'mobile engineer',
+        'ios developer',
+        'android developer',
+        'data scientist',
+        'data engineer',
+        'AI engineer',
+        'AI developer',
+        'machine learning engineer',
+        'ML engineer',
+        'embedded software engineer',
+        'cybersecurity analyst',
+        'systems engineer',
+        'cloud security engineer',
+        'database administrator',
+        'QA engineer',
+        'firmware engineer',
+        'systems administrator',
+        'IT engineer',
+        'MLOps engineer',
+        'SOC Analyst',
+        'game developer'
+    ]
+
     try {
         const tiersMapParams = {
             "free": 20,
             "basic": 15,
-            "premium": 50
+            "premium": 1000
         };
 
-        // Calculate date from 2 weeks ago and format it as a string
-        const twoWeeksAgo = new Date();
-        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-        const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
-
+        // just get all the titles
         const pipeline = [
             {
                 $match: {
@@ -371,9 +442,9 @@ export const getTopJobTitles = cache(async (db: MongoDBClient, tier: string) => 
             {
                 $sort: { count: -1 }
             },
-            {
-                $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
-            },
+            // {
+            //     $limit: 10
+            // },
             {
                 $project: {
                     _id: 0,
@@ -383,14 +454,11 @@ export const getTopJobTitles = cache(async (db: MongoDBClient, tier: string) => 
             }
         ];
 
-        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        if (tier === "free") {
-            result.forEach(job => {
-                job.title = job.title.replace("placeholder", "");
-            });
-        }
-        return result;
+        
 
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result
+ 
     } catch (error) {
         console.error('Error: getTopJobTitles() failed:', error);
         return [];
