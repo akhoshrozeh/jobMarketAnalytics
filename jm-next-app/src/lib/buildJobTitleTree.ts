@@ -22,9 +22,16 @@ export interface JobTitle {
     const hierarchy: string[] = [];
     const p = (str: string) => {hierarchy.push(str)}
 
+    const has_any = (words: string[]) => {return words.some(word => _has(word))}
+     if (has(["security", "cyber", "threat", "soc", "cybersecurity"])) {
+        p("Security")
 
+        if (has(["security"])) {
+            p(title)
+        }
+    }
     // Example hierarchical parsing rules:
-    if (has(["ai","artificial intelligence","ml","machine learning"])) {
+    else if (has(["ai","artificial intelligence","ml","machine learning"])) {
         p("AI");
         
         if (has(["ml", "machine learning"])) {
@@ -38,7 +45,7 @@ export interface JobTitle {
         }
     }
 
-    else if(has(["full stack", "fullstack", "full-stack", "back end", "backend", "back-end", "front end", "frontend", "front-end"])) {
+    else if(has(["full stack", "fullstack", "full-stack", "back end", "backend", "back-end", "front end", "frontend", "front-end", "web developer"])) {
         p("Web Development")
 
         if (has(["full stack", "fullstack", "full-stack"])) {
@@ -55,29 +62,74 @@ export interface JobTitle {
             
         }
     }
+    else if (has(["firmware", "embedded", "hardware", "verilog", "systems", "automation"])) {
+        p("Systems")
+
+        if (has(["firmware"])) {
+            p("Firmware")
+        }
+        else if (has(["embedded"])) {
+            p("Embedded")
+        }
+        else if (has(["hardware"])) {
+            p("Hardware")
+        }
+        else if (has(["automation"])) {
+            p("Automation")
+        }
+        else {
+            p("Other")
+        }
+    }
 
     else if (has(["mobile", "ios", "android", "swift", "flutter", "react native", "lynx"])) {
         p("Mobile")
+        if (has(["ios", "swift"])) {
+            p("iOS")
+        }
+        else if (has(["android", "kotlin"])) {
+            p("Android")
+        }
+        else if (has(["lynx", "react native", "flutter"])) {
+            p("Cross-Platform")
+        }
+        else {
+            p("Other")
+        }
+    }
+
+    else if (has(["dev ops", "devops", "dev-ops", "dev-op", "infrastructure", "infra", "sysadmin", "sys-admin", "sys-admin", "sysadmin", "sys-admin", "sys-admin", "system admin", "system administrator", "cloud", "network", "networks", "networking", "it"])) {
+        p("Infrastructure")
+
+        if (has(["dev ops", "devops", "dev-ops", "dev-op"])) {
+            p("DevOps")
+        }
+        else if (has(["infrastructure", "infra"])) {
+            p("Infrastructure")
+        }
+        else if (has(["sysadmin", "sys-admin", "sys-admin", "sysadmin", "system admin", "system administrator"])) {
+            p("SysAdmin")
+        }
+        else if (has(["cloud"])) {
+            p("Cloud")
+        }
+        else if (has(["network", "networks", "networking"])) {
+            p("Networking")
+        }
+        else if (has(["it"])) {
+            p("IT")
+        }
+        else {
+            p("Other")
+        }
     }
 
     
-    // 1. First determine the primary category
-    else if (has(["software engineer","developer"])) {
-      p("Software Engineering");
-    
-     
-      
-      // 3. Then determine level/seniority if present
-      if (has(["senior", "lead", "principal", "staff"])) {
-        p("Senior");
-      } else if (_has("junior")) {
-        p("Junior");
-      }
-      else {
-        p("Other")
-      }
-    } 
 
+  
+
+    
+    
 
     else if (_has("data")) {
       p("Data");
@@ -94,13 +146,38 @@ export interface JobTitle {
       else{
         p("Other")
       }
-      
-    
     }
 
-    else {
-        p("Other")
+    // 1. First determine the primary category
+    else if (has(["software engineer","developer", "software development", "software engineering", "programmer"])) {
+        p("Software Engineering");
+      
+       
+        
+        // 3. Then determine level/seniority if present
+        if (has(["senior", "lead", "principal", "staff"])) {
+          p("Senior");
+        } else if (_has("junior")) {
+          p("Junior");
+        }
+        else {
+          p(title)
+        }
     }
+    
+    else if (has(["qa", "quality assurance", "quality control", "quality engineer", "quality assurance engineer", "quality control engineer", "quality assurance engineer", "quality control engineer", "quality assurance engineer", "quality control engineer", "test"])) {
+        p("QA")
+        p(title)
+
+        // if (has(["qa", "quality assurance", "quality control", "quality engineer", "quality assurance engineer", "quality control engineer", "quality assurance engineer", "quality control engineer", "quality assurance engineer", "quality control engineer"])) {
+        //     p(title)
+        // }
+    }
+  
+
+    // else {
+    //     p(title)
+    // }
     // Add more primary categories and their subdivisions...
   
     // Always add the original title as the most specific level
