@@ -443,15 +443,27 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
     barsGroup.select(".x-axis")
     .selectAll("text")
     .attr("transform", "rotate(-45)")
+    
 
 
-    // Apply blur to the x-axis skill labels instead of the "Keywords" label
+    // Add this before the if(blurLabels) block
+    const defs = scrollableSvg.append("defs");
+    const blurFilter = defs.append("filter")
+      .attr("id", "text-blur")
+      .attr("x", "-50%")
+      .attr("y", "-50%")
+      .attr("width", "200%")
+      .attr("height", "200%");
+
+    blurFilter.append("feGaussianBlur")
+      .attr("in", "SourceGraphic")
+      .attr("stdDeviation", "2");
+
+    // Then in the if(blurLabels) block, replace with:
     if (blurLabels) {
-
-      //  Blur the individual skill labels on the x-axis
       barsGroup.select(".x-axis")
         .selectAll("text")
-        .style("filter", "blur(4px)")
+        .attr("filter", "url(#text-blur)")
         .style("user-select", "none");
     }
 
@@ -789,9 +801,7 @@ interface TopJobTitlesGraphProps {
 type HierarchyNode = d3.HierarchyRectangularNode<TreeNode>;
 
 export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
-
   const svgRef = useRef<SVGSVGElement>(null);
-
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
@@ -802,26 +812,26 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
     // Set up dimensions
     const width = 928;
     const height = 928;
-    const radius = width / 2;
+    const margin = 10;
+    const radius = Math.min(width, height) / 2 - margin; // Adjust radius to account for margin
+
 
     // Create color scale for the outer ring
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1));
 
     // Create the partition layout
     const partition = d3.partition<typeof data>()
-      .size([2 * Math.PI , radius]);
+      .size([2 * Math.PI, radius]);
 
     // Create the hierarchical structure
     const root = d3.hierarchy(data)
       .sum(d => d.children ? 0 : d.value || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-
-
     // Generate the partition layout
     partition(root);
 
-    // Create the arc generator
+    // Create the arc generators - one for normal state and one for hover state
     const arc = d3.arc<d3.HierarchyRectangularNode<typeof data>>()
       .startAngle(d => d.x0)
       .endAngle(d => d.x1)
@@ -830,12 +840,22 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
       .innerRadius(d => d.y0)
       .outerRadius(d => d.y1 - 1);
 
+    // Create a slightly larger arc for hover effect
+    const hoverArc = d3.arc<d3.HierarchyRectangularNode<typeof data>>()
+      .startAngle(d => d.x0)
+      .endAngle(d => d.x1)
+      .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+      .padRadius(radius / 2)
+      .innerRadius(d => Math.max(0, d.y0 - 5)) // Slightly smaller inner radius
+      .outerRadius(d => d.y1 + 5); // Slightly larger outer radius
+
     // Create SVG container
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
       .style("width", "100%")
       .style("height", "auto")
-      .style("font", "10px sans-serif");
+      .style("font", "10px sans-serif")
+
 
     // Create tooltip
     const tooltip = d3.select("body")
@@ -846,7 +866,7 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
       .style("background", "rgba(0, 0, 0, 0.8)")
       .style("color", "white")
       .style("border-radius", "6px")
-      .style("font-size", "14px")
+      .style("font-size", "16px")
       .style("pointer-events", "none")
       .style("opacity", 0)
       .style("z-index", "100");
@@ -861,7 +881,9 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
         return color(d.data.name);
       })
       .attr("fill-opacity", 0.6)
-      .attr("d", arc as any);
+      .attr("d", arc as any)
+      .style("cursor", "pointer")
+      .style("transition", "fill-opacity 0.2s");
 
     // Add interactivity
     path
@@ -870,9 +892,22 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
         const ancestors = d.ancestors().map(d => d.data.name).reverse().join(" → ");
         const value = format(d.value || 0);
 
+        // Highlight the current segment
         d3.select(event.currentTarget)
-          .attr("fill-opacity", 1);
+          .attr("fill-opacity", 1)
+          .transition()
+          .duration(200)
+          .attr("d", hoverArc as any);
 
+        // Highlight the text label
+        svg.selectAll("text")
+          .filter(textD => textD === d)
+          .transition()
+          .duration(100)
+          .style("font-size", "20px")
+          .style("font-weight", "bold");
+
+        // Show tooltip
         tooltip
           .style("opacity", 1)
           .html(`${ancestors}<br>${value} jobs`)
@@ -884,10 +919,23 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
           .style("left", (event.pageX + 15) + "px")
           .style("top", (event.pageY - 28) + "px");
       })
-      .on("mouseout", (event) => {
+      .on("mouseout", (event, d) => {
+        // Reset segment
         d3.select(event.currentTarget)
-          .attr("fill-opacity", 0.6);
+          .attr("fill-opacity", 0.6)
+          .transition()
+          .duration(200)
+          .attr("d", arc as any);
         
+        // Reset text label
+        svg.selectAll("text")
+          .filter(textD => textD === d)
+          .transition()
+          .duration(200)
+          .style("font-size", "16px")
+          .style("font-weight", "normal");
+        
+        // Hide tooltip
         tooltip.style("opacity", 0);
       });
 
@@ -896,10 +944,11 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
       .style("user-select", "none")
+      .attr("font-size", "16px")
       .selectAll("text")
       .data(root.descendants().filter(d => {
         const node = d as HierarchyNode;
-        return d.depth && (node.y0 + node.y1) / 2 * (node.x1 - node.x0) > 10;
+        return d.depth && (node.y0 + node.y1) / 2 * (node.x1 - node.x0) > 12;
       }))
       .join("text")
       .attr("transform", d => {
@@ -909,6 +958,8 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
         return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
       })
       .attr("dy", "0.35em")
+      .style("font-size", "20x")
+      .style("transition", "font-size 0.2s, font-weight 0.2s")
       .text(d => d.data.name);
 
     // Cleanup
@@ -919,7 +970,6 @@ export function TopJobTitlesGraph({ data }: TopJobTitlesGraphProps) {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold mb-4">Job Titles Distribution</h2>
       <div className="w-full" style={{ maxWidth: "928px", margin: "0 auto" }}>
         <svg ref={svgRef}></svg>
       </div>
