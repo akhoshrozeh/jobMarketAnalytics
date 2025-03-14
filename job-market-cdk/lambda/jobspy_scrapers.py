@@ -170,7 +170,7 @@ def handler(event, context):
 
     logger.info(f"Found {len(all_jobs)} before deduping.")
     
-    # Dedup in-memory
+    # Dedup in-memory any duplicates scraped in this execution
     for job in all_jobs:
         job_key = (job['site'], job['id'])
         if job_key not in seen_job_ids:
@@ -201,11 +201,12 @@ def handler(event, context):
                 for item in response.get('Responses', {}).get(jobs_table.name, []):
                     existing_keys.add((item['site'], item['id']))
 
-
+            # These are jobs that already existed in the DB, that were scraped in this execution
             for item in response.get('Responses', {}).get(jobs_table.name, []):
                 existing_keys.add((item['site'], item['id']))
                 
 
+        # Only save the jobs that don't exist in the db. 
         final_jobs = []
         for job in mem_dedup_jobs:
             if (job['site'], job['id']) not in existing_keys:
