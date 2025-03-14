@@ -32,7 +32,7 @@ def handler(event, context):
     # processing: the batch has been uploaded to openai and is currently being processed (handled by batch_poller)
     # completed: the batch has been downloaded from openai, and stored both in dynamo and mongo (done; can be deleted after a certain amount of time?)
     # retry: the batch upload to openai failed. needs to be attempted again (handled by batch_dispatcher)
-    # failure: something went wrong; manual debugging (handled by ??? - create error handling lambda? - write errors to the table)
+    # error: something went wrong; manual debugging (handled by ??? - create error handling lambda? - write errors to the table)
    
     statuses = ["init", "retry", "cancelled"]
     _status = 'init'
