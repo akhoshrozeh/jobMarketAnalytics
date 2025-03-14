@@ -201,7 +201,7 @@ class JobMarketCdkStack(Stack):
                 "MONGODB_DATABASE": mongodb_db,
                 "MONGODB_COLLECTION": mongodb_collection
             },
-            timeout=Duration.minutes(5)
+            timeout=Duration.minutes(15)
         )
 
 
