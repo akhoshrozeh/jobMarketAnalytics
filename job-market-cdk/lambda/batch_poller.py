@@ -143,6 +143,7 @@ def process_batch(batch, batches_table):
     
         # Can't do consistent reads on GSI. Wait for updates with retrys; need to check extracted_keywords were added to all jobs
         for attempt in range(max_retries):
+            jobs = []
             # Read in all the jobs for this batch, including newly written extracted keywords
             try:
                 last_evaluated_key = None
@@ -174,8 +175,16 @@ def process_batch(batch, batches_table):
                 # Verify all jobs have keywords
                 missing_keywords = [j['id'] for j in jobs if 'extracted_keywords' not in j]
                 
-                # none missing
-                if len(missing_keywords) == 0 and len(jobs) == len(results):
+                # IF: (none missing) OR (we're missing keywords for jobs that didn't have descriptions)
+                # The second condition is because the scraper still wrote jobs without descriptions into the database. But batch_dispatcher only sent jobs WITH description fields to OpenAI
+                # In other words, we're expecting some keywords to be missing.  
+                logger.info(f"jobs from ddb: {len(jobs)}")
+                logger.info(f"jobs in openAI batch: {len(results)}")
+                logger.info(f"len of missing keywords: {len(missing_keywords)}")
+                if (len(missing_keywords) == 0 and len(jobs) == len(results)):
+                    break
+                if (len(jobs) - len(results) == len(missing_keywords)):
+                    logger.info(f"batch_poller: {len(missing_keywords)} jobs did not have a description. Continuing gracefully.")
                     break
                     
                 logger.warning(f"Attempt {attempt+1}: {len(missing_keywords)} jobs missing keywords")
@@ -190,12 +199,10 @@ def process_batch(batch, batches_table):
                 if attempt == max_retries - 1:
                     raise
 
-        if not jobs or len(results) != len(jobs):
+        if not jobs or (len(results) != len(jobs) and (len(jobs) - len(results) != len(missing_keywords))):
             logger.error("Failed to retrieve jobs with keywords after retries")
             return
-        elif len(missing_keywords) > 0:
-            logger.error(f"Permanent missing keywords in jobs: {missing_keywords[:3]}...")
-            return
+
             
 
 
@@ -210,15 +217,14 @@ def process_batch(batch, batches_table):
 
             operations = []
             for job in jobs:
-                if job['extracted_keywords']:
-                    job['inserted_at'] = datetime.datetime.utcnow()
-                    operations.append(
-                        pymongo.UpdateOne(
-                            {'id': job['id']},
-                            {'$setOnInsert': job},
-                            upsert=True
-                        )
+                job['inserted_at'] = datetime.datetime.utcnow()
+                operations.append(
+                    pymongo.UpdateOne(
+                        {'id': job['id']},
+                        {'$setOnInsert': job},
+                        upsert=True
                     )
+                )
 
             res = collection.bulk_write(operations)
             logger.info(f"batch_poller: bulk_write response:{res}")
