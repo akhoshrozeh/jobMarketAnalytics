@@ -35,24 +35,26 @@ export default async function Navbar() {
             </div>
             <div className="hidden md:block text-black flex-1">
               <div className="flex space-x-8 justify-center">
-                {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
                 <Link 
                   href="/" 
-                  className="rounded-xl px-2 py-2  text-md font-medium text-black hover:bg-m-light-green hover:text-black"
+                  className="relative px-2 py-2 text-md font-medium text-black group"
                 >
                   Home
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
                 </Link>
                 <Link
                   href="/analytics/overview"
-                  className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
+                  className="relative px-2 py-2 text-md font-medium text-black group"
                 >
                   Analytics
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="rounded-xl px-2 py-2 text-md font-medium text-black hover:bg-m-light-green hover:text-black"
+                  className="relative px-2 py-2 text-md font-medium text-black group"
                 >
                   Pricing
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
                 </Link>
               </div>
             </div>
@@ -67,9 +69,9 @@ export default async function Navbar() {
 
 
           {/* Mobile menu */}
-          <div className="-mr-2 flex sm:hidden">
+          <div className="-mr-2 flex md:hidden">
             {/* Mobile menu button */}
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-800 hover:bg-m-dark-green hover:text-white focus:outline-m-light-green focus:ring-2 focus:ring-inset focus:ring-m-dark-green">
               <span className="absolute -inset-0.5" />
               <span className="sr-only">Open main menu</span>
               <Bars3Icon aria-hidden="true" className="block size-6 group-data-[open]:hidden" />
@@ -79,30 +81,37 @@ export default async function Navbar() {
         </div>
       </div>
       
-      <DisclosurePanel className="sm:hidden">
+      <DisclosurePanel className="md:hidden">
         <div className="space-y-1 px-2 pb-3 pt-2">
-          {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
           <DisclosureButton
             as="a"
             href="/"
-            className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
+            className="block px-3 py-2 text-base font-medium text-black"
           >
-            Home
+            <span className="relative inline-block group">
+              Home
+              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
+            </span>
           </DisclosureButton>
           <DisclosureButton
             as="a"
             href="/analytics/overview"
-            className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+            className="block px-3 py-2 text-base font-medium text-black"
           >
-            Analytics
+            <span className="relative inline-block group">
+              Analytics
+              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
+            </span>
           </DisclosureButton>
-
           <DisclosureButton
             as="a"
             href="/pricing"
-            className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+            className="block px-3 py-2 text-base font-medium text-black"
           >
-            Pricing
+            <span className="relative inline-block group">
+              Pricing
+              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
+            </span>
           </DisclosureButton>
         </div>
         <div className="border-t border-gray-700 pt-2">

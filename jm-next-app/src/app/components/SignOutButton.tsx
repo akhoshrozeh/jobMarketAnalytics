@@ -11,7 +11,7 @@ export default function SignOutButton() {
     
     return (
         <Button
-            className="w-full text-left"
+            className="w-full text-left font-semibold"
             onClick={handleSignOut}
         >
             Logout
