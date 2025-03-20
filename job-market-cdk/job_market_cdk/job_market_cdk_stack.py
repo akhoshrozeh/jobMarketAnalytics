@@ -17,7 +17,7 @@ from aws_cdk import (
 from constructs import Construct
 import boto3
 import json
-from utils.secrets import get_mongodb_uri, get_db_collection, get_openai_api_key
+from utils.secrets import get_mongodb_uri, get_db_collection, get_openai_api_key, get_geocode_api_key
 from botocore.exceptions import ClientError
 
 
@@ -204,6 +204,19 @@ class JobMarketCdkStack(Stack):
             timeout=Duration.minutes(15)
         )
 
+        geocoder = _lambda.Function(self, "JobTrendrBackend-Geocoder",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            description="Gets the coordinates of a job's string location.",
+            handler="geocode_locations.handler",
+            code=_lambda.Code.from_asset("lambda"),
+            layers=[pymongo_layer, boto3_layer],
+            environment={
+                "MONGODB_URI": mongodb_uri_secret,
+                "MONGODB_DATABASE": mongodb_db,
+                "MONGODB_COLLECTION": mongodb_collection
+            },
+            timeout=Duration.minutes(15))
+
 
 
         # ************************************************************
@@ -245,6 +258,16 @@ class JobMarketCdkStack(Stack):
                 f"{jobs_table.table_arn}/index/InternalGroupBatchIndex"
                 ]
         ))
+
+               # Add Location Service permissions for geocoder lambda
+        geocoder.add_to_role_policy(iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "geo-places:Geocode",
+            ],
+            resources=["*"]  # You can restrict this to your specific Place Index ARN if desired
+        ))
+        
 
 
 
@@ -338,6 +361,7 @@ class JobMarketCdkStack(Stack):
         scrape_jobs_lambda.add_to_role_policy(cloudwatch_policy)
         batch_dispatcher.add_to_role_policy(cloudwatch_policy)
         batch_poller.add_to_role_policy(cloudwatch_policy)
+        geocoder.add_to_role_policy(cloudwatch_policy)
 
 
         # Add CloudWatch Metrics permissions
@@ -352,13 +376,14 @@ class JobMarketCdkStack(Stack):
         )
 
         # Add metrics permissions to all Lambdas
-        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_dispatcher]:
+        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_dispatcher, geocoder]:
             lambda_func.add_to_role_policy(metrics_policy)
 
         # Create CloudWatch Log group outputs for easy reference
         CfnOutput(self, "ScrapeJobsLogGroup", value=scrape_jobs_lambda.log_group.log_group_name)
         CfnOutput(self, "BatchPollerLogGroup", value=batch_poller.log_group.log_group_name)
         CfnOutput(self, "BatchDispatcherLogGroup", value=batch_dispatcher.log_group.log_group_name)
+        CfnOutput(self, "GeocoderLogGroup", value=geocoder.log_group.log_group_name)
 
 
 
