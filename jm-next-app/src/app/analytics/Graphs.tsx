@@ -981,8 +981,7 @@ interface JobLocationMapProps {
   locations: Array<{
     location: string;
     count: number;
-    latitude: number;
-    longitude: number;
+    location_coords: number[];
   }>;
 }
 
@@ -998,102 +997,140 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
     const width = 975;
     const height = 610;
 
+    // Create the SVG container
     const svg = d3.select(svgRef.current)
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [0, 0, width, height])
-      .attr("style", "max-width: 100%; height: auto;");
+      .attr("style", "width: 100%; height: auto; height: intrinsic;");
 
-    const g = svg.append("g");
+    // Create separate groups for map, spikes, and legend
+    const mapGroup = svg.append("g").attr("class", "map-layer");
+    const spikeGroup = svg.append("g").attr("class", "spike-layer");
+    const legendGroup = svg.append("g").attr("class", "legend-layer");
 
-    // Example snippet:
-    const maxCount = d3.max(locations, d => d.count) || 1;
-    const radius = d3.scaleSqrt([0, maxCount], [0, 40]);
-
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
-      .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-        g.selectAll("circle")
-          .attr("r", function(d) { 
-            return radius((d as any).count) / event.transform.k;
-          });
-      });
-
-    svg.call(zoom);
-
-    // Create a projection for the US
+    // Create US map projection and path generator
     const projection = d3.geoAlbersUsa()
       .scale(1300)
       .translate([width / 2, height / 2]);
     const path = d3.geoPath().projection(projection);
 
-    // Load US map
+    // Construct the length scale for spikes
+    const maxCount = d3.max(locations, d => d.count) || 1;
+    const length = d3.scaleLinear([0, maxCount], [0, 200]);
+
+    // Helper function to create spike shape
+    const spike = (length: number) => {
+      const w = 2; // spike width
+      return `M${-w/2},0L0,${-length}L${w/2},0Z`;
+    };
+
+    // Load and draw US map
     d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then((us: any) => {
-      g.append("path")
+      // Draw the nation
+      mapGroup.append("path")
         .datum(topojson.feature(us, us.objects.nation))
         .attr("fill", "#ddd")
         .attr("d", path);
-      g.append("path")
+
+      // Draw state boundaries
+      mapGroup.append("path")
         .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
         .attr("fill", "none")
         .attr("stroke", "white")
         .attr("stroke-linejoin", "round")
         .attr("d", path);
 
-      // Copy locations for simulation
-      const simPoints = locations.map(d => {
-        const [x, y] = projection([d.longitude, d.latitude]) || [width / 2, height / 2];
-        return { ...d, x, y };
-      });
+      // Create the legend (fixed position, doesn't zoom)
+      const legend = legendGroup
+        .attr("fill", "#777")
+        .attr("transform", "translate(886,592)")
+        .attr("text-anchor", "middle")
+        .style("font", "10px sans-serif")
+        .selectAll("g")
+        .data(length.ticks(4).slice(1))
+        .join("g")
+        .attr("transform", (d, i) => `translate(${20 * i},0)`);
 
-      // Force simulation to separate circles
-      const simulation = d3.forceSimulation(simPoints)
-        .force("x", d3.forceX(d => d.x))
-        .force("y", d3.forceY(d => d.y))
-        .force("collide", d3.forceCollide(d => radius(d.count) + 2))
-        .stop();
-
-      // Run simulation
-      for (let i = 0; i < 120; i++) simulation.tick();
-
-      // Draw circles at simulated positions
-      const format = d3.format(",.0f");
-      g.selectAll("circle")
-        .data(simPoints)
-        .join("circle")
-        .attr("cx", d => d.x)
-        .attr("cy", d => d.y)
-        .attr("r", d => radius(d.count))
-        .attr("fill", "#3D8D7A")
-        .attr("fill-opacity", 0.6)
-        .attr("stroke", "#fff")
+      legend.append("path")
+        .attr("fill", "red")
+        .attr("fill-opacity", 0.5)
+        .attr("stroke", "red")
         .attr("stroke-width", 0.5)
-        .on("mouseover", function (event, d) {
-          // Highlight
+        .attr("d", d => spike(length(d)));
+
+      legend.append("text")
+        .attr("dy", "1em")
+        .text(length.tickFormat(4, "s"));
+
+      // Process and sort locations
+      const processedLocations = locations
+        .map(d => {
+          const coords = projection([d.location_coords[0], d.location_coords[1]]);
+          return coords ? { ...d, x: coords[0], y: coords[1] } : null;
+        })
+        .filter((d): d is { location: string; count: number; x: number; y: number } => d !== null)
+        .sort((a, b) => d3.descending(a.count, b.count));
+
+      // Add spikes
+      const format = d3.format(",.0f");
+      const spikes = spikeGroup
+        .selectAll("path")
+        .data(processedLocations)
+        .join("path")
+        .attr("fill", "red")
+        .attr("fill-opacity", 0.5)
+        .attr("stroke", "red")
+        .attr("stroke-width", 0.5)
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("d", d => spike(length(d.count)))
+        .on("mouseover", function(event, d) {
           d3.select(this)
-            .attr("fill", "#B35C1E")
-            .attr("fill-opacity", 0.9);
-          g.append("text")
-            .attr("class", "tooltip")
+            .attr("fill", "#ff4444")
+            .attr("fill-opacity", 0.8)
+            .attr("stroke", "#ff4444");
+            
+          // Add temporary label
+          spikeGroup.append("text")
+            .attr("class", "spike-label")
             .attr("x", d.x)
-            .attr("y", d.y - radius(d.count) - 10)
+            .attr("y", d.y - length(d.count) - 5)
             .attr("text-anchor", "middle")
-            .style("font-size", "14px")
-            .style("font-weight", "bold")
-            .style("fill", "black")
+            .attr("fill", "black")
+            .attr("stroke", "white")
+            .attr("stroke-width", "0.5px")
+            .style("font-size", "12px")
             .text(`${d.location}: ${format(d.count)}`);
         })
-        .on("mouseout", function () {
-          // Un-highlight
+        .on("mouseout", function() {
           d3.select(this)
-            .attr("fill", "#3D8D7A")
-            .attr("fill-opacity", 0.6);
-          g.selectAll(".tooltip").remove();
-        })
-        .append("title")
+            .attr("fill", "red")
+            .attr("fill-opacity", 0.5)
+            .attr("stroke", "red");
+            
+          spikeGroup.selectAll(".spike-label").remove();
+        });
+
+      // Add tooltips
+      spikes.append("title")
         .text(d => `${d.location}\n${format(d.count)} jobs`);
+
+      // Add zoom behavior
+      const zoom = d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1, 8])
+        .on("zoom", (event) => {
+          // Transform both map and spike layers together
+          mapGroup.attr("transform", event.transform);
+          spikeGroup.attr("transform", event.transform);
+          
+          // Scale the spike stroke width inversely with zoom
+          spikeGroup.selectAll("path")
+            .attr("stroke-width", 0.5 / event.transform.k);
+        });
+
+      svg.call(zoom);
     });
+
   }, [locations]);
 
   return (
