@@ -22,15 +22,9 @@ export const handler = async (event: any): Promise<any>  => {
         const userDocument = {
             username: event.request.userAttributes.sub,
             email: event.request.userAttributes.email,
-            firstName: "",
-            lastName: "",
             createdAt: initDate,
             updatedAt: initDate,
             tier: "free",
-            profilePicture: "",
-            resume: "",
-            skills: [], // user's skills 
-            applications: [], // tracks a user
         }
 
         await db.collection("Users").insertOne(userDocument)

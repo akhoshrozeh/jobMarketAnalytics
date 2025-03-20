@@ -468,7 +468,7 @@ export const getTopJobTitles = cache(async (db: MongoDBClient, tier: string) => 
 export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => {
     try {
         const tiersMapParams = {
-            "free": 100,
+            "free": 10000,
             "basic": 15,
             "premium": 50
         };
@@ -476,13 +476,14 @@ export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => 
         const pipeline = [
             {
                 $match: {
-                    location: { $exists: true, $ne: "" }
+                    location_coords: { $exists: true, $ne: [] }
                 }
             },
             {
                 $group: {
                     _id: "$location",
-                    count: { $sum: 1 }
+                    count: { $sum: 1 },
+                    location_coords: { $first: "$location_coords" }
                 }
             },
             {
@@ -495,12 +496,14 @@ export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => 
                 $project: {
                     _id: 0, 
                     location: "$_id",
+                    location_coords: 1,
                     count: 1
                 }
             }
         ];
 
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        console.log("location RSE:", result)
         return result;
 
     } catch (error) {
