@@ -72,3 +72,5 @@ def get_openai_api_key():
     secret_dict = json.loads(secrets)
     openai_api_key = secret_dict['OPENAI_API_KEY']
     return openai_api_key
+
+
