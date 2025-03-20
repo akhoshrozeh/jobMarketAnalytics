@@ -16,6 +16,7 @@ export default function Loading() {
         <div className="flex justify-center items-center flex-col p-8 text-black">
             <h1 className="sm:text-2xl text-xl font-bold mb-4 mt-32">
                 Loading Analytics<span className="inline-block w-[3ch]">{dots}</span>
+
             </h1>
         </div>
     </div>

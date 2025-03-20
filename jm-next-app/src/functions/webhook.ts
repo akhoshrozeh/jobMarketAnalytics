@@ -83,7 +83,7 @@ export const handler = async (event: any): Promise<any>  => {
 
                     const res = await db.collection("Users").updateOne(
                         { username: username },
-                        { $set: { tier: "premium", updatedAt: new Date() }}
+                        { $set: { tier: "basic", updatedAt: new Date() }}
                     )
                     if (res.modifiedCount != 1) {
                         throw new Error("User document was not updated in MongoDB")
