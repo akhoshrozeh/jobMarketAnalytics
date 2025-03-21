@@ -995,7 +995,7 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
     d3.select(svgRef.current).selectAll("*").remove();
 
     const width = 975;
-    const height = 610;
+    const height = 800;
 
     // Create the SVG container
     const svg = d3.select(svgRef.current)
@@ -1015,13 +1015,15 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
       .translate([width / 2, height / 2]);
     const path = d3.geoPath().projection(projection);
 
-    // Construct the length scale for spikes
+    // Construct the length scale for spikes using sqrt scale for better distribution
     const maxCount = d3.max(locations, d => d.count) || 1;
-    const length = d3.scaleLinear([0, maxCount], [0, 200]);
+    const length = d3.scaleSqrt()  // changed from scaleLinear to scaleSqrt
+      .domain([0, maxCount])
+      .range([0, 200]);  // increased from 200 to 300
 
-    // Helper function to create spike shape
+    // Helper function to create spike shape with wider base
     const spike = (length: number) => {
-      const w = 2; // spike width
+      const w = 6;  // increased base width from 4 to 6 for better proportion
       return `M${-w/2},0L0,${-length}L${w/2},0Z`;
     };
 
@@ -1030,14 +1032,14 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
       // Draw the nation
       mapGroup.append("path")
         .datum(topojson.feature(us, us.objects.nation))
-        .attr("fill", "#ddd")
+        .attr("fill", "#bbb")
         .attr("d", path);
 
       // Draw state boundaries
       mapGroup.append("path")
         .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
         .attr("fill", "none")
-        .attr("stroke", "white")
+        .attr("stroke", "black")
         .attr("stroke-linejoin", "round")
         .attr("d", path);
 
@@ -1053,10 +1055,10 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
         .attr("transform", (d, i) => `translate(${20 * i},0)`);
 
       legend.append("path")
-        .attr("fill", "red")
-        .attr("fill-opacity", 0.5)
-        .attr("stroke", "red")
-        .attr("stroke-width", 0.5)
+        .attr("fill", "#ff4444")
+        .attr("fill-opacity", 0.7)
+        .attr("stroke", "#ff4444")
+        .attr("stroke-width", 1)
         .attr("d", d => spike(length(d)));
 
       legend.append("text")
@@ -1069,73 +1071,134 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
           const coords = projection([d.location_coords[0], d.location_coords[1]]);
           return coords ? { ...d, x: coords[0], y: coords[1] } : null;
         })
-        .filter((d): d is { location: string; count: number; x: number; y: number } => d !== null)
+        .filter((d): d is { location: string; count: number; x: number; y: number; location_coords: number[] } => d !== null)
         .sort((a, b) => d3.descending(a.count, b.count));
 
-      // Add spikes
+      // Create tooltip with consistent styling
+      const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("padding", "12px")
+        .style("background", "rgba(0, 0, 0, 0.8)")
+        .style("color", "white")
+        .style("border-radius", "6px")
+        .style("font-size", "16px")
+        .style("font-weight", "500")
+        .style("min-width", "180px")
+        .style("text-align", "center")
+        .style("box-shadow", "0 4px 8px rgba(0,0,0,0.2)")
+        .style("pointer-events", "none")
+        .style("opacity", 0)
+        .style("z-index", "100")
+        .style("backdrop-filter", "blur(4px)");
+
+      // Add zoom behavior
+      const zoom = d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1, 100])  // Changed from [1, 8] to [1, 20] for more zoom
+        .on("zoom", (event) => {
+          // Store the current zoom transform for use in hover effects
+          const currentZoom = event.transform;
+          
+          // Transform both map and spike layers together
+          mapGroup.attr("transform", currentZoom);
+          spikeGroup.attr("transform", currentZoom);
+          
+          // Scale the spikes inversely with zoom
+          updateSpikes(currentZoom.k);
+        });
+
+      // Helper function to update spike sizes based on zoom level
+      const updateSpikes = (zoomLevel: number) => {
+        spikeGroup.selectAll("path")
+          .attr("d", d => {
+            const adjustedLength = length(d.count) / Math.sqrt(zoomLevel);
+            const adjustedWidth = 6 / Math.sqrt(zoomLevel);
+            return `M${-adjustedWidth/2},0L0,${-adjustedLength}L${adjustedWidth/2},0Z`;
+          })
+          .attr("stroke-width", 2 / zoomLevel);
+      };
+
+      // Add spikes with enhanced visibility and tooltip
       const format = d3.format(",.0f");
       const spikes = spikeGroup
         .selectAll("path")
         .data(processedLocations)
         .join("path")
-        .attr("fill", "red")
-        .attr("fill-opacity", 0.5)
-        .attr("stroke", "red")
-        .attr("stroke-width", 0.5)
+        .attr("fill", "#ff4444")
+        .attr("fill-opacity", 0.7)
+        .attr("stroke", "#ff4444")
+        .attr("stroke-width", 2)
         .attr("transform", d => `translate(${d.x},${d.y})`)
         .attr("d", d => spike(length(d.count)))
         .on("mouseover", function(event, d) {
+          const currentZoom = d3.zoomTransform(svg.node()!);
+          
+          // Highlight spike with zoom-adjusted size
+          d3.select(this)
+            .attr("fill", "#ff6666")
+            .attr("fill-opacity", 1)
+            .attr("stroke", "#ff6666")
+            .attr("stroke-width", 2 / currentZoom.k)
+            .attr("d", () => {
+              const adjustedLength = length(d.count) / Math.sqrt(currentZoom.k);
+              const adjustedWidth = 6 / Math.sqrt(currentZoom.k);
+              // Make the spike slightly larger on hover while maintaining zoom proportions
+              return `M${-adjustedWidth*0.6},0L0,${-adjustedLength*1.1}L${adjustedWidth*0.6},0Z`;
+            });
+            
+          tooltip
+            .html(`<strong>${d.location}</strong><br>${format(d.count)} jobs`)
+            .style("opacity", 1)
+            .style("left", (event.pageX + 15) + "px")
+            .style("top", (event.pageY - 20) + "px");
+        })
+        .on("mousemove", function(event) {
+          tooltip
+            .style("left", (event.pageX + 15) + "px")
+            .style("top", (event.pageY - 20) + "px");
+        })
+        .on("mouseout", function(event, d) {
+          const currentZoom = d3.zoomTransform(svg.node()!);
+          
+          // Reset spike to normal zoom-adjusted size
           d3.select(this)
             .attr("fill", "#ff4444")
-            .attr("fill-opacity", 0.8)
-            .attr("stroke", "#ff4444");
+            .attr("fill-opacity", 0.7)
+            .attr("stroke", "#ff4444")
+            .attr("stroke-width", 2 / currentZoom.k)
+            .attr("d", () => {
+              const adjustedLength = length(d.count) / Math.sqrt(currentZoom.k);
+              const adjustedWidth = 6 / Math.sqrt(currentZoom.k);
+              return `M${-adjustedWidth/2},0L0,${-adjustedLength}L${adjustedWidth/2},0Z`;
+            });
             
-          // Add temporary label
-          spikeGroup.append("text")
-            .attr("class", "spike-label")
-            .attr("x", d.x)
-            .attr("y", d.y - length(d.count) - 5)
-            .attr("text-anchor", "middle")
-            .attr("fill", "black")
-            .attr("stroke", "white")
-            .attr("stroke-width", "0.5px")
-            .style("font-size", "12px")
-            .text(`${d.location}: ${format(d.count)}`);
-        })
-        .on("mouseout", function() {
-          d3.select(this)
-            .attr("fill", "red")
-            .attr("fill-opacity", 0.5)
-            .attr("stroke", "red");
-            
-          spikeGroup.selectAll(".spike-label").remove();
-        });
-
-      // Add tooltips
-      spikes.append("title")
-        .text(d => `${d.location}\n${format(d.count)} jobs`);
-
-      // Add zoom behavior
-      const zoom = d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([1, 8])
-        .on("zoom", (event) => {
-          // Transform both map and spike layers together
-          mapGroup.attr("transform", event.transform);
-          spikeGroup.attr("transform", event.transform);
-          
-          // Scale the spike stroke width inversely with zoom
-          spikeGroup.selectAll("path")
-            .attr("stroke-width", 0.5 / event.transform.k);
+          tooltip.style("opacity", 0);
         });
 
       svg.call(zoom);
+
+      // Remove the old title tooltips
+      spikes.select("title").remove();
     });
+
+    // Add cleanup for tooltip
+    return () => {
+      d3.select("body").selectAll(".tooltip").remove();
+    };
 
   }, [locations]);
 
   return (
-    <div className="w-full overflow-x-auto">
-      <svg ref={svgRef}></svg>
+    <div className="flex items-center justify-center h-full">
+      <svg 
+        ref={svgRef}
+        style={{
+          maxHeight: "100%",
+          width: "auto",
+          display: "block" // This removes any extra space below the SVG
+        }}
+      ></svg>
     </div>
   );
 }

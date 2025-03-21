@@ -48,7 +48,9 @@ export default async function Overview() {
                 
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
                     <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Locations</h2>
-                    <TopLocations topLocationsData={overviewData?.topLocations as {location: string, count: number, locationCoords: number[]}[]}/>
+                    <div className="flex flex-row items-center justify-center h-[600px]">
+                        <TopLocations topLocationsData={overviewData?.topLocations as {location: string, count: number, location_coords: number[]}[]}/>
+                    </div>
                 </div>
                 
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
