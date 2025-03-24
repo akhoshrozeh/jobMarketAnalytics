@@ -41,14 +41,14 @@ export async function middleware(request: NextRequest) {
 
 
   // Must have premium
-  if (request.nextUrl.pathname.startsWith('/analytics/search') && tier != 'premium') {
-      return NextResponse.redirect(new URL('/pricing', request.url))
+  if (request.nextUrl.pathname === ('/analytics')) {
+      return NextResponse.redirect(new URL('/analytics/overview', request.url))
   }
 
   // Route needs basic or premium
   if (request.nextUrl.pathname.startsWith('/analytics/skills-connectivity') && tier == 'free') {
     return NextResponse.redirect(new URL('/pricing', request.url))
-}
+  }
 
   return NextResponse.next()
 
