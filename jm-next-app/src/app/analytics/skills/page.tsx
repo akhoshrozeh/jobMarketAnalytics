@@ -1,7 +1,6 @@
-export default function Skills() {
+export default async function Skills() {
     return (
         <div>
-            <h1>Skills</h1>
         </div>
     )
 }
