@@ -464,7 +464,10 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
       barsGroup.select(".x-axis")
         .selectAll("text")
         .attr("filter", "url(#text-blur)")
-        .style("user-select", "none");
+        .style("user-select", "none")
+        .style("opacity", 0.7) // Reduce opacity for additional blur effect
+        .style("filter", "blur(4px)") // Add CSS blur on top of SVG blur
+
     }
 
   }, [data, blurLabels, totalJobs, isLargeScreen]);
@@ -995,7 +998,7 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
     d3.select(svgRef.current).selectAll("*").remove();
 
     const width = 975;
-    const height = 800;
+    const height = 1000;
 
     // Create the SVG container
     const svg = d3.select(svgRef.current)
@@ -1007,23 +1010,24 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
     // Create separate groups for map, spikes, and legend
     const mapGroup = svg.append("g").attr("class", "map-layer");
     const spikeGroup = svg.append("g").attr("class", "spike-layer");
-    const legendGroup = svg.append("g").attr("class", "legend-layer");
+    // const legendGroup = svg.append("g").attr("class", "legend-layer");
 
     // Create US map projection and path generator
     const projection = d3.geoAlbersUsa()
       .scale(1300)
-      .translate([width / 2, height / 2]);
+      .translate([width / 2, height / 2]);  // Adjusted y-translation for better vertical centering
     const path = d3.geoPath().projection(projection);
 
     // Construct the length scale for spikes using sqrt scale for better distribution
     const maxCount = d3.max(locations, d => d.count) || 1;
-    const length = d3.scaleSqrt()  // changed from scaleLinear to scaleSqrt
-      .domain([0, maxCount])
-      .range([0, 200]);  // increased from 200 to 300
+    const length = d3.scalePow()  // changed from scaleSqrt to scalePow
+      .exponent(0.3)  // This will make small values even smaller
+      .domain([1, maxCount])
+      .range([5, 200]);  // Changed minimum from 0 to 5 to ensure visibility
 
     // Helper function to create spike shape with wider base
     const spike = (length: number) => {
-      const w = 6;  // increased base width from 4 to 6 for better proportion
+      const w = Math.max(3, length/10);  // Width proportional to length, with minimum of 3
       return `M${-w/2},0L0,${-length}L${w/2},0Z`;
     };
 
@@ -1042,28 +1046,6 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
         .attr("stroke", "black")
         .attr("stroke-linejoin", "round")
         .attr("d", path);
-
-      // Create the legend (fixed position, doesn't zoom)
-      const legend = legendGroup
-        .attr("fill", "#777")
-        .attr("transform", "translate(886,592)")
-        .attr("text-anchor", "middle")
-        .style("font", "10px sans-serif")
-        .selectAll("g")
-        .data(length.ticks(4).slice(1))
-        .join("g")
-        .attr("transform", (d, i) => `translate(${20 * i},0)`);
-
-      legend.append("path")
-        .attr("fill", "#ff4444")
-        .attr("fill-opacity", 0.7)
-        .attr("stroke", "#ff4444")
-        .attr("stroke-width", 1)
-        .attr("d", d => spike(length(d)));
-
-      legend.append("text")
-        .attr("dy", "1em")
-        .text(length.tickFormat(4, "s"));
 
       // Process and sort locations
       const processedLocations = locations
@@ -1111,7 +1093,7 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
       // Helper function to update spike sizes based on zoom level
       const updateSpikes = (zoomLevel: number) => {
         spikeGroup.selectAll("path")
-          .attr("d", d => {
+          .attr("d", (d: any) => {
             const adjustedLength = length(d.count) / Math.sqrt(zoomLevel);
             const adjustedWidth = 6 / Math.sqrt(zoomLevel);
             return `M${-adjustedWidth/2},0L0,${-adjustedLength}L${adjustedWidth/2},0Z`;
@@ -1140,7 +1122,7 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
             .attr("fill-opacity", 1)
             .attr("stroke", "#ff6666")
             .attr("stroke-width", 2 / currentZoom.k)
-            .attr("d", () => {
+            .attr("d", (d: any) => {
               const adjustedLength = length(d.count) / Math.sqrt(currentZoom.k);
               const adjustedWidth = 6 / Math.sqrt(currentZoom.k);
               // Make the spike slightly larger on hover while maintaining zoom proportions
@@ -1167,7 +1149,7 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
             .attr("fill-opacity", 0.7)
             .attr("stroke", "#ff4444")
             .attr("stroke-width", 2 / currentZoom.k)
-            .attr("d", () => {
+            .attr("d", (d: any) => {
               const adjustedLength = length(d.count) / Math.sqrt(currentZoom.k);
               const adjustedWidth = 6 / Math.sqrt(currentZoom.k);
               return `M${-adjustedWidth/2},0L0,${-adjustedLength}L${adjustedWidth/2},0Z`;
@@ -1190,13 +1172,13 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
   }, [locations]);
 
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="w-full h-full flex items-center justify-center">
       <svg 
         ref={svgRef}
         style={{
+          maxWidth: "100%",
           maxHeight: "100%",
-          width: "auto",
-          display: "block" // This removes any extra space below the SVG
+          display: "block"
         }}
       ></svg>
     </div>
