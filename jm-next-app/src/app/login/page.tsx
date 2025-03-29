@@ -37,7 +37,7 @@ export default function Login() {
                     router.push('/sign-up?needsConfirmation=true&email=' + encodeURIComponent(email));
                     break;
                 case "DONE":
-                    window.location.href = '/'
+                    window.location.href = '/analytics/overview'
                     break;
                 default:
                     setErrorMessage("An error occurred in sign in.")
