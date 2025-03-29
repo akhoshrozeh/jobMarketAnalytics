@@ -3,7 +3,6 @@ import { getTopSkillsClient, getTier } from "@/lib/dataAcessLayer";
 export default async function SearchResults() {
     const tier = await getTier();
     const skills = await getTopSkillsClient(tier);
-    console.log("skills", skills);
 
     return (
         <div className="p-2 max-h-64 overflow-y-auto">

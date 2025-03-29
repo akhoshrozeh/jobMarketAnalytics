@@ -25,15 +25,10 @@ export default function BentoLayout(
                         </div>
                     </div>
                     
-                    <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:row-span-1 bg-slate-100/50">
-                        <h2 className="text-lg font-semibold mb-2 text-gray-700 ">💰 Average Salary</h2>
-                        <div className="text-md lg:text-xl xl:text-2xl">
+                   
+                    <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-4 lg:row-span-1 bg-slate-100/50">
+                        <h2 className="text-xl font-semibold mb-2 text-gray-700">💰 Salary Distribution</h2>
                             {Salary}
-                        </div>
-                    </div>
-                    <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-4 lg:row-span-2 bg-slate-100/50">
-                        <h2 className="text-xl font-semibold mb-2 text-gray-700">🛠️✨ Top Skills</h2>
-
                     </div>
                     
                     <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 bg-slate-100/50">
@@ -57,8 +52,10 @@ export default function BentoLayout(
                     
                 </div>
         </div>) : (
-            <div className="text-center text-lg md:text-2xl font-semibold text-black">
-                ☝️ Select or search for a skill! ☝️
+            <div className="mt-16 flex justify-center items-center w-full">
+                <div className="inline-flex flex justify-center items-center ring-2 ring-m-dark-green rounded-lg p-4 text-lg md:text-2xl font-semibold text-black bg-white shadow-lg  hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-white via-gray-50 to-white hover:from-gray-50 hover:via-white hover:to-gray-50">
+                    ✨ ☝️ Select or search for a skill! ☝️ ✨
+                </div>
             </div>
         )
     )
