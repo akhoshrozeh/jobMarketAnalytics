@@ -14,10 +14,19 @@ const getMongoDBClientConnection = cache(async () => {
   return db;
 });
 
-const getTier = cache(async () => {
+export const getTier = cache(async () => {
     const tokenPayload = await verifyIdToken();
     const tier = tokenPayload.payload?.["custom:tier"] as string || "free";
     return tier;
+});
+
+export const getTopSkillsClient = cache(async (tier: string) => {
+    const db = await getMongoDBClientConnection();
+    if (!db) {
+        console.error("Error: getMongoDBClientConnection() failed");
+        return [];
+    }
+    return getTopSkills(db, tier);
 });
 
 export const getOverviewData = cache(async () => {
@@ -95,7 +104,7 @@ export const getTopSkills = cache(async (db: MongoDBClient, tier: string) => {
         const tiersMapParams = {
             "free": 5,
             "basic": 15,
-            "premium": 100
+            "premium": 10000
         };
 
         const pipeline = [
@@ -467,11 +476,12 @@ export const getTopJobTitles = cache(async (db: MongoDBClient, tier: string) => 
 
 export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => {
     try {
-        const tiersMapParams = {
-            "free": 10000,
-            "basic": 15,
-            "premium": 50
-        };
+        
+        // const tiersMapParams = {
+        //     "free": 1000,
+        //     "basic": 15,
+        //     "premium": 50
+        // };
 
         const pipeline = [
             {
@@ -489,9 +499,9 @@ export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => 
             {
                 $sort: { count: -1 }
             },
-            {
-                $limit: tiersMapParams[tier as keyof typeof tiersMapParams]
-            },
+            // {
+            //     $limit: 1000
+            // },
             {
                 $project: {
                     _id: 0, 
@@ -509,5 +519,197 @@ export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => 
     } catch (error) {
         console.error('Error: getTopJobTitles() failed:', error);
         return [];
+    }
+});
+
+
+
+
+
+
+export const getSkillData = cache(async (skill: string) => {
+    try {
+        const tier = await getTier();
+        const db = await getMongoDBClientConnection();
+
+
+
+        if (!db?.collection) {
+            console.error("Error: getMongoDBClientConnection() failed");
+            return null;
+        }
+
+        // Get all data in parallel using a single db connection
+        const [
+            totalJobsForSkill,
+            averageSalaryForSkill
+        ] = await Promise.all([
+            getTotalJobsForSkill(db, skill),
+            getSalaryDistributionForSkill(db, skill)
+        ]);
+
+        return {
+            "totalJobsForSkill": totalJobsForSkill, 
+            "averageSalaryForSkill": averageSalaryForSkill
+        };
+    } catch (error) {
+        console.error('Error: getOverviewData() failed:', error);
+        return null;
+    }  
+})
+
+const getTotalJobsForSkill = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            {
+                $match: {
+                    extracted_keywords: { $exists: true, $ne: [] }
+                }
+            },
+            {
+                $unwind: "$extracted_keywords"
+            },
+            {
+                $match: { $expr: { $eq: ["$extracted_keywords", skill] } }
+            },
+            {
+                $count: "total"
+            }
+        ]
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result[0]?.total || 0;
+    } catch (error) {
+        console.error('Error: getTotalJobsForSkill() failed:', error);
+        return null;
+    }
+})
+
+const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            {
+                $match: {
+                    extracted_keywords: { $exists: true, $ne: [] },
+                    $and: [
+                        { min_amount: { $exists: true, $ne: null } },
+                        { max_amount: { $exists: true, $ne: null } }
+                    ]
+                }
+            },
+            {
+                $unwind: "$extracted_keywords"
+            },
+            {
+                $match: {
+                    extracted_keywords: skill
+                }
+            },
+            {
+                $project: {
+                    interval: 1,
+                    // Compute the interval - if missing and amount < 150, assume hourly
+                    
+                    minSalary: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $lt: [{ $toDouble: "$min_amount" }, 150] },
+                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 40, 52] }
+                                },
+                                {
+                                    case: {
+                                        $and: [
+                                            { $eq: ["$interval", null] },
+                                            { $lt: [{ $toDouble: "$min_amount" }, 150] }
+                                        ]
+                                    },
+                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 40, 52] }
+                                },
+                                {
+                                    case: { $eq: ["$interval", "daily"] },
+                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 5, 52] }
+                                },
+                                {
+                                    case: { $eq: ["$interval", "weekly"] },
+                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 52] }
+                                },
+                                {
+                                    case: { $eq: ["$interval", "monthly"] },
+                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 12] }
+                                }
+                            ],
+                            default: { $toDouble: "$min_amount" }
+                        }
+                    },
+                    maxSalary: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $lt: [{ $toDouble: "$max_amount" }, 150] },
+                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 40, 52] }
+                                },
+                                {
+                                    case: {
+                                        $and: [
+                                            { $eq: ["$interval", null] },
+                                            { $lt: [{ $toDouble: "$max_amount" }, 150] }
+                                        ]
+                                    },
+                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 40, 52] }
+                                },
+                                {
+                                    case: { $eq: ["$interval", "daily"] },
+                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 5, 52] }
+                                },
+                                {
+                                    case: { $eq: ["$interval", "weekly"] },
+                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 52] }
+                                },
+                                {
+                                    case: { $eq: ["$interval", "monthly"] },
+                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 12] }
+                                }
+                            ],
+                            default: { $toDouble: "$max_amount" }
+                        }
+                    }
+                }
+            },
+            {
+                $facet: {
+                    minSalaries: [
+                        {
+                            $bucket: {
+                                groupBy: "$minSalary",
+                                boundaries: [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 250000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000],
+                                default: "1Mil",
+                                output: {
+                                    count: { $sum: 1 },
+                                    examples: { $push: { salary: "$minSalary", interval: "$interval" } }
+                                }
+                            }
+                        }
+                    ],
+                    maxSalaries: [
+                        {
+                            $bucket: {
+                                groupBy: "$maxSalary",
+                                boundaries: [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 250000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000],
+                                default: "1Mil",
+                                output: {
+                                    count: { $sum: 1 },
+                                    examples: { $push: { salary: "$maxSalary", interval:"$interval" } }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ];
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result[0] || { minSalaries: [], maxSalaries: [] };
+    } catch (error) {
+        console.error('Error: getSalaryDistributionForSkill() failed:', error);
+        return null;
     }
 });
