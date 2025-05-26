@@ -6,17 +6,44 @@ type SkillContextType = {
     setSelectedSkill: (skill: string) => void;
     skillData: any | null;
     setSkillData: (data: any) => void;
+    tier: string;
+    setTier: (tier: string) => void;
+    showUpgradeModal: boolean;
+    setShowUpgradeModal: (show: boolean) => void;
 }
 
 const SkillContext = createContext<SkillContextType | undefined>(undefined);
 
-export function SkillProvider({ children }: { children: React.ReactNode }) {
+type SkillProviderProps = {
+    children: React.ReactNode;
+    initialTier: string;
+}
+
+export function SkillProvider({ children, initialTier }: SkillProviderProps) {
     const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
     const [skillData, setSkillData] = useState<any | null>(null);
-    console.log("selectedSkill", selectedSkill);
+    const [tier, setTier] = useState<string>(initialTier);
+    const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+
+    const handleSkillSelect = (skill: string) => {
+        if (tier === "free") {
+            setShowUpgradeModal(true);
+        } else {
+            setSelectedSkill(skill);
+        }
+    };
 
     return (
-        <SkillContext.Provider value={{ selectedSkill, setSelectedSkill, skillData, setSkillData }}>
+        <SkillContext.Provider value={{ 
+            selectedSkill, 
+            setSelectedSkill: handleSkillSelect, 
+            skillData, 
+            setSkillData,
+            tier,
+            setTier,
+            showUpgradeModal,
+            setShowUpgradeModal
+        }}>
             {children}
         </SkillContext.Provider>
     );
