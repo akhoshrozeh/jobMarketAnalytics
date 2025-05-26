@@ -3,10 +3,14 @@ import { useSkill } from "./SkillContext"
 export default function BentoLayout(
     {   
         TotalJobs,
-        Salary
+        Salary,
+        Grade,
+        TopJobs
     }:{
         TotalJobs: React.ReactNode,
-        Salary: React.ReactNode
+        Salary: React.ReactNode,
+        Grade: React.ReactNode,
+        TopJobs: React.ReactNode
     }) {
     const { skillData, selectedSkill } = useSkill()
     
@@ -33,7 +37,7 @@ export default function BentoLayout(
                     
                     <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 bg-slate-100/50">
                         <h2 className="text-lg font-semibold mb-2 text-gray-700">🌍 Remote 📍Onsite</h2>
-
+                        {Grade}
                     </div>
                     
                     <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
@@ -45,10 +49,9 @@ export default function BentoLayout(
                     
                     <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
                         <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
-
+                        {TopJobs}
                     </div>
 
-                    
                     
                 </div>
         </div>) : (
