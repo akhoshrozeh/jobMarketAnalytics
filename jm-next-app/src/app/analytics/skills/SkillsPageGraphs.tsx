@@ -13,9 +13,19 @@ interface SalaryDistributionProps {
         count: number;
         examples: number[];
     }>;
+    selectedSkill: string;
+    totalJobs: number;
 }
 
-export function SalaryDistributionGraph({ minSalaries, maxSalaries }: SalaryDistributionProps) {
+// Define the type for the data structure
+interface BarData {
+    data: {
+        category: string;
+    };
+    [key: number]: number;
+}
+
+export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkill, totalJobs }: SalaryDistributionProps) {
     const scrollableRef = useRef<SVGSVGElement>(null);
     const fixedRef = useRef<SVGSVGElement>(null);
 
@@ -44,11 +54,15 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries }: SalaryDist
         const totalBarsWidth = stackedData.length * 60;
         const actualWidth = Math.max(width, totalBarsWidth + marginLeft + marginRight);
 
+        // Calculate the available width for bars
+        const availableWidth = actualWidth - marginLeft - marginRight;
+
         // Create scales
         const x = d3.scaleBand()
             .domain(stackedData.map(d => d.category))
             .range([marginLeft, actualWidth - marginRight])
-            .padding(0.1);
+            .paddingInner(0.1) // Adjust padding to fill the space
+            .paddingOuter(0.05); // Optional: add some outer padding for aesthetics
 
         const y = d3.scaleLinear()
             .domain([0, d3.max(stackedData, d => d.min + d.max) || 0]).nice()
@@ -143,18 +157,69 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries }: SalaryDist
             .attr("rx", 6)
             .attr("ry", 6)
             .style("filter", "drop-shadow(0 2px 3px rgba(0,0,0,0.2))")
+            .on("mouseenter", function(event, d: BarData) {
+                const percentage = ((d[1] - d[0]) / totalJobs * 100).toFixed(1);
+                const parentNode = (this as SVGGElement).parentNode as SVGGElement | null;
+                if (parentNode) {
+                    const parentData = d3.select<SVGGElement, any>(parentNode).datum();
+                    const currentIndex = boundaries.indexOf(+d.data.category);
+                    const nextCategory = boundaries[currentIndex + 1] || "1Mil";
+                    tooltip
+                        .html(parentData.key === "min" 
+                            ? `${percentage}% of ${selectedSkill} jobs have Minimum salary of $${(+d.data.category / 1000).toFixed(0)}k - $${(typeof nextCategory === 'number' ? nextCategory / 1000 : nextCategory)}k`
+                            : `${percentage}% of ${selectedSkill} jobs have Maximum salary of $${(+d.data.category / 1000).toFixed(0)}k - $${(typeof nextCategory === 'number' ? nextCategory / 1000 : nextCategory)}k`)
+                        .style("opacity", 1)
+                        .style("left", (event.pageX + 15) + "px")
+                        .style("top", (event.pageY - 20) + "px");
+                }
+
+                // Enlarge the bar
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("x", (x(d.data.category) || 0) - 5)
+                    .attr("width", x.bandwidth() + 10)
+                    .attr("y", y(d[1]) - 5)
+                    .attr("height", y(d[0]) - y(d[1]) + 10);
+            })
+            .on("mousemove", function(event) {
+                tooltip
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mouseleave", function(event, d: BarData) {
+                tooltip.style("opacity", 0);
+
+                // Reset the bar size
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("x", x(d.data.category) || 0)
+                    .attr("width", x.bandwidth())
+                    .attr("y", y(d[1]))
+                    .attr("height", y(d[0]) - y(d[1]));
+            })
             .transition()
             .duration(1000)
             .ease(d3.easePoly)
             .attr("y", d => y(d[1]))
             .attr("height", d => y(d[0]) - y(d[1]));
 
-        // Add x-axis with rotated labels
+        // Define the boundaries
+        const boundaries = [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 240000, 260000, 280000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000];
+
+        // Add x-axis with formatted labels
         scrollableSvg.append("g")
             .attr("transform", `translate(0,${height - marginBottom})`)
-            .call(d3.axisBottom(x))
+            .call(d3.axisBottom(x)
+                .tickFormat((d, i) => {
+                    const nextValue = boundaries[i + 1];
+                    return `$${(+d / 1000).toFixed(0)}k - $${(typeof nextValue === 'number' ? nextValue / 1000 : nextValue)}k`;
+                })
+            )
             .selectAll("text")
-            .style("font-size", "12px")
+            .style("font-size", "14px")
+            .style("font-weight", "600")
             .attr("transform", "translate(-15,10)rotate(-45)")
             .style("text-anchor", "end")
             .style("dominant-baseline", "central");
@@ -188,14 +253,14 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries }: SalaryDist
             .style("font-size", "12px");
 
         // Add axis labels
-        fixedSvg.append("text")
-            .attr("class", "x-label")
-            .attr("text-anchor", "middle")
-            .attr("x", marginLeft + (containerWidth - marginLeft - marginRight) / 2)
-            .attr("y", height - 10)
-            .style("fill", "black")
-            .style("font-size", "24px")
-            .text("Salary Range");
+        // fixedSvg.append("text")
+        //     .attr("class", "x-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", marginLeft + (containerWidth - marginLeft - marginRight) / 2)
+        //     .attr("y", height - 5)
+        //     .style("fill", "black")
+        //     .style("font-size", "24px")
+        //     .text("Salary Range");
 
         fixedSvg.append("text")
             .attr("class", "y-label")
