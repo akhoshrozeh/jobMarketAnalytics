@@ -104,7 +104,7 @@ export const getTopSkills = cache(async (db: MongoDBClient, tier: string) => {
         const tiersMapParams = {
             "free": 5,
             "basic": 15,
-            "premium": 10000
+            "premium": 1000
         };
 
         const pipeline = [
@@ -513,7 +513,6 @@ export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => 
         ];
 
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        console.log("location RSE:", result)
         return result;
 
     } catch (error) {
@@ -525,6 +524,18 @@ export const getTopLocations = cache(async (db: MongoDBClient, tier: string) => 
 
 
 
+
+
+
+
+
+// **********************************************
+// **********************************************
+
+// SKILLS PAGE CALLS
+
+// **********************************************
+// **********************************************
 
 
 export const getSkillData = cache(async (skill: string) => {
@@ -542,15 +553,18 @@ export const getSkillData = cache(async (skill: string) => {
         // Get all data in parallel using a single db connection
         const [
             totalJobsForSkill,
-            averageSalaryForSkill
+            averageSalaryForSkill,
+            skillGrade
         ] = await Promise.all([
             getTotalJobsForSkill(db, skill),
-            getSalaryDistributionForSkill(db, skill)
+            getSalaryDistributionForSkill(db, skill),
+            getSkillGrade(db, skill)
         ]);
 
         return {
             "totalJobsForSkill": totalJobsForSkill, 
-            "averageSalaryForSkill": averageSalaryForSkill
+            "averageSalaryForSkill": averageSalaryForSkill,
+            "skillGrade": skillGrade
         };
     } catch (error) {
         console.error('Error: getOverviewData() failed:', error);
@@ -681,7 +695,7 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
                         {
                             $bucket: {
                                 groupBy: "$minSalary",
-                                boundaries: [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 250000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000],
+                                boundaries: [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 240000, 260000, 280000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000],
                                 default: "1Mil",
                                 output: {
                                     count: { $sum: 1 },
@@ -694,22 +708,153 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
                         {
                             $bucket: {
                                 groupBy: "$maxSalary",
-                                boundaries: [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 250000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000],
+                                boundaries: [0, 50000, 70000, 90000, 110000, 130000, 150000, 180000, 200000, 220000, 240000, 260000, 280000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000],
                                 default: "1Mil",
                                 output: {
                                     count: { $sum: 1 },
-                                    examples: { $push: { salary: "$maxSalary", interval:"$interval" } }
+                                    examples: { $push: { salary: "$maxSalary", interval: "$interval" } }
                                 }
                             }
+                        }
+                    ],
+                    totalJobs: [
+                        {
+                            $count: "total"
                         }
                     ]
                 }
             }
         ];
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        return result[0] || { minSalaries: [], maxSalaries: [] };
+        return result[0] || { minSalaries: [], maxSalaries: [], totalJobs: 0 };
     } catch (error) {
         console.error('Error: getSalaryDistributionForSkill() failed:', error);
         return null;
+    }
+});
+
+
+const getSkillGrade = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            {
+                $facet: {
+                    skillRanking: [
+                        { $match: { extracted_keywords: { $exists: true, $ne: [] } } },
+                        { $unwind: "$extracted_keywords" },
+                        { $group: { _id: "$extracted_keywords", count: { $sum: 1 } } },
+                        { $sort: { count: -1 } },
+                        { $limit: 1000}, //CHANGE THE TOP SKILLS FROM LIMITER TO 500
+                        { 
+                            $group: {
+                                _id: null,
+                                allSkills: { 
+                                    $push: { 
+                                        skill: "$_id", 
+                                        count: "$count" 
+                                    } 
+                                },
+                                totalSkills: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $project: {
+                                rank: {
+                                    $indexOfArray: ["$allSkills.skill", skill]
+                                },
+                                totalSkills: 1
+                            }
+                        },
+                        {
+                            $project: {
+                                popularityScore: {
+                                    $subtract: [
+                                        1,
+                                        { $divide: ["$rank", "$totalSkills"] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    skillData: [
+                        { $match: { extracted_keywords: skill } },
+                        {
+                            $group: {
+                                _id: null,
+                                avgMinSalary: { $avg: { $toDouble: "$min_amount" } },
+                                avgMaxSalary: { $avg: { $toDouble: "$max_amount" } }
+                            }
+                        },
+                        {
+                            $project: {
+                                avgSalary: { $avg: ["$avgMinSalary", "$avgMaxSalary"] }
+                            }
+                        }
+                    ],
+                    overallAvgSalary: [
+                        {
+                            $group: {
+                                _id: null,
+                                avgMin: { $avg: { $toDouble: "$min_amount" } },
+                                avgMax: { $avg: { $toDouble: "$max_amount" } }
+                            }
+                        },
+                        {
+                            $project: {
+                                avg: { $avg: ["$avgMin", "$avgMax"] }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    skillRanking: 1,
+                    skillData: 1,
+                    overallAvgSalary: 1,
+                    compositeScore: {
+                        $let: {
+                            vars: {
+                                popularityScore: { $arrayElemAt: ["$skillRanking.popularityScore", 0] },
+                                skillAvg: { $arrayElemAt: ["$skillData.avgSalary", 0] },
+                                overallAvg: { $arrayElemAt: ["$overallAvgSalary.avg", 0] }
+                            },
+                            in: {
+                                $add: [
+                                    { $multiply: [0.5, "$$popularityScore"] },
+                                    { $multiply: [0.5, { $min: [1, { $subtract: ["$$skillAvg", "$$overallAvg"] }] }] }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    grade: {
+                        $switch: {
+                            branches: [
+                                { case: { $gte: ["$compositeScore", 0.8] }, then: "A" },
+                                { case: { $gte: ["$compositeScore", 0.6] }, then: "B" },
+                                { case: { $gte: ["$compositeScore", 0.4] }, then: "C" },
+                                { case: { $gte: ["$compositeScore", 0.2] }, then: "D" }
+                            ],
+                            default: "F"
+                        }
+                    },
+                    compositeScore: 1,
+                    skillAvg: { $arrayElemAt: ["$skillData.avgSalary", 0] },
+                    overallAvg: { $arrayElemAt: ["$overallAvgSalary.avg", 0] },
+                    popularityScore: { $arrayElemAt: ["$skillRanking.popularityScore", 0] },
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        console.log("Grade result:", result);
+        return result[0] || { grade: "F", compositeScore: 0 };
+    } catch (error) {
+        console.error('Error: getSkillGrade() failed:', error);
+        return { grade: "F", compositeScore: 0 };
     }
 });
