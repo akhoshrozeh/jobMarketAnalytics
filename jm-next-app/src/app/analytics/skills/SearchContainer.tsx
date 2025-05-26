@@ -11,12 +11,22 @@ export default function SearchContainer({
     skills: { _id: string, totalOccurences: number }[]
     fetchSkillData: (skill: string) => Promise<any>
 }) {
-    const { selectedSkill, setSelectedSkill, setSkillData } = useSkill();
+    const { selectedSkill, setSelectedSkill, setSkillData, tier, setShowUpgradeModal } = useSkill();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const handleContainerClick = () => {
+        if (tier === "free") {
+            setShowUpgradeModal(true);
+            return;
+        }
+    };
 
     const handleSkillClick = async (skill: string) => {
+        if (tier === "free") {
+            setShowUpgradeModal(true);
+            return;
+        }
         setSelectedSkill(skill);
         setSearchQuery(skill);
         setIsDropdownOpen(false);
@@ -24,12 +34,14 @@ export default function SearchContainer({
         setSkillData(data);
     };
     
-
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (tier === "free") {
+            setShowUpgradeModal(true);
+            return;
+        }
         setSearchQuery(e.target.value);
         setSelectedSkill('');
         setIsDropdownOpen(true);
-        console.log("searchQuery", searchQuery);
     };
 
     const filteredSkills = skills.filter(skill => 
@@ -37,7 +49,7 @@ export default function SearchContainer({
     );
 
     return (
-        <div className="relative w-full max-w-2xl mx-auto mb-8">
+        <div className="relative w-full max-w-2xl mx-auto mb-8" onClick={handleContainerClick}>
             <div className="flex items-center">
                 <input
                     type="text"
@@ -45,10 +57,17 @@ export default function SearchContainer({
                     onChange={handleInputChange}
                     placeholder="Search skills..."
                     className="w-full px-4 py-2 rounded-lg border border-m-light-green focus:outline-none focus:ring-2 focus:ring-m-light-green focus:border-transparent"
-                    onFocus={() => setIsDropdownOpen(true)}
+                    onFocus={() => tier !== "free" && setIsDropdownOpen(true)}
                 />
                 <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (tier === "free") {
+                            setShowUpgradeModal(true);
+                            return;
+                        }
+                        setIsDropdownOpen(!isDropdownOpen);
+                    }}
                     className="ml-2 p-2 px-4 rounded-lg border-2 border-m-dark-green hover:bg-m-light-green"
                 >
                     {isDropdownOpen ? '↑' : '↓'}
@@ -60,7 +79,10 @@ export default function SearchContainer({
                     {filteredSkills.map((skill) => (
                         <div
                             key={skill._id}
-                            onClick={() => handleSkillClick(skill._id)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleSkillClick(skill._id);
+                            }}
                             className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
                                 selectedSkill === skill._id ? 'bg-blue-50' : ''
                             }`}
