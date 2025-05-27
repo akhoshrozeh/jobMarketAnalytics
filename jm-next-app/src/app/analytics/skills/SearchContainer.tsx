@@ -11,7 +11,7 @@ export default function SearchContainer({
     skills: { _id: string, totalOccurences: number }[]
     fetchSkillData: (skill: string) => Promise<any>
 }) {
-    const { selectedSkill, setSelectedSkill, setSkillData, tier, setShowUpgradeModal } = useSkill();
+    const { selectedSkill, setSelectedSkill, setSkillData, tier, setShowUpgradeModal, setIsLoading } = useSkill();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,8 +30,10 @@ export default function SearchContainer({
         setSelectedSkill(skill);
         setSearchQuery(skill);
         setIsDropdownOpen(false);
+        setIsLoading(true);
         const data = await fetchSkillData(skill);
         setSkillData(data);
+        setIsLoading(false);
     };
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

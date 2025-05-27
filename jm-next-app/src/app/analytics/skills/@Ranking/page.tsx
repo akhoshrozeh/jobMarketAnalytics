@@ -1,7 +1,7 @@
 "use client"
 import { useSkill } from "../SkillContext";
 
-export default function TotalJobs() {
+export default function Ranking() {
     const { skillData } = useSkill();
     return (
         <div>

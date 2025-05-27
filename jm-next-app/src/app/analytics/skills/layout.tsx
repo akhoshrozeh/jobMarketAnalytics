@@ -16,7 +16,8 @@ export default async function Layout({
   TotalJobs,
   Salary,
   Grade,
-  TopJobs
+  TopJobs,
+  RelatedSkills
 }: {
   children: React.ReactNode
   TopSkills: React.ReactNode
@@ -24,6 +25,7 @@ export default async function Layout({
   Salary: React.ReactNode
   Grade: React.ReactNode
   TopJobs: React.ReactNode
+  RelatedSkills: React.ReactNode
 }) {
   // Fetch searchable skills during SSR
   const tier = await getTier();
@@ -37,7 +39,7 @@ export default async function Layout({
           {TopSkills}
         </SearchContainer>
 
-        <BentoLayout TotalJobs={TotalJobs} Salary={Salary} Grade={Grade} TopJobs={TopJobs} />
+        <BentoLayout TotalJobs={TotalJobs} Salary={Salary} Grade={Grade} TopJobs={TopJobs} RelatedSkills={RelatedSkills} />
         <UpgradeModal />
       </div>
     </SkillProvider>

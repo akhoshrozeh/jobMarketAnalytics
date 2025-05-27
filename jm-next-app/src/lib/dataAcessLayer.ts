@@ -543,8 +543,6 @@ export const getSkillData = cache(async (skill: string) => {
         const tier = await getTier();
         const db = await getMongoDBClientConnection();
 
-
-
         if (!db?.collection) {
             console.error("Error: getMongoDBClientConnection() failed");
             return null;
@@ -553,24 +551,33 @@ export const getSkillData = cache(async (skill: string) => {
         // Get all data in parallel using a single db connection
         const [
             totalJobsForSkill,
-            averageSalaryForSkill,
-            skillGrade
+            salaryDistributionForSkill,
+            skillGrade,
+            detailedSalaryMetrics,
+            topJobs,
+            relatedSkills
         ] = await Promise.all([
             getTotalJobsForSkill(db, skill),
             getSalaryDistributionForSkill(db, skill),
-            getSkillGrade(db, skill)
+            getSkillGrade(db, skill),
+            getDetailedSalaryMetrics(db, skill),
+            getTopJobForSkill(db, skill),
+            getRelatedSkills(db, skill)
         ]);
 
         return {
             "totalJobsForSkill": totalJobsForSkill, 
-            "averageSalaryForSkill": averageSalaryForSkill,
-            "skillGrade": skillGrade
+            "salaryDistributionForSkill": salaryDistributionForSkill,
+            "skillGrade": skillGrade,
+            "detailedSalaryMetrics": detailedSalaryMetrics,
+            "topJobs": topJobs,
+            "relatedSkills": relatedSkills
         };
     } catch (error) {
-        console.error('Error: getOverviewData() failed:', error);
+        console.error('Error: getSkillData() failed:', error);
         return null;
     }  
-})
+});
 
 const getTotalJobsForSkill = cache(async (db: MongoDBClient, skill: string) => {
     try {
@@ -734,6 +741,7 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
 });
 
 
+
 const getSkillGrade = cache(async (db: MongoDBClient, skill: string) => {
     try {
         const pipeline = [
@@ -851,10 +859,197 @@ const getSkillGrade = cache(async (db: MongoDBClient, skill: string) => {
         ];
 
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        console.log("Grade result:", result);
         return result[0] || { grade: "F", compositeScore: 0 };
     } catch (error) {
         console.error('Error: getSkillGrade() failed:', error);
         return { grade: "F", compositeScore: 0 };
+    }
+});
+
+const getDetailedSalaryMetrics = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            // First, get all salaries for the specific skill
+            {
+                $match: {
+                    extracted_keywords: skill,
+                    min_amount: { $exists: true, $ne: null },
+                    max_amount: { $exists: true, $ne: null }
+                }
+            },
+            {
+                $project: {
+                    salary: {
+                        $avg: [
+                            { $toDouble: "$min_amount" },
+                            { $toDouble: "$max_amount" }
+                        ]
+                    }
+                }
+            },
+            {
+                $facet: {
+                    // Get overall salary metrics for comparison
+                    overallMetrics: [
+                        {
+                            $group: {
+                                _id: null,
+                                median: { $avg: "$salary" },  // Using avg instead of percentile for now
+                                min: { $min: "$salary" },
+                                max: { $max: "$salary" }
+                            }
+                        }
+                    ],
+                    // Get skill-specific metrics
+                    skillMetrics: [
+                        {
+                            $group: {
+                                _id: null,
+                                median: { $avg: "$salary" },  // Using avg instead of percentile for now
+                                min: { $min: "$salary" },
+                                max: { $max: "$salary" }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    skillMetrics: { $arrayElemAt: ["$skillMetrics", 0] },
+                    overallMetrics: { $arrayElemAt: ["$overallMetrics", 0] }
+                }
+            },
+            {
+                $project: {
+                    skillMetrics: 1,
+                    overallMetrics: 1,
+                    salaryPremium: {
+                        $subtract: ["$skillMetrics.median", "$overallMetrics.median"]
+                    }
+                }
+            },
+            {
+                $project: {
+                    skillMetrics: 1,
+                    overallMetrics: 1,
+                    salaryPremium: 1,
+                    salaryPremiumPercentage: {
+                        $multiply: [
+                            {
+                                $divide: [
+                                    "$salaryPremium",
+                                    "$overallMetrics.median"
+                                ]
+                            },
+                            100
+                        ]
+                    }
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result[0] || null;
+    } catch (error) {
+        console.error('Error: getDetailedSalaryMetrics() failed:', error);
+        return null;
+    }
+});
+
+export const getTopJobForSkill = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            {
+                $match: {
+                    extracted_keywords: { $in: [skill] },
+                    title: { $exists: true, $ne: "" }
+                }
+            },
+            {
+                $project: {
+                    // Keep both original and normalized title
+                    originalTitle: "$title",
+                    normalizedTitle: { $toLower: "$title" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$normalizedTitle",
+                    count: { $sum: 1 },
+                    // Store one example of the original title for display
+                    title: { $first: "$originalTitle" }
+                }
+            },
+            {
+                $sort: { count: -1 }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    title: 1,
+                    count: 1
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result;
+
+    } catch (error) {
+        console.error('Error: getTopJobForSkill() failed:', error);
+        return [];
+    }
+});
+
+export const getRelatedSkills = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            // Match jobs that contain the given skill in their extracted_keywords
+            {
+                $match: {
+                    extracted_keywords: {
+                        $exists: true,
+                        $ne: [],
+                        $in: [skill]
+                    }
+                }
+            },
+            // Unwind the extracted_keywords array to work with individual keywords
+            {
+                $unwind: "$extracted_keywords"
+            },
+            // Group by keyword and count occurrences
+            {
+                $group: {
+                    _id: "$extracted_keywords",
+                    count: { $sum: 1 }
+                }
+            },
+            // Exclude the input skill from results
+            {
+                $match: {
+                    _id: { $ne: skill }
+                }
+            },
+            // Sort by count in descending order
+            {
+                $sort: { count: -1 }
+            },
+            // Project to match the expected output format
+            {
+                $project: {
+                    _id: 0,
+                    keyword: "$_id",
+                    count: 1
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        return result;
+
+    } catch (error) {
+        console.error('Error: getRelatedSkills() failed:', error);
+        return [];
     }
 });

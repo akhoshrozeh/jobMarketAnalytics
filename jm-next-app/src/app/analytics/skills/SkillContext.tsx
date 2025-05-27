@@ -1,29 +1,27 @@
 "use client"
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 
 type SkillContextType = {
-    selectedSkill: string | null;
+    selectedSkill: string;
     setSelectedSkill: (skill: string) => void;
-    skillData: any | null;
+    skillData: any;
     setSkillData: (data: any) => void;
     tier: string;
     setTier: (tier: string) => void;
     showUpgradeModal: boolean;
     setShowUpgradeModal: (show: boolean) => void;
-}
+    isLoading: boolean;
+    setIsLoading: (loading: boolean) => void;
+};
 
 const SkillContext = createContext<SkillContextType | undefined>(undefined);
 
-type SkillProviderProps = {
-    children: React.ReactNode;
-    initialTier: string;
-}
-
-export function SkillProvider({ children, initialTier }: SkillProviderProps) {
-    const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
-    const [skillData, setSkillData] = useState<any | null>(null);
-    const [tier, setTier] = useState<string>(initialTier);
-    const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+export function SkillProvider({ children, initialTier }: { children: ReactNode, initialTier: string }) {
+    const [selectedSkill, setSelectedSkill] = useState('');
+    const [skillData, setSkillData] = useState(null);
+    const [tier, setTier] = useState(initialTier);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSkillSelect = (skill: string) => {
         if (tier === "free") {
@@ -34,15 +32,17 @@ export function SkillProvider({ children, initialTier }: SkillProviderProps) {
     };
 
     return (
-        <SkillContext.Provider value={{ 
-            selectedSkill, 
-            setSelectedSkill: handleSkillSelect, 
-            skillData, 
+        <SkillContext.Provider value={{
+            selectedSkill,
+            setSelectedSkill: handleSkillSelect,
+            skillData,
             setSkillData,
             tier,
             setTier,
             showUpgradeModal,
-            setShowUpgradeModal
+            setShowUpgradeModal,
+            isLoading,
+            setIsLoading
         }}>
             {children}
         </SkillContext.Provider>

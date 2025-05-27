@@ -2,7 +2,7 @@
 import { useSkill } from "../SkillContext";
 import { SalaryDistributionGraph } from "../SkillsPageGraphs";
 
-export default function TotalJobs() {
+export default function Salary() {
     const { skillData, selectedSkill } = useSkill();
     console.log("skillData", skillData)
     return (
