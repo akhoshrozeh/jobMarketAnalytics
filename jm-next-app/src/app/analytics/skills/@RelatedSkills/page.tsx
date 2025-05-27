@@ -15,9 +15,9 @@ export default function RelatedSkills() {
                                 key={skill.keyword}
                                 className="p-3 hover:bg-gray-50 transition-colors duration-150 flex items-center"
                             >
-                                <span className="w-8 text-gray-500 font-medium">#{index + 1}</span>
-                                <span className="font-medium text-gray-900 flex-grow">{skill.keyword}</span>
-                                <span className="text-sm text-gray-500">
+                                <span className="w-8 text-gray-500 font-medium text-sm sm:text-base">#{index + 1}</span>
+                                <span className="font-medium text-gray-900 flex-grow text-sm sm:text-base">{skill.keyword}</span>
+                                <span className="text-xs sm:text-sm text-gray-500">
                                     {percentage}% match
                                 </span>
                             </div>
