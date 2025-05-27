@@ -14,7 +14,7 @@ export default async function Layout({
   children,
   TopSkills,
   TotalJobs,
-  Salary,
+  SalaryDistribution,
   Grade,
   TopJobs,
   RelatedSkills
@@ -22,7 +22,7 @@ export default async function Layout({
   children: React.ReactNode
   TopSkills: React.ReactNode
   TotalJobs: React.ReactNode
-  Salary: React.ReactNode
+  SalaryDistribution: React.ReactNode
   Grade: React.ReactNode
   TopJobs: React.ReactNode
   RelatedSkills: React.ReactNode
@@ -39,7 +39,7 @@ export default async function Layout({
           {TopSkills}
         </SearchContainer>
 
-        <BentoLayout TotalJobs={TotalJobs} Salary={Salary} Grade={Grade} TopJobs={TopJobs} RelatedSkills={RelatedSkills} />
+        <BentoLayout TotalJobs={TotalJobs} SalaryDistribution={SalaryDistribution} Grade={Grade} TopJobs={TopJobs} RelatedSkills={RelatedSkills} />
         <UpgradeModal />
       </div>
     </SkillProvider>
