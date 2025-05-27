@@ -4,18 +4,18 @@ import { useSkill } from "./SkillContext"
 export default function BentoLayout(
     {   
         TotalJobs,
-        Salary,
+        SalaryDistribution,
         Grade,
         TopJobs,
         RelatedSkills
     }:{
         TotalJobs: React.ReactNode,
-        Salary: React.ReactNode,
+        SalaryDistribution: React.ReactNode,
         Grade: React.ReactNode,
         TopJobs: React.ReactNode,
         RelatedSkills: React.ReactNode
     }) {
-    const { skillData, selectedSkill, isLoading } = useSkill()
+    const { skillData, selectedSkill, isLoading, tier } = useSkill()
     
     return (
         <>
@@ -41,7 +41,7 @@ export default function BentoLayout(
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-5 lg:row-span-1 bg-slate-100/50">
                             <h2 className="text-xl font-semibold mb-2 text-gray-700">💰 Salary Distribution</h2>
-                                {Salary}
+                                {SalaryDistribution}
                         </div>
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 bg-slate-100/50">
@@ -62,10 +62,87 @@ export default function BentoLayout(
                         </div>
                     </div>
                 ) : (
-                    <div className="mt-16 flex justify-center items-center w-full">
-                        <div className="inline-flex flex justify-center items-center ring-2 ring-m-dark-green rounded-lg p-4 text-lg md:text-2xl font-semibold text-black bg-white shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-white via-gray-50 to-white hover:from-gray-50 hover:via-white hover:to-gray-50">
-                            ✨ ☝️ Select or search for a skill! ☝️ ✨
+                    <div className="mt-4 max-w-4xl mx-auto px-4">
+                        {/* <div className="flex justify-center items-center w-full mb-16">
+                            <div className="inline-flex flex justify-center items-center ring-2 ring-m-dark-green rounded-lg p-4 text-lg md:text-2xl font-semibold text-black bg-white shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-white via-gray-50 to-white hover:from-gray-50 hover:via-white hover:to-gray-50">
+                                ✨ ☝️ Select or search for a skill! ☝️ ✨
+                            </div>
+                        </div> */}
+
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-6">Discover Your Skill's Market Value</h2>
+                            <p className="text-xl text-gray-600">
+                                Make data-driven decisions about your career path with comprehensive skill analytics
+                            </p>
                         </div>
+
+                        <div className="space-y-12">
+                            <div className="flex items-start gap-6">
+                                <div className="text-3xl">📊</div>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Real-time Job Market Data</h3>
+                                    <p className="text-gray-600">
+                                        Get instant insights into job demand, salary ranges, and market trends for any tech skill. 
+                                        Track opportunities across different regions and industries.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-6">
+                                <div className="text-3xl">💰</div>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Salary Intelligence</h3>
+                                    <p className="text-gray-600">
+                                        Understand exactly what your skills are worth. Compare salary ranges from entry-level to senior positions, 
+                                        and see how experience and location affect compensation.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-6">
+                                <div className="text-3xl">🎯</div>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Career Path Planning</h3>
+                                    <p className="text-gray-600">
+                                        Discover related skills and job titles that complement your expertise. Build a competitive skill set 
+                                        that opens more opportunities and accelerates your career growth.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-6">
+                                <div className="text-3xl">🌍</div>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Location & Remote Insights</h3>
+                                    <p className="text-gray-600">
+                                        Find out where your skills are most in demand. Explore remote work opportunities and understand 
+                                        how location affects job availability and compensation.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {tier !== "premium" && (
+                            <div className="mt-16 text-center">
+                                <div className="inline-block bg-gradient-to-r from-m-dark-green to-green-600 text-white px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                                    <h3 className="text-2xl font-bold mb-3">Upgrade to Premium</h3>
+                                    <p className="text-lg text-white/90 mb-4">
+                                        Get unlimited access to detailed skill analytics and personalized insights
+                                    </p>
+                                    <ul className="text-left text-white/90 space-y-2 mb-4">
+                                        <li className="flex items-center gap-2">
+                                            <span>✓</span> Comprehensive salary data
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <span>✓</span> Detailed market trends
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <span>✓</span> Career path recommendations
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
