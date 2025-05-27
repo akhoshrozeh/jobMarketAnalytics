@@ -7,13 +7,15 @@ export default function BentoLayout(
         SalaryDistribution,
         Grade,
         TopJobs,
-        RelatedSkills
+        RelatedSkills,
+        SkillSalaryStats
     }:{
         TotalJobs: React.ReactNode,
         SalaryDistribution: React.ReactNode,
         Grade: React.ReactNode,
         TopJobs: React.ReactNode,
-        RelatedSkills: React.ReactNode
+        RelatedSkills: React.ReactNode,
+        SkillSalaryStats: React.ReactNode
     }) {
     const { skillData, selectedSkill, isLoading, tier } = useSkill()
     
@@ -55,6 +57,12 @@ export default function BentoLayout(
                                 {RelatedSkills}
                             </div>
                         </div>
+                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
+                            <h2 className="text-lg font-semibold mb-2 text-gray-700">Skill Salary Stats</h2>
+                            <div className="flex items-center justify-center">
+                                {SkillSalaryStats}
+                            </div>
+                        </div>
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
                             <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
@@ -63,21 +71,15 @@ export default function BentoLayout(
                     </div>
                 ) : (
                     <div className="mt-4 max-w-4xl mx-auto px-4">
-                        {/* <div className="flex justify-center items-center w-full mb-16">
-                            <div className="inline-flex flex justify-center items-center ring-2 ring-m-dark-green rounded-lg p-4 text-lg md:text-2xl font-semibold text-black bg-white shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-white via-gray-50 to-white hover:from-gray-50 hover:via-white hover:to-gray-50">
-                                ✨ ☝️ Select or search for a skill! ☝️ ✨
-                            </div>
-                        </div> */}
-
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-6">Discover Your Skill's Market Value</h2>
+                        <div className="text-center mb-16 animate-fade-in [animation-delay:200ms] opacity-0 [animation-fill-mode:forwards]">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-6">Discover Your Skill&apos;s Market Value</h2>
                             <p className="text-xl text-gray-600">
                                 Make data-driven decisions about your career path with comprehensive skill analytics
                             </p>
                         </div>
 
                         <div className="space-y-12">
-                            <div className="flex items-start gap-6">
+                            <div className="flex items-start gap-6 animate-fade-in [animation-delay:400ms] opacity-0 [animation-fill-mode:forwards]">
                                 <div className="text-3xl">📊</div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-800 mb-2">Real-time Job Market Data</h3>
@@ -88,7 +90,7 @@ export default function BentoLayout(
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-6">
+                            <div className="flex items-start gap-6 animate-fade-in [animation-delay:600ms] opacity-0 [animation-fill-mode:forwards]">
                                 <div className="text-3xl">💰</div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-800 mb-2">Salary Intelligence</h3>
@@ -99,7 +101,7 @@ export default function BentoLayout(
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-6">
+                            <div className="flex items-start gap-6 animate-fade-in [animation-delay:800ms] opacity-0 [animation-fill-mode:forwards]">
                                 <div className="text-3xl">🎯</div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-800 mb-2">Career Path Planning</h3>
@@ -110,7 +112,7 @@ export default function BentoLayout(
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-6">
+                            <div className="flex items-start gap-6 animate-fade-in [animation-delay:1000ms] opacity-0 [animation-fill-mode:forwards]">
                                 <div className="text-3xl">🌍</div>
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-800 mb-2">Location & Remote Insights</h3>
@@ -123,7 +125,7 @@ export default function BentoLayout(
                         </div>
 
                         {tier !== "premium" && (
-                            <div className="mt-16 text-center">
+                            <div className="mt-16 text-center animate-fade-in [animation-delay:1200ms] opacity-0 [animation-fill-mode:forwards]">
                                 <div className="inline-block bg-gradient-to-r from-m-dark-green to-green-600 text-white px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                                     <h3 className="text-2xl font-bold mb-3">Upgrade to Premium</h3>
                                     <p className="text-lg text-white/90 mb-4">
