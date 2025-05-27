@@ -21,7 +21,7 @@ export default function BentoLayout(
         <>
             {isLoading && (
                 <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-m-dark-green"></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-m-dark-green"></div>
                     <div className="text-xl font-medium text-gray-800">
                         Analyzing <span className="font-bold">{selectedSkill}</span> market insights...
                     </div>
