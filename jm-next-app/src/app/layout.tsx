@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import DynamicBlob from "@/app/components/DynamicBlob";
 import Navbar from "@/app/components/Navbar";
 import Providers from "@/providers/AmplifyProvider";
+import { Raleway } from "next/font/google";
 
 
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
+const raleway = Raleway({
+  variable: "--font-raleway",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
-
 
 export const metadata: Metadata = {
   title: "JobTrendr | Job Market Tools",
@@ -27,7 +26,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={plusJakartaSans.className}>
+      <body className={`${raleway.className}`}>
         <div>
           {/* Background layer */}
           <div className="fixed inset-0 bg-white -z-20" />
