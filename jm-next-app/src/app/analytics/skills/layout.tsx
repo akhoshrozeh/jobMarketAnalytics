@@ -12,19 +12,17 @@ async function fetchSkillData(skill: string) {
 
 export default async function Layout({
   children,
+  MarketDemand,
   TopSkills,
-  TotalJobs,
   SalaryDistribution,
-  Grade,
   TopJobs,
   RelatedSkills,
   SkillSalaryStats
 }: {
   children: React.ReactNode
+  MarketDemand: React.ReactNode
   TopSkills: React.ReactNode
-  TotalJobs: React.ReactNode
   SalaryDistribution: React.ReactNode
-  Grade: React.ReactNode
   TopJobs: React.ReactNode
   RelatedSkills: React.ReactNode
   SkillSalaryStats: React.ReactNode
@@ -41,7 +39,7 @@ export default async function Layout({
           {TopSkills}
         </SearchContainer>
 
-        <BentoLayout TotalJobs={TotalJobs} SalaryDistribution={SalaryDistribution} Grade={Grade} TopJobs={TopJobs} RelatedSkills={RelatedSkills} SkillSalaryStats={SkillSalaryStats} />
+        <BentoLayout MarketDemand={MarketDemand} SalaryDistribution={SalaryDistribution} TopJobs={TopJobs} RelatedSkills={RelatedSkills} SkillSalaryStats={SkillSalaryStats} />
         <UpgradeModal />
       </div>
     </SkillProvider>

@@ -3,16 +3,14 @@ import { useSkill } from "./SkillContext"
 
 export default function BentoLayout(
     {   
-        TotalJobs,
+        MarketDemand,
         SalaryDistribution,
-        Grade,
         TopJobs,
         RelatedSkills,
         SkillSalaryStats
     }:{
-        TotalJobs: React.ReactNode,
+        MarketDemand: React.ReactNode,
         SalaryDistribution: React.ReactNode,
-        Grade: React.ReactNode,
         TopJobs: React.ReactNode,
         RelatedSkills: React.ReactNode,
         SkillSalaryStats: React.ReactNode
@@ -31,40 +29,38 @@ export default function BentoLayout(
             )}
             <div className="container mx-auto p-4">
                 {skillData ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-6 grid-rows-24 gap-4 text-center">
-                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 h-full flex flex-col bg-slate-100/50">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">📊 Total Jobs</h2>
-                            <div className="flex-1 flex items-center justify-center">
-                                <div className="md:text-2xl lg:text-4xl font-bold">
-                                    {TotalJobs}
-                                </div>
-                            </div>
-                        </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
                         
-                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-5 lg:row-span-1 bg-slate-100/50">
-                            <h2 className="text-xl font-semibold mb-2 text-gray-700">💰 Salary Distribution</h2>
-                                {SalaryDistribution}
-                        </div>
-                        
-                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 bg-slate-100/50">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">🌍 Remote 📍Onsite</h2>
-                            {Grade}
-                        </div>
-                        
-                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">Related Skills</h2>
-                            <div className="flex items-center justify-center">
-                                {RelatedSkills}
-                            </div>
-                        </div>
-                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
+                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 lg:row-span-1 bg-slate-100/50">
                             <h2 className="text-lg font-semibold mb-2 text-gray-700">Skill Salary Stats</h2>
                             <div className="flex items-center justify-center">
                                 {SkillSalaryStats}
                             </div>
                         </div>
                         
-                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
+                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-4 lg:row-span-2 bg-slate-100/50">
+                            <h2 className="text-xl font-semibold mb-2 text-gray-700">💰 Salary Distribution</h2>
+                                {SalaryDistribution}
+                        </div>
+                        
+                        
+                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 flex flex-col bg-slate-100/50 lg:col-span-2 lg:row-span-1">
+                            <h2 className="text-lg font-semibold mb-2 text-gray-700">📊 Market Demand </h2>
+                            <div className="flex-1">
+                                {MarketDemand}
+                            </div>
+                        </div>
+                        
+                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 lg:row-span-1 bg-slate-100/50">
+                            <h2 className="text-lg font-semibold mb-2 text-gray-700">Related Skills</h2>
+                            <div className="flex items-center justify-center">
+                                {RelatedSkills}
+                            </div>
+                        </div>
+
+
+                        
+                        <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 lg:row-span-1 bg-slate-100/50">
                             <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
                             {TopJobs}
                         </div>
