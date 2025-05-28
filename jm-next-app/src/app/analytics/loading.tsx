@@ -6,10 +6,10 @@ export default function Loading() {
                 <div className="flex flex-col items-center gap-6 text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-m-dark-green"></div>
                     <div className="flex flex-col items-center gap-2">
-                        <h1 className="text-2xl font-semibold text-gray-800">
+                        <h1 className="text-2xl font-semibold text-gray-800 animate-pulse">
                             Loading Analytics 
                         </h1>
-                        <p className="text-gray-500 text-sm">Preparing your insights</p>
+                        <p className="text-gray-500 text-sm animate-pulse">Preparing your insights</p>
                     </div>
                 </div>
             </div>
