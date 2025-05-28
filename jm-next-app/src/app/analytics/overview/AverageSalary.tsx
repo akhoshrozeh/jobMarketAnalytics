@@ -13,15 +13,15 @@ export default function AverageSalary({ avgMinSalary, avgMaxSalary }: { avgMinSa
     });
 
     useEffect(() => {
-        const duration = 1500; // 2 seconds total
-        const frames = 60; // 60 fps
+        const duration = 1500;
+        const frames = 60;
         const frameTime = duration / frames;
         let elapsed = 0;
 
         const timer = setInterval(() => {
             elapsed += frameTime;
             const progress = Math.min(elapsed / duration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
 
             setMinCount(Math.floor(avgMinSalary * easeProgress));
             setMaxCount(Math.floor(avgMaxSalary * easeProgress));
@@ -34,20 +34,19 @@ export default function AverageSalary({ avgMinSalary, avgMaxSalary }: { avgMinSa
         return () => clearInterval(timer);
     }, [avgMinSalary, avgMaxSalary]);
 
-    // TODO: format $ for mobile; there's a gap in the text
     return (
-        <div className="flex flex-col items-center justify-center gap-x-4 font-bold">
-            <div className="flex flex-row items-center justify-center gap-x-4 w-full">
-                <div className="flex items-center">
-                    <span className="w-6">🔺$</span>
-                    <span className="min-w-[111px] text-right">{maxCount.toLocaleString()}</span>
-                </div>
+        <div className="flex flex-col items-center justify-center gap-y-2 w-full">
+            <div className="flex items-center justify-center gap-x-2">
+                <span className="text-xl sm:text-2xl">🔺</span>
+                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+                    {formatter.format(maxCount)}
+                </span>
             </div>
-            <div className="flex flex-row items-center justify-center gap-x-4 w-full">
-                <div className="flex items-center">
-                    <span className="w-6">🔻$</span>
-                    <span className="min-w-[114px] text-right">{minCount.toLocaleString()}</span>
-                </div>
+            <div className="flex items-center justify-center gap-x-2">
+                <span className="text-xl sm:text-2xl">🔻</span>
+                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+                    {formatter.format(minCount)}
+                </span>
             </div>
         </div>
     );
