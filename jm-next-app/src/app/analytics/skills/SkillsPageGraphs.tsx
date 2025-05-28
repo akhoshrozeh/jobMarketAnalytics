@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 interface SalaryDistributionProps {
@@ -28,6 +28,19 @@ interface BarData {
 export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkill, totalJobs }: SalaryDistributionProps) {
     const scrollableRef = useRef<SVGSVGElement>(null);
     const fixedRef = useRef<SVGSVGElement>(null);
+    const [containerWidth, setContainerWidth] = useState<number>(600);
+    const containerDivRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function updateWidth() {
+            if (containerDivRef.current) {
+                setContainerWidth(containerDivRef.current.offsetWidth);
+            }
+        }
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+        return () => window.removeEventListener('resize', updateWidth);
+    }, []);
 
     useEffect(() => {
         if (!scrollableRef.current || !fixedRef.current || !minSalaries || !maxSalaries) return;
@@ -37,7 +50,7 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
         d3.select(fixedRef.current).selectAll("*").remove();
 
         // Chart dimensions and margins
-        const width = 600;
+        const width = containerWidth;
         const height = 600;
         const marginTop = 20;
         const marginRight = 20;
@@ -68,16 +81,10 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
             .domain([0, d3.max(stackedData, d => d.min + d.max) || 0]).nice()
             .range([height - marginBottom, marginTop]);
 
-        // Get the container width
-        const container = d3.select(scrollableRef.current?.parentNode as HTMLElement)
-            .style("position", "relative")
-            .style("height", `${height}px`);
-        const containerWidth = (container.node() as HTMLElement).clientWidth;
-
         // Create gradient for bars
         const scrollableSvg = d3.select(scrollableRef.current)
-            .attr("viewBox", [0, 0, actualWidth, height])
-            .attr("width", actualWidth)
+            .attr("viewBox", [0, 0, width, height])
+            .attr("width", width)
             .attr("height", height)
             .attr("style", "max-width: none; height: auto;");
 
@@ -226,8 +233,8 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
 
         // Fixed overlay layer
         const fixedSvg = d3.select(fixedRef.current)
-            .attr("viewBox", [0, 0, containerWidth, height])
-            .attr("width", containerWidth)
+            .attr("viewBox", [0, 0, width, height])
+            .attr("width", width)
             .attr("height", height)
             .attr("style", "pointer-events: none; position: absolute; top: 0; left: 0;");
 
@@ -236,7 +243,7 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
             .attr("class", "grid")
             .attr("transform", `translate(${marginLeft},0)`)
             .call(d3.axisLeft(y)
-                .tickSize(-containerWidth)
+                .tickSize(-width + marginLeft + marginRight)
                 .tickFormat(() => "")
             )
             .style("stroke-dasharray", "2,2")
@@ -274,7 +281,7 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
 
         // Add legend
         const legend = fixedSvg.append("g")
-            .attr("transform", `translate(${containerWidth - 150}, 30)`);
+            .attr("transform", `translate(${width - 150}, 30)`);
 
         const legendItems = [
             { label: "Min Salary", color: "url(#minSalaryGradient)" },
@@ -302,10 +309,10 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
         return () => {
             tooltip.remove();
         };
-    }, [minSalaries, maxSalaries]);
+    }, [containerWidth]);
 
     return (
-        <div style={{ position: "relative", height: "600px" }}>
+        <div ref={containerDivRef} style={{ position: "relative", height: "600px" }}>
             <div className="w-full overflow-x-auto overflow-y-hidden" style={{ scrollBehavior: 'smooth' }}>
                 <svg ref={scrollableRef}></svg>
             </div>

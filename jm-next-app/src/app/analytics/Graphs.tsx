@@ -182,22 +182,23 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
   const scrollableRef = useRef<SVGSVGElement>(null);
   const fixedRef = useRef<SVGSVGElement>(null);
   const [isLargeScreen, setIsLargeScreen] = useState(false); // Start with a default value
+  const [containerWidth, setContainerWidth] = useState<number>(600);
+  const containerDivRef = useRef<HTMLDivElement>(null);
 
   // Set initial value and add resize listener
   useEffect(() => {
-    // Set initial value after component mounts
     setIsLargeScreen(window.innerWidth >= 1024);
-
     function handleResize() {
       const wasLargeScreen = isLargeScreen;
       const isNowLargeScreen = window.innerWidth >= 1024;
-      
-      // Only update state if we've crossed the threshold
       if (wasLargeScreen !== isNowLargeScreen) {
         setIsLargeScreen(isNowLargeScreen);
       }
+      if (containerDivRef.current) {
+        setContainerWidth(containerDivRef.current.offsetWidth);
+      }
     }
-
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isLargeScreen]);
@@ -240,10 +241,10 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
       .range([height - marginBottom, marginTop]);
 
     // Get the visible container width from the parent element.
-    const container = d3.select(scrollableRef.current?.parentNode as HTMLElement)
-      .style("position", "relative")
-      .style("height", `${height}px`);
-    const containerWidth = (container.node() as HTMLElement).clientWidth;
+    // const container = d3.select(scrollableRef.current?.parentNode as HTMLElement)
+    //   .style("position", "relative")
+    //   .style("height", `${height}px`);
+    // const containerWidth = (container.node() as HTMLElement).clientWidth;
 
     // ----- SCROLLABLE LAYER (bars and x-axis) -----
     const scrollableSvg = d3.select(scrollableRef.current)
@@ -470,10 +471,10 @@ export function TopSkillsGraph({ data, blurLabels = false, totalJobs }: TopSkill
 
     }
 
-  }, [data, blurLabels, totalJobs, isLargeScreen]);
+  }, [data, blurLabels, totalJobs, isLargeScreen, containerWidth]);
 
   return (
-    <div style={{ position: "relative", height: "600px" }}>
+    <div ref={containerDivRef} style={{ position: "relative", height: "600px" }}>
       <div className="w-full overflow-x-auto overflow-y-hidden" style={{ scrollBehavior: 'smooth' }}>
         {/* Scrollable layer (bars & x-axis) */}
         <svg ref={scrollableRef}></svg>
