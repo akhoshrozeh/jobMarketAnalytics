@@ -198,7 +198,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
           <div className="flex items-center gap-x-4 min-w-fit">
             <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="-m-2.5 p-2.5 text-gray-400">
               <span className="sr-only">Open sidebar</span>
-              <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-full p-1" />
+              <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-md p-1 border-2 border-m-dark-green" />
             </button>
             <div className="hidden xl:block text-lg font-semibold text-black">Analytics Dashboard</div>
           </div>

@@ -22,7 +22,7 @@ export default async function Overview() {
                 
                 {/* Second row - smaller components side by side */}
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 h-full flex flex-col bg-slate-100/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700">📊 Total Jobs Analyzed</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-black">📊 Total Jobs Analyzed</h2>
                     <div className="flex-1 flex items-center justify-center">
                         <div className="md:text-2xl lg:text-4xl font-bold">
                             <TotalJobs totalJobs={overviewData?.totalJobs || 0}/>
@@ -31,30 +31,30 @@ export default async function Overview() {
                 </div>
                 
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:row-span-1 bg-slate-100/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700 ">💰 Average Salaries</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-black ">💰 Average Salaries</h2>
                     <div className="text-md lg:text-xl xl:text-2xl">
                         <AverageSalary avgMinSalary={overviewData?.averageSalary[0]?.avgMinSalary || 0} avgMaxSalary={overviewData?.averageSalary[0]?.avgMaxSalary || 0}/>
                     </div>
                 </div>
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-4 lg:row-span-2 bg-slate-100/50">
-                    <h2 className="text-xl font-semibold mb-2 text-gray-700">🛠️✨ Top Skills</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-black">🛠️✨ Top Skills</h2>
                     <TopSkills blurLabels={!tier.valid} topSkills={overviewData?.topSkills} totalJobs={overviewData?.totalJobs || 0}/>
                 </div>
                 
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 bg-slate-100/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700">🌍 Remote 📍Onsite</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-black">🌍 Remote 📍Onsite</h2>
                     <RemoteVsOnsite remoteVsOnsiteJobs={overviewData?.remoteVsOnsiteJobs as { total: number; remote: number; nonRemote: number; }[]}/>
                 </div>
                 
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Locations</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-black">Top Locations</h2>
                     <div className="flex items-center justify-center">
                         <TopLocations topLocationsData={overviewData?.topLocations as {location: string, count: number, location_coords: number[]}[]}/>
                     </div>
                 </div>
                 
                 <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 bg-slate-100/50">
-                    <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-black">Top Job Titles</h2>
                     <TopJobTitles topJobTitlesData={overviewData?.topJobTitles as {title: string, count: number}[]}/>
                 </div>
 
