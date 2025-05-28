@@ -32,27 +32,27 @@ export default function BentoLayout(
                     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 lg:row-span-1 bg-slate-100/50">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">Skill Salary Stats</h2>
+                            <h2 className="text-xl font-semibold mb-2 text-black">📈 Salary Stats</h2>
                             <div className="flex items-center justify-center">
                                 {SkillSalaryStats}
                             </div>
                         </div>
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-4 lg:row-span-2 bg-slate-100/50">
-                            <h2 className="text-xl font-semibold mb-2 text-gray-700">💰 Salary Distribution</h2>
+                            <h2 className="text-xl font-semibold mb-2 text-black">💰 Salary Distribution</h2>
                                 {SalaryDistribution}
                         </div>
                         
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 flex flex-col bg-slate-100/50 lg:col-span-2 lg:row-span-1">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">📊 Market Demand </h2>
+                            <h2 className="text-xl font-semibold mb-2 text-black">📊 Market Demand</h2>
                             <div className="flex-1">
                                 {MarketDemand}
                             </div>
                         </div>
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 lg:row-span-1 bg-slate-100/50">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">Related Skills</h2>
+                            <h2 className="text-xl font-semibold mb-2 text-black">🔗 Related Skills</h2>
                             <div className="flex items-center justify-center">
                                 {RelatedSkills}
                             </div>
@@ -61,7 +61,7 @@ export default function BentoLayout(
 
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 lg:row-span-1 bg-slate-100/50">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-700">Top Job Titles</h2>
+                            <h2 className="text-xl font-semibold mb-2 text-black">👔 Top Job Titles</h2>
                             {TopJobs}
                         </div>
                     </div>
