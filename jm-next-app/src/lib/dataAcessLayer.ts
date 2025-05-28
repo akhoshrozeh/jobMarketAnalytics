@@ -550,60 +550,34 @@ export const getSkillData = cache(async (skill: string) => {
 
         // Get all data in parallel using a single db connection
         const [
-            totalJobsForSkill,
             salaryDistributionForSkill,
-            skillGrade,
             detailedSalaryMetrics,
             topJobs,
-            relatedSkills
+            relatedSkills,
+            skillSalaryStats,
+            marketDemand
         ] = await Promise.all([
-            getTotalJobsForSkill(db, skill),
             getSalaryDistributionForSkill(db, skill),
-            getSkillGrade(db, skill),
             getDetailedSalaryMetrics(db, skill),
             getTopJobForSkill(db, skill),
-            getRelatedSkills(db, skill)
+            getRelatedSkills(db, skill),
+            getSkillSalaryStats(db, skill),
+            getSkillMarketDemand(db, skill)
         ]);
 
         return {
-            "totalJobsForSkill": totalJobsForSkill, 
             "salaryDistributionForSkill": salaryDistributionForSkill,
-            "skillGrade": skillGrade,
             "detailedSalaryMetrics": detailedSalaryMetrics,
             "topJobs": topJobs,
-            "relatedSkills": relatedSkills
+            "relatedSkills": relatedSkills,
+            "skillSalaryStats": skillSalaryStats,
+            "marketDemand": marketDemand
         };
     } catch (error) {
         console.error('Error: getSkillData() failed:', error);
         return null;
     }  
 });
-
-const getTotalJobsForSkill = cache(async (db: MongoDBClient, skill: string) => {
-    try {
-        const pipeline = [
-            {
-                $match: {
-                    extracted_keywords: { $exists: true, $ne: [] }
-                }
-            },
-            {
-                $unwind: "$extracted_keywords"
-            },
-            {
-                $match: { $expr: { $eq: ["$extracted_keywords", skill] } }
-            },
-            {
-                $count: "total"
-            }
-        ]
-        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        return result[0]?.total || 0;
-    } catch (error) {
-        console.error('Error: getTotalJobsForSkill() failed:', error);
-        return null;
-    }
-})
 
 const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: string) => {
     try {
@@ -741,130 +715,6 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
 });
 
 
-
-const getSkillGrade = cache(async (db: MongoDBClient, skill: string) => {
-    try {
-        const pipeline = [
-            {
-                $facet: {
-                    skillRanking: [
-                        { $match: { extracted_keywords: { $exists: true, $ne: [] } } },
-                        { $unwind: "$extracted_keywords" },
-                        { $group: { _id: "$extracted_keywords", count: { $sum: 1 } } },
-                        { $sort: { count: -1 } },
-                        { $limit: 1000}, //CHANGE THE TOP SKILLS FROM LIMITER TO 500
-                        { 
-                            $group: {
-                                _id: null,
-                                allSkills: { 
-                                    $push: { 
-                                        skill: "$_id", 
-                                        count: "$count" 
-                                    } 
-                                },
-                                totalSkills: { $sum: 1 }
-                            }
-                        },
-                        {
-                            $project: {
-                                rank: {
-                                    $indexOfArray: ["$allSkills.skill", skill]
-                                },
-                                totalSkills: 1
-                            }
-                        },
-                        {
-                            $project: {
-                                popularityScore: {
-                                    $subtract: [
-                                        1,
-                                        { $divide: ["$rank", "$totalSkills"] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    skillData: [
-                        { $match: { extracted_keywords: skill } },
-                        {
-                            $group: {
-                                _id: null,
-                                avgMinSalary: { $avg: { $toDouble: "$min_amount" } },
-                                avgMaxSalary: { $avg: { $toDouble: "$max_amount" } }
-                            }
-                        },
-                        {
-                            $project: {
-                                avgSalary: { $avg: ["$avgMinSalary", "$avgMaxSalary"] }
-                            }
-                        }
-                    ],
-                    overallAvgSalary: [
-                        {
-                            $group: {
-                                _id: null,
-                                avgMin: { $avg: { $toDouble: "$min_amount" } },
-                                avgMax: { $avg: { $toDouble: "$max_amount" } }
-                            }
-                        },
-                        {
-                            $project: {
-                                avg: { $avg: ["$avgMin", "$avgMax"] }
-                            }
-                        }
-                    ]
-                }
-            },
-            {
-                $project: {
-                    skillRanking: 1,
-                    skillData: 1,
-                    overallAvgSalary: 1,
-                    compositeScore: {
-                        $let: {
-                            vars: {
-                                popularityScore: { $arrayElemAt: ["$skillRanking.popularityScore", 0] },
-                                skillAvg: { $arrayElemAt: ["$skillData.avgSalary", 0] },
-                                overallAvg: { $arrayElemAt: ["$overallAvgSalary.avg", 0] }
-                            },
-                            in: {
-                                $add: [
-                                    { $multiply: [0.5, "$$popularityScore"] },
-                                    { $multiply: [0.5, { $min: [1, { $subtract: ["$$skillAvg", "$$overallAvg"] }] }] }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $project: {
-                    grade: {
-                        $switch: {
-                            branches: [
-                                { case: { $gte: ["$compositeScore", 0.8] }, then: "A" },
-                                { case: { $gte: ["$compositeScore", 0.6] }, then: "B" },
-                                { case: { $gte: ["$compositeScore", 0.4] }, then: "C" },
-                                { case: { $gte: ["$compositeScore", 0.2] }, then: "D" }
-                            ],
-                            default: "F"
-                        }
-                    },
-                    compositeScore: 1,
-                    skillAvg: { $arrayElemAt: ["$skillData.avgSalary", 0] },
-                    overallAvg: { $arrayElemAt: ["$overallAvgSalary.avg", 0] },
-                    popularityScore: { $arrayElemAt: ["$skillRanking.popularityScore", 0] },
-                }
-            }
-        ];
-
-        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        return result[0] || { grade: "F", compositeScore: 0 };
-    } catch (error) {
-        console.error('Error: getSkillGrade() failed:', error);
-        return { grade: "F", compositeScore: 0 };
-    }
-});
 
 const getDetailedSalaryMetrics = cache(async (db: MongoDBClient, skill: string) => {
     try {
@@ -1053,3 +903,141 @@ export const getRelatedSkills = cache(async (db: MongoDBClient, skill: string) =
         return [];
     }
 });
+
+// Helper function to calculate median
+const calculateMedian = (numbers: number[]): number => {
+    if (!numbers || numbers.length === 0) return 0;
+    const sorted = [...numbers].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0 
+        ? (sorted[mid - 1] + sorted[mid]) / 2 
+        : sorted[mid];
+};
+
+export const getSkillMarketDemand = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        // Get the skill count and total jobs
+        const pipeline = [
+            {
+                $facet: {
+                    skillCount: [
+                        { $match: { extracted_keywords: skill } },
+                        { $count: "total" }
+                    ],
+                    totalJobs: [
+                        { $count: "total" }
+                    ]
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        const skillCount = result[0]?.skillCount[0]?.total || 0;
+        const totalJobs = result[0]?.totalJobs[0]?.total || 0;
+
+        // Get the ranking from getTopSkills
+        const topSkills = await getTopSkills(db, "premium"); // Use premium to get all skills
+        const skillRank = topSkills.findIndex((s: { _id: string }) => s._id === skill) + 1;
+
+        return {
+            count: skillCount,
+            totalJobs: totalJobs,
+            popularityScore: (skillCount / totalJobs) * 100,
+            popularityRank: skillRank || 0 // Use 0 if skill not found in rankings
+        };
+    } catch (error) {
+        console.error('Error: getSkillMarketDemand() failed:', error);
+        return null;
+    }
+});
+
+export const getSkillSalaryStats = cache(async (db: MongoDBClient, skill: string) => {
+    try {
+        const pipeline = [
+            {
+                $match: {
+                    extracted_keywords: skill,
+                    min_amount: { $exists: true, $ne: null, $gte: 40000 },
+                    max_amount: { $exists: true, $ne: null, $gte: 40000 }
+                }
+            },
+            {
+                $project: {
+                    avgSalary: {
+                        $avg: [
+                            { $toDouble: "$min_amount" },
+                            { $toDouble: "$max_amount" }
+                        ]
+                    }
+                }
+            },
+            {
+                $facet: {
+                    skillStats: [
+                        {
+                            $group: {
+                                _id: null,
+                                mean: { $avg: "$avgSalary" },
+                                count: { $sum: 1 }
+                            }
+                        }
+                    ],
+                    overallStats: [
+                        {
+                            $lookup: {
+                                from: "JobPostings",
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            min_amount: { $exists: true, $ne: null, $gte: 40000 },
+                                            max_amount: { $exists: true, $ne: null, $gte: 40000 }
+                                        }
+                                    },
+                                    {
+                                        $project: {
+                                            avgSalary: {
+                                                $avg: [
+                                                    { $toDouble: "$min_amount" },
+                                                    { $toDouble: "$max_amount" }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            mean: { $avg: "$avgSalary" },
+                                            count: { $sum: 1 }
+                                        }
+                                    }
+                                ],
+                                as: "overall"
+                            }
+                        }
+                    ]
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        const skillData = result[0]?.skillStats[0];
+        const overallData = result[0]?.overallStats[0]?.overall[0];
+
+        if (!skillData || !overallData) return null;
+
+        return {
+            mean: skillData.mean,
+            count: skillData.count,
+            overallMean: overallData.mean,
+            overallCount: overallData.count,
+            salaryPremium: skillData.mean - overallData.mean,
+            salaryPremiumPercentage: ((skillData.mean - overallData.mean) / overallData.mean) * 100
+        };
+        
+    } catch (error) {
+        console.error('Error: getSkillSalaryStats() failed:', error);
+        return null;
+    }
+});
+
+
