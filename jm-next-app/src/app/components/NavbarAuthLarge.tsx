@@ -25,7 +25,7 @@ export default async function NavbarAuthLarge({isLoggedIn, tier}: {isLoggedIn: b
 
               {/* Profile dropdown */}
               <div>
-                {tier}
+                {tier.charAt(0).toUpperCase() + tier.slice(1)}
               </div>
               <Menu as="div" className="relative ml-3 z-20">
                 <div>
@@ -40,22 +40,7 @@ export default async function NavbarAuthLarge({isLoggedIn, tier}: {isLoggedIn: b
                   transition
                   className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-black border-2 border-emerald-500 py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                 >
-                  <MenuItem>
-                    <Link
-                      href="#profile"
-                      className="block px-4 py-2 text-sm text-white data-[focus]:bg-emerald-500/80 data-[focus]:outline-none"
-                    >
-                      Profile
-                    </Link>
-                  </MenuItem>
-                  <MenuItem>
-                    <Link
-                      href="#settings"
-                      className="block px-4 py-2 text-sm text-white data-[focus]:bg-emerald-500/80 data-[focus]:outline-none"
-                    >
-                      Settings
-                    </Link>
-                  </MenuItem>
+                 
                     <MenuItem as="div" className="block px-4 py-2 text-sm text-white data-[focus]:bg-emerald-500/80 data-[focus]:outline-none">
                   <SignOutButton />
                   </MenuItem>

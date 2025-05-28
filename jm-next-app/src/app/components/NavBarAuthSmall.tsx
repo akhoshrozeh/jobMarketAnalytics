@@ -16,18 +16,9 @@ export default async function NavBarAuthSmall({isLoggedIn, tier}: {isLoggedIn: b
                     
                     className="block rounded-md px-1 py-2 text-base font-medium text-black"
                     >
-                    Tier: {tier}
+                    {tier.charAt(0).toUpperCase() + tier.slice(1)}
                     </DisclosurePanel>
-
-                    <DisclosureButton
-                    as="a"
-                    href="#"
-                    className="block rounded-md px-1 py-2 text-base font-medium text-black"
-                    >
-                    Profile
-                    </DisclosureButton>
                     
-
                     <DisclosureButton
                     as="div"
                     

@@ -30,9 +30,11 @@ export default async function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-20">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center justify-between flex-1">
-            <div className="shrink-0 text-m-light-green font-bold text-2xl bg-black p-2 rounded-xl">
-              Job<span className="text-emerald-500">Trendr</span>
-            </div>
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <div className="shrink-0 text-m-light-green font-bold text-2xl bg-black p-2 rounded-xl">
+                  Job<span className="text-emerald-500">Trendr</span>
+              </div>
+            </Link>
             <div className="hidden md:block text-black flex-1">
               <div className="flex space-x-8 justify-center">
                 <Link 
