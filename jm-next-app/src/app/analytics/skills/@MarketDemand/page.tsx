@@ -49,10 +49,10 @@ export default function MarketDemand() {
             <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300 animate-fade-in [animation-delay:800ms] opacity-0 [animation-fill-mode:forwards]">
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Popularity Rank</h3>
                 <div className="text-3xl font-bold text-m-dark-green">
-                    Top {marketDemand.popularityRank}%
+                    {marketDemand.popularityRank}
                 </div>
                 <div className="mt-2 text-sm text-gray-500">
-                    of all skills in demand
+                    skill in demand
                 </div>
             </div>
         </div>
