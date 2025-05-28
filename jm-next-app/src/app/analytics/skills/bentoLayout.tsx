@@ -29,7 +29,7 @@ export default function BentoLayout(
             )}
             <div className="container mx-auto p-4">
                 {skillData ? (
-                    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 text-center">
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-2 lg:row-span-1 bg-slate-100/50">
                             <h2 className="text-xl font-semibold mb-2 text-black">📈 Salary Stats</h2>
