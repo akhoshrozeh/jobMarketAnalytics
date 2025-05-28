@@ -76,24 +76,17 @@ export default function ResetPassword() {
         
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <Image
-                alt="Your Company"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=emerald&shade=500"
-                className="mx-auto h-10 w-auto"
-                width={100}
-                height={100}
-            />
-            <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">Reset Password</h2>
+            <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-black">Reset Password</h2>
             </div>
     
             { step === "ENTER_EMAIL" && (
                 <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-                    <form onSubmit={handleResetPassword} className="space-y-6">
+                    <form onSubmit={handleResetPassword} className="space-y-6 text-center">
                         <div>
-                            <label htmlFor="email" className="block text-md font-medium text-white">
+                            <label htmlFor="email" className="block text-md font-medium text-black">
                                 Please enter your email address. 
                             </label>
-                            <label htmlFor="email" className="block text-md font-medium text-white mt-2">
+                            <label htmlFor="email" className="block text-md font-medium text-black mt-2">
                                 A confirmation code will be sent for verification.
                             </label>
                             <label className="text-red-500 mt-4">
@@ -107,7 +100,7 @@ export default function ResetPassword() {
                                 required
                                 placeholder="Your Email"
                                 autoComplete="email"
-                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
+                                className="block w-full rounded-md px-3 py-1.5 text-base text-black outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                 />
                             </div>
                         </div>
@@ -127,7 +120,7 @@ export default function ResetPassword() {
                 <div className="mt-10 sm:mx-auto sm:max-w-full xs:max-w-xs">
                    <form onSubmit={handleConfirmResetPassword} className="space-y-6">
                         <div className="border-b border-gray-400 mb-12 pb-8">
-                            <label htmlFor="confirmationCode" className="block text-md font-medium text-white mb-4">
+                            <label htmlFor="confirmationCode" className="block text-md font-medium text-black mb-4">
                                 Please enter your confirmation code from <u>{email}</u>
                             </label>
                             <div className="mt-2">
@@ -135,7 +128,7 @@ export default function ResetPassword() {
                                 id="confirmationCode"
                                 name="confirmationCode"
                                 required
-                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
+                                className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-black outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                 />
                                 
                             </div>
@@ -144,7 +137,7 @@ export default function ResetPassword() {
                             {errorMessage}
                         </div>
                         <div>
-                            <label htmlFor="newPassword" className="block text-md font-medium text-white">
+                            <label htmlFor="newPassword" className="block text-md font-medium text-black">
                                 New password:
                             </label>    
                             <div className="mt-2">
@@ -153,12 +146,12 @@ export default function ResetPassword() {
                                     name="newPassword"
                                     type="password"
                                     required
-                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
+                                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-black outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                     />
                             </div>
                         </div>
                         <div>
-                            <label htmlFor="newPasswordConfirmation" className="block text-md font-medium text-white">
+                            <label htmlFor="newPasswordConfirmation" className="block text-md font-medium text-black">
                                 Confirm new password:
                             </label>    
                             <div className="mt-2">
@@ -167,7 +160,7 @@ export default function ResetPassword() {
                                     name="newPasswordConfirmation"
                                     type="password"
                                     required
-                                    className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
+                                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-black outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-emerald-500 sm:text-md/6"
                                     />
                             </div>
                         </div>
@@ -185,7 +178,7 @@ export default function ResetPassword() {
 
             { step === "DONE" && (
                 <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-lg">
-                    <div className="flex items-center justify-center text-white text-center text-md font-medium">
+                    <div className="flex items-center justify-center text-black text-center text-md font-medium">
                         Your password has successfully been reset! You can now login.
                     </div>
                 </div>
