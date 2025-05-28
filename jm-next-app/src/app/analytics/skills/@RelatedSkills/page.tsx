@@ -16,7 +16,7 @@ export default function RelatedSkills() {
 
     return (
         <div className="p-4 w-full mx-8">
-            <div className="max-h-[400px] overflow-y-auto rounded-xl border border-gray-200 shadow-sm bg-white/60 relative">
+            <div className="max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 shadow-sm bg-white/60 relative">
                 <div className="divide-y divide-gray-100">
                     {skillData?.relatedSkills
                         .map((skill: any, index: number) => {
