@@ -23,13 +23,37 @@ export interface JobTitle {
     const p = (str: string) => {hierarchy.push(str)}
 
     const has_any = (words: string[]) => {return words.some(word => _has(word))}
-     if (has(["security", "cyber", "threat", "soc", "cybersecurity"])) {
+    if (has(["security", "cyber", "threat", "soc", "cybersecurity"])) {
         p("Security")
 
-        if (has(["security"])) {
-            p(title)
+        if (has(["soc"])) {
+            p("SOC")
+        }
+        else if (has(["devsecops"])) {
+          p("DevSecOps")
+        }
+        else if (has(["analyst"])) {
+          p("Analyst")
+        }
+        else if (has(["engineer"])) {
+          p("Engineer")
+        }
+        else if (has(["architect"])) {
+          p("Architect")
+        }
+        else {
+          p(title)
         }
     }
+
+    else if (has(["ui/", "ui ", "/ux ", "ui/ux", "user interface", "user experience"])) {
+        p("UI/UX")
+        p(title)
+
+        
+    }
+
+
     // Example hierarchical parsing rules:
     else if (has(["ai","artificial intelligence","ml","machine learning"])) {
         p("AI");
@@ -155,7 +179,7 @@ export interface JobTitle {
        
         
         // 3. Then determine level/seniority if present
-        if (has(["senior", "lead", "principal", "staff"])) {
+        if (has(["senior", "lead", "principal", "staff", "sr"])) {
           p("Senior");
         } else if (_has("junior")) {
           p("Junior");
