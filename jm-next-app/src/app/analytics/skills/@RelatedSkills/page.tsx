@@ -49,7 +49,7 @@ export default function RelatedSkills() {
                                                 transform: 'translateX(-50%)'
                                             }}
                                         >
-                                            {skill.percentage}% of jobs that require <strong>{selectedSkill}</strong> also require <strong>{skill.keyword}</strong>
+                                            {skill.percentage}% of jobs that require <strong>{selectedSkill}</strong> also mention <strong>{skill.keyword}</strong>
                                             <div className="absolute left-1/2 -translate-x-1/2 bottom-[-4px] w-2 h-2 bg-gray-900 rotate-45"></div>
                                         </div>,
                                         document.body
