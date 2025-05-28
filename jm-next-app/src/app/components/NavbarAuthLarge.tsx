@@ -29,18 +29,12 @@ export default async function NavbarAuthLarge({isLoggedIn, tier}: {isLoggedIn: b
               </div>
               <Menu as="div" className="relative ml-3 z-20">
                 <div>
-                  <MenuButton className="relative flex ">
-                    <span className="absolute -inset-1.5" />
-                    <span className="sr-only">Open user menu</span>
-                    <Cog6ToothIcon aria-hidden="true" className="h-6 w-6" />
-                    {/* <Image
-                      alt=""
-                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/BrownSpiderMonkey_%28edit2%29.jpg/1920px-BrownSpiderMonkey_%28edit2%29.jpg"
-                      className="size-8 rounded-full"
-                      height={32}
-                      width={32}
-                    /> */}
-                  </MenuButton>
+                <MenuButton className="relative flex rounded-full p-1 hover:bg-m-dark-green/50 transform transition-transform duration-300 hover:rotate-90">
+                  <span className="absolute -inset-1.5" />
+                  <span className="sr-only">Open user menu</span>
+                  <Cog6ToothIcon aria-hidden="true" className="h-6 w-6" />
+              </MenuButton>
+
                 </div>
                 <MenuItems
                   transition
