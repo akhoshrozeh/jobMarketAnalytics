@@ -30,11 +30,11 @@ export default async function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-20">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center justify-between flex-1">
-            <Link href="/" className="hover:opacity-80 transition-opacity">
-              <div className="shrink-0 text-m-light-green font-bold text-2xl bg-black p-2 rounded-xl">
-                  Job<span className="text-emerald-500">Trendr</span>
-              </div>
-            </Link>
+            <div className="shrink-0 text-m-light-green font-bold text-2xl bg-black p-2 rounded-xl">
+              <Link href="/" className="hover:opacity-80 transition-opacity">
+                Job<span className="text-emerald-500">Trendr</span>
+              </Link>
+            </div>
             <div className="hidden md:block text-black flex-1">
               <div className="flex space-x-8 justify-center">
                 <Link 
@@ -83,12 +83,12 @@ export default async function Navbar() {
         </div>
       </div>
       
-      <DisclosurePanel className="md:hidden">
-        <div className="space-y-1 px-2 pb-3 pt-2">
+      <DisclosurePanel className="md:hidden absolute  w-full bg-white shadow-lg z-50 rounded-lg border-2 border-m-dark-green transition-transform duration-300 ease-in-out transform scale-95 data-[open]:scale-100">
+        <div className="space-y-1 px-4 pb-3 pt-2">
           <DisclosureButton
             as="a"
             href="/"
-            className="block px-3 py-2 text-base font-medium text-black"
+            className="block px-3 py-2 text-base font-medium text-black text-center"
           >
             <span className="relative inline-block group">
               Home
@@ -98,7 +98,7 @@ export default async function Navbar() {
           <DisclosureButton
             as="a"
             href="/analytics/overview"
-            className="block px-3 py-2 text-base font-medium text-black"
+            className="block px-3 py-2 text-base font-medium text-black text-center"
           >
             <span className="relative inline-block group">
               Analytics
@@ -108,7 +108,7 @@ export default async function Navbar() {
           <DisclosureButton
             as="a"
             href="/pricing"
-            className="block px-3 py-2 text-base font-medium text-black"
+            className="block px-3 py-2 text-base font-medium text-black text-center"
           >
             <span className="relative inline-block group">
               Pricing
@@ -117,13 +117,8 @@ export default async function Navbar() {
           </DisclosureButton>
         </div>
         <div className="border-t border-gray-700 pt-2">
-          <div className="space-y-1 px-2 pb-3">
-            {/* <div className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"> */}
-
-                <NavBarAuthSmall isLoggedIn={isLoggedIn} tier={tier}/>
-
-
-            {/* </div> */}
+          <div className="space-y-1 px-4 pb-3">
+            <NavBarAuthSmall isLoggedIn={isLoggedIn} tier={tier}/>
           </div>
         </div>
       </DisclosurePanel>

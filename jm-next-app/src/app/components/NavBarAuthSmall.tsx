@@ -29,16 +29,13 @@ export default async function NavBarAuthSmall({isLoggedIn, tier}: {isLoggedIn: b
                 </div>
             </div>
             ) : (
-                <div>
+                <div className="px-2 flex justify-center">
                     <DisclosureButton
                     as="a"
                     href="/login"
-                    className="block rounded-md px-1 py-2 text-base font-medium text-black"
+                    className="inline-block rounded-md px-3 py-2 text-md font-medium text-black bg-emerald-500 hover:bg-emerald-500/70 hover:text-gray-800"
                     >
-                        <span className="relative inline-block group">
-                            Login
-                            <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
-                        </span>
+                        Login
                     </DisclosureButton>
                 </div>
             )}
