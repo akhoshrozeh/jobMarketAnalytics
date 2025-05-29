@@ -141,7 +141,13 @@ def handle_init_batch(batch, batches_table, jobs_table, openai_client):
     # Format jobs as JSONL for OpenAI batch processing
     try:
         batch_payload = []
+        missing_description_count = 0
         for job in jobs:
+            if 'description' not in job:
+                logger.warning(f"Job {job['id']} is missing a description. Skipping.")
+                missing_description_count += 1
+                continue
+
             payload = {
                 "custom_id": job['id'],
                 "method": "POST", 
@@ -163,7 +169,8 @@ def handle_init_batch(batch, batches_table, jobs_table, openai_client):
             batch_payload.append(payload)
 
         jsonl_payload = "\n".join(json.dumps(payload, separators=(',', ':')) for payload in batch_payload)
-
+        logger.info(f"batch_dispatcher: {missing_description_count} jobs missing descriptions. Skipped.")
+        
     except Exception as e:
         logger.error(f"batch_dispatcher: Failed to format jobs as JSONL: {e}")
         return
