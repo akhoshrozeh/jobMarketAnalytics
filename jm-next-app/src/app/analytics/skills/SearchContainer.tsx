@@ -50,6 +50,8 @@ export default function SearchContainer({
         skill._id.toString().toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // console.log('Filtered Skills:', filteredSkills.map(skill => skill._id.toString()));
+
     return (
         <div className="relative w-full max-w-2xl mx-auto mb-8" onClick={handleContainerClick}>
             <div className="flex items-center">
@@ -91,7 +93,7 @@ export default function SearchContainer({
                                 selectedSkill === skill._id ? 'bg-blue-50' : ''
                             }`}
                         >
-                            {skill._id}
+                            {skill._id.toString()}
                         </div>
                     ))}
                 </div>
