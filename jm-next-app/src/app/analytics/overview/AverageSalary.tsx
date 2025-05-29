@@ -38,15 +38,24 @@ export default function AverageSalary({ avgMinSalary, avgMaxSalary }: { avgMinSa
         <div className="flex flex-col items-center justify-center gap-y-2 w-full">
             <div className="flex items-center justify-center gap-x-2">
                 <span className="text-xl sm:text-2xl">🔺</span>
-                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
-                    {formatter.format(maxCount)}
-                </span>
+                <div className="flex flex-col">
+                    <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+                        {formatter.format(maxCount)}
+                    </span>
+                    <span className="text-xs text-gray-500">Average Max Salary</span>
+                </div>
             </div>
             <div className="flex items-center justify-center gap-x-2">
                 <span className="text-xl sm:text-2xl">🔻</span>
-                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
-                    {formatter.format(minCount)}
-                </span>
+                <div className="flex flex-col">
+                    <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+                        {formatter.format(minCount)}
+                    </span>
+                    <span className="text-xs text-gray-500">Average Min Salary</span>
+                </div>
+            </div>
+            <div className="text-xs text-gray-500 mt-2 text-center max-w-xs">
+                Based on the minimum and maximum salary ranges posted in job listings
             </div>
         </div>
     );
