@@ -17,7 +17,7 @@ from aws_cdk import (
 from constructs import Construct
 import boto3
 import json
-from utils.secrets import get_mongodb_uri, get_db_collection, get_openai_api_key, get_geocode_api_key
+from utils.secrets import get_mongodb_uri, get_db_collection, get_openai_api_key
 from botocore.exceptions import ClientError
 
 
@@ -216,6 +216,20 @@ class JobMarketCdkStack(Stack):
                 "MONGODB_COLLECTION": mongodb_collection
             },
             timeout=Duration.minutes(15))
+        
+        mongo_sanitizer = _lambda.Function(self, "JobTrendrBackend-MongoSanitizer",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            description="Sanitizes MongoDB data (salary and extracted keywords).",
+            handler="sanitize_mongo.handler",
+            code=_lambda.Code.from_asset("lambda"),
+            layers=[pymongo_layer, boto3_layer],
+            environment={
+                "MONGODB_URI": mongodb_uri_secret,
+                "MONGODB_DATABASE": mongodb_db,
+                "MONGODB_COLLECTION": mongodb_collection
+            },
+            timeout=Duration.minutes(15)
+        )
 
 
 
@@ -259,7 +273,13 @@ class JobMarketCdkStack(Stack):
                 ]
         ))
 
-               # Add Location Service permissions for geocoder lambda
+        # Allow the batch_poller to invoke the mongo_sanitizer lambda after it writes to mongo
+        batch_poller.add_to_role_policy(iam.PolicyStatement(
+            actions=["lambda:InvokeFunction"],
+            resources=[mongo_sanitizer.function_arn]
+        ))
+
+        # Add Location Service permissions for geocoder lambda
         geocoder.add_to_role_policy(iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             actions=[
@@ -267,6 +287,8 @@ class JobMarketCdkStack(Stack):
             ],
             resources=["*"]  # You can restrict this to your specific Place Index ARN if desired
         ))
+
+
         
 
 
@@ -362,7 +384,7 @@ class JobMarketCdkStack(Stack):
         batch_dispatcher.add_to_role_policy(cloudwatch_policy)
         batch_poller.add_to_role_policy(cloudwatch_policy)
         geocoder.add_to_role_policy(cloudwatch_policy)
-
+        mongo_sanitizer.add_to_role_policy(cloudwatch_policy)
 
         # Add CloudWatch Metrics permissions
         metrics_policy = iam.PolicyStatement(
@@ -376,7 +398,7 @@ class JobMarketCdkStack(Stack):
         )
 
         # Add metrics permissions to all Lambdas
-        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_dispatcher, geocoder]:
+        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_dispatcher, geocoder, mongo_sanitizer]:
             lambda_func.add_to_role_policy(metrics_policy)
 
         # Create CloudWatch Log group outputs for easy reference
@@ -384,6 +406,7 @@ class JobMarketCdkStack(Stack):
         CfnOutput(self, "BatchPollerLogGroup", value=batch_poller.log_group.log_group_name)
         CfnOutput(self, "BatchDispatcherLogGroup", value=batch_dispatcher.log_group.log_group_name)
         CfnOutput(self, "GeocoderLogGroup", value=geocoder.log_group.log_group_name)
+        CfnOutput(self, "MongoSanitizerLogGroup", value=mongo_sanitizer.log_group.log_group_name)
 
 
 
