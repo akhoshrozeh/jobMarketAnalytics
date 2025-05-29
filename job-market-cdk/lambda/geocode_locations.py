@@ -23,7 +23,8 @@ def handler(event, context):
     batch_size = 500
 
     # Normalize locations
-    # clean_locations(collection)
+    logger.info("Normalizing locations...")
+    clean_locations(collection)
 
 
     query = {
@@ -122,7 +123,6 @@ def clean_locations(collection):
         }
     ]
 
-    result = collection.aggregate(pipeline)
-    logger.info(f"Result: {result}")
+    collection.aggregate(pipeline)
     logger.info("Location normalization complete")
     return {"status": "complete"}
