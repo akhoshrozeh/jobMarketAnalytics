@@ -37,6 +37,12 @@ def handler(event, context):
     statuses = ["init", "retry", "cancelled"]
     _status = 'init'
 
+    # A crude way of estimating tokens sent to OpenAI. This is to prevent *too* many throttling failures.
+    # These aren't a huge deal. They get handled batch_poller and have their status = 'retry'
+    # TODO: implement the checking. Need to look at the 'batch' data structure to extract 'total_jobs'
+    MAX_BATCHES_TO_ENQUEUE = 5
+    batches_enqd = 0
+
     try:
         for _status in statuses:
             response = batches_table.query(
@@ -58,10 +64,19 @@ def handler(event, context):
             if _status == 'init':
                 for batch in batches:
                     handle_init_batch(batch, batches_table, jobs_table, openai_client)
+                    batches_enqd += 1
+                    if batches_enqd >= MAX_BATCHES_TO_ENQUEUE:
+                        logger.info(f"batch_dispatcher: Reached max batches to enqueue. Exiting..")
+                        return
+
             
             elif _status == 'retry' or _status == 'cancelled':
                 for batch in batches:
                     handle_retry_batch(batch, batches_table, openai_client)
+                    batches_enqd += 1
+                    if batches_enqd >= MAX_BATCHES_TO_ENQUEUE:
+                        logger.info(f"batch_dispatcher: Reached max batches to enqueue. Exiting..")
+                        return
         
     except Exception as e:
         logger.error(f"batch_dispatcher: Failed to query {_status} batches {e}")
