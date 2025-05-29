@@ -1,4 +1,4 @@
-import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
+import { Disclosure, DisclosureButton, DisclosurePanel, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import NavbarAuthLarge from './NavbarAuthLarge'
@@ -39,7 +39,7 @@ export default async function Navbar() {
               <div className="flex space-x-8 justify-center">
                 <Link 
                   href="/" 
-                  className="relative px-2 py-2 text-md font-medium text-black group"
+                  className="relative px-2 py-2 text-md font-medium text-black group " 
                 >
                   Home
                   <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
@@ -83,45 +83,54 @@ export default async function Navbar() {
         </div>
       </div>
       
-      <DisclosurePanel className="md:hidden absolute  w-full bg-white shadow-lg z-50 rounded-lg border-2 border-m-dark-green transition-transform duration-300 ease-in-out transform scale-95 data-[open]:scale-100">
-        <div className="space-y-1 px-4 pb-3 pt-2">
-          <DisclosureButton
-            as="a"
-            href="/"
-            className="block px-3 py-2 text-base font-medium text-black text-center"
-          >
-            <span className="relative inline-block group">
-              Home
-              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
-            </span>
-          </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="/analytics/overview"
-            className="block px-3 py-2 text-base font-medium text-black text-center"
-          >
-            <span className="relative inline-block group">
-              Analytics
-              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
-            </span>
-          </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="/pricing"
-            className="block px-3 py-2 text-base font-medium text-black text-center"
-          >
-            <span className="relative inline-block group">
-              Pricing
-              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
-            </span>
-          </DisclosureButton>
-        </div>
-        <div className="border-t border-gray-700 pt-2">
-          <div className="space-y-1 px-4 pb-3">
-            <NavBarAuthSmall isLoggedIn={isLoggedIn} tier={tier}/>
+      <Transition
+        enter="transition duration-200 ease-out"
+        enterFrom="transform scale-95 opacity-0"
+        enterTo="transform scale-100 opacity-100"
+        leave="transition duration-150 ease-in"
+        leaveFrom="transform scale-100 opacity-100"
+        leaveTo="transform scale-95 opacity-0"
+      >
+        <DisclosurePanel className="md:hidden absolute w-full bg-white shadow-lg z-50 rounded-lg border-2 border-m-dark-green">
+          <div className="space-y-2 px-4 py-3">
+            <DisclosureButton
+              as="a"
+              href="/"
+              className="block w-full px-3 py-2.5 text-base font-medium text-black hover:bg-m-dark-green/10 rounded-lg transition-colors duration-200 text-center"
+            >
+              <span className="relative inline-block group">
+                Home
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
+              </span>
+            </DisclosureButton>
+            <DisclosureButton
+              as="a"
+              href="/analytics/overview"
+              className="block w-full px-3 py-2.5 text-base font-medium text-black hover:bg-m-dark-green/10 rounded-lg transition-colors duration-200 text-center"
+            >
+              <span className="relative inline-block group">
+                Analytics
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
+              </span>
+            </DisclosureButton>
+            <DisclosureButton
+              as="a"
+              href="/pricing"
+              className="block w-full px-3 py-2.5 text-base font-medium text-black hover:bg-m-dark-green/10 rounded-lg transition-colors duration-200 text-center"
+            >
+              <span className="relative inline-block group">
+                Pricing
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-0 h-0.5 bg-m-dark-green transition-all duration-300 group-hover:w-full" />
+              </span>
+            </DisclosureButton>
           </div>
-        </div>
-      </DisclosurePanel>
+          <div className="border-t border-gray-200 pt-2">
+            <div className="px-4 pb-3">
+              <NavBarAuthSmall isLoggedIn={isLoggedIn} tier={tier}/>
+            </div>
+          </div>
+        </DisclosurePanel>
+      </Transition>
     </Disclosure>
   )
 }
