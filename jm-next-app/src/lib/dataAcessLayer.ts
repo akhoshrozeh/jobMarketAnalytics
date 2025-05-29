@@ -586,8 +586,8 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
                 $match: {
                     extracted_keywords: { $exists: true, $ne: [] },
                     $and: [
-                        { min_amount: { $exists: true, $ne: null } },
-                        { max_amount: { $exists: true, $ne: null } }
+                        { adj_min_amount: { $exists: true, $ne: null } },
+                        { adj_max_amount: { $exists: true, $ne: null } }
                     ]
                 }
             },
@@ -601,73 +601,8 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
             },
             {
                 $project: {
-                    interval: 1,
-                    // Compute the interval - if missing and amount < 150, assume hourly
-                    
-                    minSalary: {
-                        $switch: {
-                            branches: [
-                                {
-                                    case: { $lt: [{ $toDouble: "$min_amount" }, 150] },
-                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 40, 52] }
-                                },
-                                {
-                                    case: {
-                                        $and: [
-                                            { $eq: ["$interval", null] },
-                                            { $lt: [{ $toDouble: "$min_amount" }, 150] }
-                                        ]
-                                    },
-                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 40, 52] }
-                                },
-                                {
-                                    case: { $eq: ["$interval", "daily"] },
-                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 5, 52] }
-                                },
-                                {
-                                    case: { $eq: ["$interval", "weekly"] },
-                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 52] }
-                                },
-                                {
-                                    case: { $eq: ["$interval", "monthly"] },
-                                    then: { $multiply: [{ $toDouble: "$min_amount" }, 12] }
-                                }
-                            ],
-                            default: { $toDouble: "$min_amount" }
-                        }
-                    },
-                    maxSalary: {
-                        $switch: {
-                            branches: [
-                                {
-                                    case: { $lt: [{ $toDouble: "$max_amount" }, 150] },
-                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 40, 52] }
-                                },
-                                {
-                                    case: {
-                                        $and: [
-                                            { $eq: ["$interval", null] },
-                                            { $lt: [{ $toDouble: "$max_amount" }, 150] }
-                                        ]
-                                    },
-                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 40, 52] }
-                                },
-                                {
-                                    case: { $eq: ["$interval", "daily"] },
-                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 5, 52] }
-                                },
-                                {
-                                    case: { $eq: ["$interval", "weekly"] },
-                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 52] }
-                                },
-                                {
-                                    case: { $eq: ["$interval", "monthly"] },
-                                    then: { $multiply: [{ $toDouble: "$max_amount" }, 12] }
-                                }
-                            ],
-                            default: { $toDouble: "$max_amount" }
-                        }
-                    }
+                    minSalary: "$adj_min_amount",
+                    maxSalary: "$adj_max_amount"
                 }
             },
             {
@@ -680,7 +615,7 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
                                 default: "1Mil",
                                 output: {
                                     count: { $sum: 1 },
-                                    examples: { $push: { salary: "$minSalary", interval: "$interval" } }
+                                    examples: { $push: { salary: "$minSalary", interval: "yearly" } }
                                 }
                             }
                         }
@@ -693,7 +628,7 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
                                 default: "1Mil",
                                 output: {
                                     count: { $sum: 1 },
-                                    examples: { $push: { salary: "$maxSalary", interval: "$interval" } }
+                                    examples: { $push: { salary: "$maxSalary", interval: "yearly" } }
                                 }
                             }
                         }
@@ -707,10 +642,10 @@ const getSalaryDistributionForSkill = cache(async (db: MongoDBClient, skill: str
             }
         ];
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        return result[0] || { minSalaries: [], maxSalaries: [], totalJobs: 0 };
+        return result[0] || { minSalaries: [], maxSalaries: [], totalJobs: [{ total: 0 }] };
     } catch (error) {
         console.error('Error: getSalaryDistributionForSkill() failed:', error);
-        return null;
+        return { minSalaries: [], maxSalaries: [], totalJobs: [{ total: 0 }] };
     }
 });
 
