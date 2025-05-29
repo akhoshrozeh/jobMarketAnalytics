@@ -75,8 +75,14 @@ def process_batch(batch, batches_table):
                 if openai_batch.errors.data[0].code == 'token_limit_exceeded':
                     logger.info(f"batch_poller: token_limit_exceeded error. Updating batch status to 'retry'")
                     handle_token_limit_error(batch, batches_table)
+
+                elif openai_batch.errors.data[0].code == 'invalid_request' and openai_batch.errors.data[0].message.startswith('Cannot find file'):
+                    logger.info(f"batch_poller: Cannot find file error. Updating batch status to 'init' to re-process")
+                    handle_missing_file_error(batch, batches_table)
+                
                 else:
                     logger.error(f"batch_poller: FAILURE - OpenAI failed to process the batch. openai_batch_id {batch_id}")
+                    handle_other_error(batch, batches_table)
                 return
 
             case 'expired':
@@ -285,4 +291,39 @@ def handle_token_limit_error(batch, batches_table):
 
     except Exception as e:
         logger.error(f"batch_poller: Failed to set batch status to 'retry' in DynamoDB: {e}")
+        return
+    
+# for example, Openai tries to process a batch where the input file expired (no longer exists on openai platform)
+def handle_missing_file_error(batch, batches_table):
+    try:
+        batches_table.update_item(
+            Key={
+                'internal_group_batch_id': batch['internal_group_batch_id'],
+                'created_at': batch['created_at']
+                },
+            UpdateExpression='SET #status = :val',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={':val': 'init'}
+        )
+        logger.info(f"batch_poller: Updated batch {batch['internal_group_batch_id']} to 'init' in DynamoDB")
+
+    except Exception as e:
+        logger.error(f"batch_poller: Failed to set batch status to 'error' in DynamoDB: {e}")
+        return
+
+def handle_other_error(batch, batches_table):
+    try:
+        batches_table.update_item(
+            Key={
+                'internal_group_batch_id': batch['internal_group_batch_id'],
+                'created_at': batch['created_at']
+                },
+            UpdateExpression='SET #status = :val',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={':val': 'error'}
+        )
+        logger.info(f"batch_poller: Updated batch {batch['internal_group_batch_id']} to 'error' in DynamoDB")
+
+    except Exception as e:
+        logger.error(f"batch_poller: Failed to set batch status to 'error' in DynamoDB: {e}")
         return
