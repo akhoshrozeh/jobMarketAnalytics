@@ -27,12 +27,12 @@ export default function SearchContainer({
             setShowUpgradeModal(true);
             return;
         }
-        setSelectedSkill(skill);
-        setSearchQuery(skill);
-        setIsDropdownOpen(false);
         setIsLoading(true);
         const data = await fetchSkillData(skill);
         setSkillData(data);
+        setSelectedSkill(skill);
+        setSearchQuery(skill);
+        setIsDropdownOpen(false);
         setIsLoading(false);
     };
     
@@ -42,7 +42,6 @@ export default function SearchContainer({
             return;
         }
         setSearchQuery(e.target.value);
-        setSelectedSkill('');
         setIsDropdownOpen(true);
     };
 

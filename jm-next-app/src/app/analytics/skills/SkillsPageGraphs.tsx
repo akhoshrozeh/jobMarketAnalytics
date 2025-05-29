@@ -43,7 +43,11 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
     }, []);
 
     useEffect(() => {
-        if (!scrollableRef.current || !fixedRef.current || !minSalaries || !maxSalaries) return;
+        console.log('Data updated:', { minSalaries, maxSalaries, selectedSkill, totalJobs });
+        if (!scrollableRef.current || !fixedRef.current || !minSalaries || !maxSalaries) {
+            console.log('Missing required data or refs');
+            return;
+        }
 
         // Clear previous content
         d3.select(scrollableRef.current).selectAll("*").remove();
@@ -74,8 +78,8 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
         const x = d3.scaleBand()
             .domain(stackedData.map(d => d.category))
             .range([marginLeft, actualWidth - marginRight])
-            .paddingInner(0.1) // Adjust padding to fill the space
-            .paddingOuter(0.05); // Optional: add some outer padding for aesthetics
+            .paddingInner(0.1)
+            .paddingOuter(0.05);
 
         const y = d3.scaleLinear()
             .domain([0, d3.max(stackedData, d => d.min + d.max) || 0]).nice()
@@ -207,8 +211,7 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
                     .attr("height", y(d[0]) - y(d[1]));
             })
             .transition()
-            .duration(1000)
-            .ease(d3.easePoly)
+            .duration(750)
             .attr("y", d => y(d[1]))
             .attr("height", d => y(d[0]) - y(d[1]));
 
@@ -309,14 +312,12 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedSkil
         return () => {
             tooltip.remove();
         };
-    }, [containerWidth]);
+    }, [minSalaries, maxSalaries, selectedSkill, totalJobs, containerWidth]);
 
     return (
-        <div ref={containerDivRef} style={{ position: "relative", height: "600px" }}>
-            <div className="w-full overflow-x-auto overflow-y-hidden" style={{ scrollBehavior: 'smooth' }}>
-                <svg ref={scrollableRef}></svg>
-            </div>
-            <svg ref={fixedRef} style={{ position: "absolute", top: 0, left: 0 }}></svg>
+        <div ref={containerDivRef} className="relative w-full overflow-x-auto">
+            <svg ref={scrollableRef} className="w-full"></svg>
+            <svg ref={fixedRef} className="absolute top-0 left-0 w-full pointer-events-none"></svg>
         </div>
     );
 }

@@ -23,18 +23,10 @@ export function SkillProvider({ children, initialTier }: { children: ReactNode, 
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSkillSelect = (skill: string) => {
-        if (tier === "free") {
-            setShowUpgradeModal(true);
-        } else {
-            setSelectedSkill(skill);
-        }
-    };
-
     return (
         <SkillContext.Provider value={{
             selectedSkill,
-            setSelectedSkill: handleSkillSelect,
+            setSelectedSkill,
             skillData,
             setSkillData,
             tier,
