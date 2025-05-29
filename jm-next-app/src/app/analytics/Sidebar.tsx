@@ -109,7 +109,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
                       <span className="sr-only">Close sidebar</span>
                       <XMarkIcon aria-hidden="true" className="size-6 text-gray-400 bg-black rounded-3xl hover:text-white" />
                     </button>
-                    <div className="w-full text-center">Analytics Dashboard</div>
+                    <div className="w-full text-center">Analytics Menu</div>
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-4">
@@ -200,7 +200,7 @@ export default function Sidebar({children, tier}: {children: React.ReactNode, ti
               <span className="sr-only">Open sidebar</span>
               <Bars3Icon aria-hidden="true" className="size-8 text-black hover:text-emerald-500 hover:bg-emerald-500/20 rounded-md p-1 border-2 border-m-dark-green" />
             </button>
-            <div className="hidden xl:block text-lg font-semibold text-black">Analytics Dashboard</div>
+            <div className="hidden xl:block text-lg font-semibold text-black">Analytics Menu</div>
           </div>
           {/* <div className="flex-1 flex justify-center sm:px-16 px-8">
             {tier === 'premium' ? <SearchBar /> : <DisplayOnlySearchBar />}
