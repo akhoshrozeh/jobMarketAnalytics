@@ -232,7 +232,7 @@ def handler(event, context):
 
     
 
-    # Create batches of size 500. OpenAI has batch limit of 2mil enqueued tokens for gpt-4o-mini
+    # Create batches of size 300. OpenAI has batch limit of 2mil enqueued tokens for gpt-4o-mini
     # Write final_jobs to DynamoDB, attaching an internal batch group id
     # Create the Batch Item in Batches Table.
     try:
