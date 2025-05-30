@@ -217,6 +217,23 @@ class JobMarketCdkStack(Stack):
             },
             timeout=Duration.minutes(15))
         
+       
+
+        categorize_job_titles = _lambda.Function(self, "JobTrendrBackend-MongoCategorizeJobTitles",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            description="Categorizes job titles.",
+            handler="categorize_job_titles.handler",
+            code=_lambda.Code.from_asset("lambda"),
+            layers=[pymongo_layer, boto3_layer],
+            environment={
+                "MONGODB_URI": mongodb_uri_secret,
+                "MONGODB_DATABASE": mongodb_db,
+                "MONGODB_COLLECTION": mongodb_collection
+            },
+            timeout=Duration.minutes(15),
+            memory_size=512
+        )
+
         mongo_sanitizer = _lambda.Function(self, "JobTrendrBackend-MongoSanitizer",
             runtime=_lambda.Runtime.PYTHON_3_12,
             description="Sanitizes MongoDB data (salary and extracted keywords).",
@@ -226,7 +243,9 @@ class JobMarketCdkStack(Stack):
             environment={
                 "MONGODB_URI": mongodb_uri_secret,
                 "MONGODB_DATABASE": mongodb_db,
-                "MONGODB_COLLECTION": mongodb_collection
+                "MONGODB_COLLECTION": mongodb_collection,
+                "CATEGORIZE_JOB_TITLES_LAMBDA": categorize_job_titles.function_name
+
             },
             timeout=Duration.minutes(15),
             memory_size=10240
@@ -287,6 +306,12 @@ class JobMarketCdkStack(Stack):
                 "geo-places:Geocode",
             ],
             resources=["*"]  # You can restrict this to your specific Place Index ARN if desired
+        ))
+
+        # allow sanitizer to invoke the categorize function
+        mongo_sanitizer.add_to_role_policy(iam.PolicyStatement(
+            actions=["lambda:InvokeFunction"],
+            resources=[categorize_job_titles.function_arn]
         ))
 
 
@@ -386,6 +411,7 @@ class JobMarketCdkStack(Stack):
         batch_poller.add_to_role_policy(cloudwatch_policy)
         geocoder.add_to_role_policy(cloudwatch_policy)
         mongo_sanitizer.add_to_role_policy(cloudwatch_policy)
+        categorize_job_titles.add_to_role_policy(cloudwatch_policy)
 
         # Add CloudWatch Metrics permissions
         metrics_policy = iam.PolicyStatement(
@@ -399,7 +425,7 @@ class JobMarketCdkStack(Stack):
         )
 
         # Add metrics permissions to all Lambdas
-        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_dispatcher, geocoder, mongo_sanitizer]:
+        for lambda_func in [scrape_jobs_lambda, batch_poller, batch_dispatcher, geocoder, mongo_sanitizer, categorize_job_titles]:
             lambda_func.add_to_role_policy(metrics_policy)
 
         # Create CloudWatch Log group outputs for easy reference
@@ -408,7 +434,7 @@ class JobMarketCdkStack(Stack):
         CfnOutput(self, "BatchDispatcherLogGroup", value=batch_dispatcher.log_group.log_group_name)
         CfnOutput(self, "GeocoderLogGroup", value=geocoder.log_group.log_group_name)
         CfnOutput(self, "MongoSanitizerLogGroup", value=mongo_sanitizer.log_group.log_group_name)
-
+        CfnOutput(self, "CategorizeJobTitlesLogGroup", value=categorize_job_titles.log_group.log_group_name)
 
 
 
