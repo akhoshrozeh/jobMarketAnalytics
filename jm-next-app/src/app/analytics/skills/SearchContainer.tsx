@@ -27,6 +27,7 @@ export default function SearchContainer({
             setShowUpgradeModal(true);
             return;
         }
+
         setIsLoading(true);
         const data = await fetchSkillData(skill);
         setSkillData(data);

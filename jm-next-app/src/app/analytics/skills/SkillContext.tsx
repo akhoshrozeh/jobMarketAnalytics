@@ -34,7 +34,8 @@ export function SkillProvider({ children, initialTier }: { children: ReactNode, 
             showUpgradeModal,
             setShowUpgradeModal,
             isLoading,
-            setIsLoading
+            setIsLoading,   
+
         }}>
             {children}
         </SkillContext.Provider>
