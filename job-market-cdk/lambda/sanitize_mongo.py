@@ -3,15 +3,14 @@ import boto3
 from pymongo import UpdateMany
 from datetime import datetime
 import os
+import json
 import logging
-import time
 
 # Init logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # Initialize clients
-client = boto3.client('geo-places')
 mongo_client = pymongo.MongoClient(os.environ['MONGODB_URI'])
 db = mongo_client[os.environ['MONGODB_DATABASE']]
 collection = db[os.environ['MONGODB_COLLECTION']]
@@ -26,6 +25,8 @@ collection = db[os.environ['MONGODB_COLLECTION']]
     # c) if does not have attribute 'interval', then we need to make an best guess.
             # high majorty of documents will be either hourly or yearly. 
 def handler(event, context):
+
+    lambda_client = boto3.client('lambda')
 
     try:
         convert_string_to_double(collection)
@@ -44,6 +45,20 @@ def handler(event, context):
     except Exception as e:
         logger.error(f"Error converting salaries: {e}")
         return {"status": "ERROR", "message": str(e)}
+    
+
+    try:
+        lambda_client.invoke(
+            FunctionName=os.environ["CATEGORIZE_JOB_TITLES_LAMBDA"],
+            InvocationType="Event",
+            Payload=json.dumps({"categorize_mode": "new_only"})
+        )
+        logger.info("Successfully invoked categorize_job_titles lambda")
+    except Exception as e:
+        logger.error(f"Error invoking categorize_job_titles: {e}")
+        return {"status": "ERROR", "message": str(e)}
+    
+
 
     return {"status": "complete", "message": "Cleaned MongoDB values."}
 
@@ -79,6 +94,7 @@ def convert_string_to_double(collection):
             count += 1
     logger.info(f"Converted {count} documents to double")
 
+    return 
 
 # 2. Adjust salaries to yearly values in datatype 'double'
     # a) convert all min_amount and max_amount of type 'string' to 'double'
@@ -91,14 +107,15 @@ def convert_string_to_double(collection):
     # 2) for (values without 'interval' or is null) AND have min_amount & max_amount, read the value, then make a guess
     
     #     -> all these values will be under adj_min_amount and adj_max_amount
-    return 
 
 def convert_salaries(collection):
     # Query to find documents with an 'interval' field and valid min_amount and max_amount
     query_with_interval = {
         "interval": {"$exists": True, "$ne": None},
         "min_amount": {"$exists": True, "$ne": None, "$gt": 0},
-        "max_amount": {"$exists": True, "$ne": None, "$gt": 0}
+        "max_amount": {"$exists": True, "$ne": None, "$gt": 0},
+        "adj_min_amount": {"$exists": False},
+        "adj_max_amount": {"$exists": False}
     }
     
     # Query to find documents without an 'interval' field but with valid min_amount and max_amount
@@ -108,7 +125,9 @@ def convert_salaries(collection):
             {"interval": None}
         ],
         "min_amount": {"$exists": True, "$ne": None, "$gt": 0},
-        "max_amount": {"$exists": True, "$ne": None, "$gt": 0}
+        "max_amount": {"$exists": True, "$ne": None, "$gt": 0},
+        "adj_min_amount": {"$exists": False},
+        "adj_max_amount": {"$exists": False}
     }
     
     # Process documents with an 'interval' field
