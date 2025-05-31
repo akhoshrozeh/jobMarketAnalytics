@@ -13,7 +13,7 @@ async function fetchSkillData(skill: string) {
 export default async function Layout({
   children,
   MarketDemand,
-  TopSkills,
+  // TopSkills,
   SalaryDistribution,
   TopJobs,
   RelatedSkills,
@@ -21,7 +21,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode
   MarketDemand: React.ReactNode
-  TopSkills: React.ReactNode
+  // TopSkills: React.ReactNode
   SalaryDistribution: React.ReactNode
   TopJobs: React.ReactNode
   RelatedSkills: React.ReactNode
@@ -36,7 +36,7 @@ export default async function Layout({
       <div>
         <h1 className="text-4xl font-bold text-center mb-6">Skill Insights</h1>
         <SearchContainer skills={skills} fetchSkillData={fetchSkillData}>
-          {TopSkills}
+          {/* {TopSkills} */} {children}
         </SearchContainer>
 
         <BentoLayout MarketDemand={MarketDemand} SalaryDistribution={SalaryDistribution} TopJobs={TopJobs} RelatedSkills={RelatedSkills} SkillSalaryStats={SkillSalaryStats} />
