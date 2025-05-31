@@ -44,9 +44,9 @@ export function SalaryDistributionGraph({ minSalaries, maxSalaries, selectedRole
     }, []);
 
     useEffect(() => {
-        console.log('Data updated:', { minSalaries, maxSalaries, selectedRole, selectedSubcategory, totalJobs });
+        // console.log('Data updated:', { minSalaries, maxSalaries, selectedRole, selectedSubcategory, totalJobs });
         if (!scrollableRef.current || !fixedRef.current || !minSalaries || !maxSalaries) {
-            console.log('Missing required data or refs');
+            // console.log('Missing required data or refs');
             return;
         }
 

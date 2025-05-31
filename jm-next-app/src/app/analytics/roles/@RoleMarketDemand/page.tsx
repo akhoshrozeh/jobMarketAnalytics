@@ -4,7 +4,7 @@ import { useRole } from "../RoleContext";
 export default function MarketDemand() {
     const { roleData } = useRole();
     const marketDemand = roleData?.marketDemand;
-    console.log("marketDemand from page", marketDemand);
+    // console.log("marketDemand from page", marketDemand);
 
     if (!marketDemand) return null;
 
