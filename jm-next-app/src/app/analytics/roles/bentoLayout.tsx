@@ -4,13 +4,18 @@ import { useRole } from "./RoleContext"
 export default function BentoLayout({
     RoleSalaryStats,
     RoleSalaryDistribution,
-    RoleMarketDemand
-}: {
+    RoleMarketDemand,
+    RoleTopSkills,
+    RoleLocations
+    }: {
     RoleSalaryStats: React.ReactNode
     RoleSalaryDistribution: React.ReactNode
     RoleMarketDemand: React.ReactNode
+    RoleTopSkills: React.ReactNode
+    RoleLocations: React.ReactNode
 }) {
-    const { roleData, selectedRole, isLoading, tier } = useRole()
+    const { roleData, selectedRole, selectedSubcategory, isLoading, tier } = useRole()
+    console.log("roleData", roleData)
     
     return (
         <>
@@ -47,17 +52,19 @@ export default function BentoLayout({
                         </div>
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 lg:row-span-1 bg-slate-100/50">
-                            <h2 className="text-xl font-semibold mb-2 text-black">🔗 Related Skills</h2>
+                            <h2 className="text-xl font-semibold mb-2 text-black">
+                                🔗 Top Skills For {selectedSubcategory !== "All" && selectedSubcategory !== "Other" ? selectedSubcategory : selectedRole}
+                            </h2>
                             <div className="flex items-center justify-center">
-
+                                {RoleTopSkills}
                             </div>
                         </div>
 
 
                         
                         <div className="rounded-lg shadow p-4 shadow-gray-300 shadow-md border border-gray-200 lg:col-span-3 lg:row-span-1 bg-slate-100/50">
-                            <h2 className="text-xl font-semibold mb-2 text-black">👔 Top Job Titles</h2>
-
+                            <h2 className="text-xl font-semibold mb-2 text-black">📍Role Locations</h2>
+                            {RoleLocations}
                         </div>
                     </div>
                 ) : (

@@ -14,13 +14,17 @@ export default async function Layout({
   children,
   RoleSalaryStats,
   RoleSalaryDistribution,
-  RoleMarketDemand
+  RoleMarketDemand,
+  RoleTopSkills,
+  RoleLocations
 
 }: {
   children: React.ReactNode
   RoleSalaryStats: React.ReactNode
   RoleSalaryDistribution: React.ReactNode
   RoleMarketDemand: React.ReactNode
+  RoleTopSkills: React.ReactNode
+  RoleLocations: React.ReactNode
 }) {
   // Fetch searchable roles during SSR
   const tier = await getTier();
@@ -34,7 +38,7 @@ export default async function Layout({
           {children}
         </SearchContainer>
 
-        <BentoLayout RoleSalaryStats={RoleSalaryStats} RoleSalaryDistribution={RoleSalaryDistribution} RoleMarketDemand={RoleMarketDemand} />
+        <BentoLayout RoleSalaryStats={RoleSalaryStats} RoleSalaryDistribution={RoleSalaryDistribution} RoleMarketDemand={RoleMarketDemand} RoleTopSkills={RoleTopSkills} RoleLocations={RoleLocations} />
         <UpgradeModal />
       </div>
     </RoleProvider>
