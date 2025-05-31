@@ -20,8 +20,9 @@ import Link from 'next/link'
 const navigation = [
   { name: 'Market Overview', href: '/analytics/overview', icon: GlobeAmericasIcon, current: true, tier: 'free' },
   { name: 'Skills', href: '/analytics/skills', icon: WrenchScrewdriverIcon, current: false, tier: 'free' },
+  { name: 'Compare Skills', href: '/analytics/compare-skills', icon: WrenchScrewdriverIcon, current: false, tier: 'free' },
   { name: 'Roles', href: '/analytics/roles', icon: BriefcaseIcon, current: false, tier: 'free' },
-  { name: 'Compare', href: '/analytics/compare', icon: Square2StackIcon, current: false, tier: 'free' },
+  { name: 'Compare Roles', href: '/analytics/compare-roles', icon: BriefcaseIcon, current: false, tier: 'free' },
   { name: 'Skill Relationships', href: '/analytics/skills-connectivity', icon: ShareIcon, current: false, tier: 'basic' },
 ]
 
