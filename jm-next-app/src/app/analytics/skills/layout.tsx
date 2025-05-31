@@ -13,7 +13,6 @@ async function fetchSkillData(skill: string) {
 export default async function Layout({
   children,
   MarketDemand,
-  // TopSkills,
   SalaryDistribution,
   TopJobs,
   RelatedSkills,
@@ -21,7 +20,6 @@ export default async function Layout({
 }: {
   children: React.ReactNode
   MarketDemand: React.ReactNode
-  // TopSkills: React.ReactNode
   SalaryDistribution: React.ReactNode
   TopJobs: React.ReactNode
   RelatedSkills: React.ReactNode
