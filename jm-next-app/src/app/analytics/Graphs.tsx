@@ -993,7 +993,7 @@ export function JobLocationMap({ locations }: JobLocationMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   
   useEffect(() => {
-    if (!svgRef.current || !locations.length) return;
+    if (!svgRef.current || !locations || !locations.length) return;
 
     // Clear previous chart
     d3.select(svgRef.current).selectAll("*").remove();
