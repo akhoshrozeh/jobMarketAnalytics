@@ -46,7 +46,6 @@ export const getOverviewData = cache(async () => {
             topSkills,
             averageSalary,
             totalJobs,
-
             remoteVsOnsiteJobs,
             topJobTitles,
             topLocations
