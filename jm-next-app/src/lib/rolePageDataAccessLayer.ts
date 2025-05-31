@@ -149,7 +149,6 @@ export const getRoles = cache(async (db: MongoDBClient, tier: string): Promise<C
                 subcategories: item.subcategories
             };
         });
-        console.log("categoryData", categoryData);
         return categoryData;
     } catch (error) {
         console.error('Error fetching roles:', error);
@@ -174,14 +173,18 @@ export const getRoleData = cache(async (category: string, subcategory: string, t
             marketSalaryAverage,
             marketTotalJobs,
             salaryDistributionForRole,
-            roleMarketDemand
+            roleMarketDemand,
+            roleTopSkills,
+            roleLocations
            
         ] = await Promise.all([
             getRoleSalaryStats(db, category, subcategory),
             getAverageSalary(db),
             getTotalJobs(db),
             getSalaryDistributionForRole(db, category, subcategory),
-            getRoleMarketDemand(db, category, subcategory)
+            getRoleMarketDemand(db, category, subcategory),
+            getRoleTopSkills(db, category, subcategory),
+            getRoleLocations(db, category, subcategory)
         ]);
 
         return {
@@ -189,7 +192,9 @@ export const getRoleData = cache(async (category: string, subcategory: string, t
             "marketSalaryAverage": marketSalaryAverage,
             "marketTotalJobs": marketTotalJobs,
             "salaryDistributionForRole": salaryDistributionForRole,
-            "marketDemand": roleMarketDemand
+            "marketDemand": roleMarketDemand,
+            "topSkills": roleTopSkills,
+            "locations": roleLocations
         };
     } catch (error) {
         console.error('Error: getRoleData() failed:', error);
@@ -304,7 +309,6 @@ const getSalaryDistributionForRole = cache(async (db: MongoDBClient, category: s
             }
         ];
         const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
-        console.log("getSalaryDistributionForRole", result);
         return result[0] || { minSalaries: [], maxSalaries: [], totalJobs: [{ total: 0 }] };
     } catch (error) {
         console.error('Error: getSalaryDistributionForRole() failed:', error);
@@ -396,10 +400,165 @@ export const getRoleMarketDemand = cache(async (db: MongoDBClient, category: str
             popularityScore: totalJobs > 0 ? (roleCount / totalJobs) * 100 : 0,
             popularityRank: roleRank || 0 // Use 0 if not found in rankings
         };
-        console.log("roleMarketDemand", roleMarketDemand);
         return roleMarketDemand;
     } catch (error) {
         console.error('Error: getRoleMarketDemand() failed:', error);
         return null;
+    }
+});
+
+export const getRoleTopSkills = cache(async (db: MongoDBClient, category: string, subcategory: string) => {
+    try {
+        // Validate input parameters
+        if (!db || !category) {
+            console.error('Error: getRoleTopSkills() - invalid parameters');
+            return [];
+        }
+
+        // Build the match stage based on category and subcategory
+        const roleMatchStage: any = {
+            "categories.0": category,
+            extracted_keywords: {
+                $exists: true,
+                $ne: []
+            }
+        };
+
+        // Only add subcategory filter when it's NOT "All"
+        if (subcategory !== "All") {
+            roleMatchStage["categories.1"] = subcategory;
+        }
+
+        const pipeline = [
+            // Match jobs that belong to the specified role/subcategory and have skills
+            {
+                $match: roleMatchStage
+            },
+            // Unwind the extracted_keywords array to work with individual skills
+            {
+                $unwind: "$extracted_keywords"
+            },
+            // Group by skill and count occurrences
+            {
+                $group: {
+                    _id: "$extracted_keywords",
+                    count: { $sum: 1 }
+                }
+            },
+            // Sort by count in descending order
+            {
+                $sort: { count: -1 }
+            },
+            // Project to match the expected output format
+            {
+                $project: {
+                    _id: 0,
+                    keyword: "$_id",
+                    count: 1
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        
+        // Validate the result is an array
+        if (!Array.isArray(result)) {
+            console.error('Error: getRoleTopSkills() - result is not an array:', typeof result);
+            return [];
+        }
+
+        // Validate each item in the result has the expected structure
+        const validatedResult = result.filter(item => {
+            return item && 
+                   typeof item === 'object' && 
+                   typeof item.keyword === 'string' && 
+                   typeof item.count === 'number' &&
+                   !item.$map && // Ensure it's not a MongoDB aggregation object
+                   !item.$group && // Additional check for aggregation objects
+                   !item.$match; // Additional check for aggregation objects
+        });
+
+        return validatedResult;
+
+    } catch (error) {
+        console.error('Error: getRoleTopSkills() failed:', error);
+        return [];
+    }
+});
+
+
+export const getRoleLocations = cache(async (db: MongoDBClient, category: string, subcategory: string) => {
+    try {
+        // Validate input parameters
+        if (!db || !category) {
+            console.error('Error: getRoleLocations() - invalid parameters');
+            return [];
+        }
+
+        // Build the match stage based on category and subcategory
+        const roleMatchStage: any = {
+            "categories.0": category,
+            location_coords: { $exists: true, $ne: [] },
+            location: { $exists: true, $nin: [null, ""] }
+        };
+
+        // Only add subcategory filter when it's NOT "All"
+        if (subcategory !== "All") {
+            roleMatchStage["categories.1"] = subcategory;
+        }
+
+        const pipeline = [
+            // Match jobs that belong to the specified role/subcategory and have location data
+            {
+                $match: roleMatchStage
+            },
+            // Group by location and count occurrences
+            {
+                $group: {
+                    _id: "$location",
+                    count: { $sum: 1 },
+                    location_coords: { $first: "$location_coords" }
+                }
+            },
+            // Sort by count in descending order
+            {
+                $sort: { count: -1 }
+            },
+            // Project to match the expected output format
+            {
+                $project: {
+                    _id: 0, 
+                    location: "$_id",
+                    location_coords: 1,
+                    count: 1
+                }
+            }
+        ];
+
+        const result = await db.collection('JobPostings').aggregate(pipeline).toArray();
+        
+        // Validate the result is an array
+        if (!Array.isArray(result)) {
+            console.error('Error: getRoleLocations() - result is not an array:', typeof result);
+            return [];
+        }
+
+        // Validate each item in the result has the expected structure
+        const validatedResult = result.filter(item => {
+            return item && 
+                   typeof item === 'object' && 
+                   typeof item.location === 'string' && 
+                   typeof item.count === 'number' &&
+                   Array.isArray(item.location_coords) &&
+                   !item.$map && // Ensure it's not a MongoDB aggregation object
+                   !item.$group && // Additional check for aggregation objects
+                   !item.$match; // Additional check for aggregation objects
+        });
+
+        return validatedResult;
+
+    } catch (error) {
+        console.error('Error: getRoleLocations() failed:', error);
+        return [];
     }
 });
